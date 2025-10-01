@@ -23,29 +23,16 @@ except Exception as e:
 
 
 class AdvancedPanelDetector:
-    """Advanced mobile display panel detector using multiple methods"""
+    """Advanced mobile display panel detector - FIXED for false positives"""
     
     def __init__(self):
-        self.min_confidence = 0.4
-        self.phone_classes = ['cell phone', 'phone', 'mobile phone']
+        # INCREASED confidence threshold to reduce false positives
+        self.min_confidence = 0.70  # Increased from 0.4 to 0.7
+        # Only detect actual cell phones
+        self.phone_class = 'cell phone'
         
-    def preprocess_image(self, image):
-        """Enhanced preprocessing for better detection"""
-        # Denoise
-        denoised = cv2.fastNlMeansDenoisingColored(image, None, 10, 10, 7, 21)
-        
-        # Enhance contrast
-        lab = cv2.cvtColor(denoised, cv2.COLOR_BGR2LAB)
-        l, a, b = cv2.split(lab)
-        clahe = cv2.createCLAHE(clipLimit=3.0, tileGridSize=(8, 8))
-        l = clahe.apply(l)
-        enhanced = cv2.merge([l, a, b])
-        enhanced = cv2.cvtColor(enhanced, cv2.COLOR_LAB2BGR)
-        
-        return enhanced
-    
     def detect_with_yolo(self, image):
-        """Detect using YOLOv8 deep learning model"""
+        """Detect using YOLOv8 - STRICT mode to prevent false positives"""
         if model is None:
             return []
         
@@ -59,175 +46,38 @@ class AdvancedPanelDetector:
                 class_id = int(box.cls[0])
                 class_name = model.names[class_id]
                 
-                # Check if it's a phone/mobile device
-                if confidence > self.min_confidence and class_name in self.phone_classes:
+                # STRICT: Only accept 'cell phone' class with high confidence
+                if confidence > self.min_confidence and class_name == self.phone_class:
                     x1, y1, x2, y2 = map(int, box.xyxy[0])
-                    detections.append({
-                        'bbox': (x1, y1, x2 - x1, y2 - y1),
-                        'confidence': confidence,
-                        'method': 'YOLO',
-                        'class': class_name
-                    })
-        
-        return detections
-    
-    def detect_with_contours(self, image):
-        """Advanced contour-based detection"""
-        preprocessed = self.preprocess_image(image)
-        gray = cv2.cvtColor(preprocessed, cv2.COLOR_BGR2GRAY)
-        
-        # Multiple edge detection approaches
-        edges1 = cv2.Canny(gray, 30, 100)
-        edges2 = cv2.Canny(gray, 50, 150)
-        edges = cv2.bitwise_or(edges1, edges2)
-        
-        # Morphological operations to connect edges
-        kernel = cv2.getStructuringElement(cv2.MORPH_RECT, (3, 3))
-        edges = cv2.dilate(edges, kernel, iterations=2)
-        edges = cv2.erode(edges, kernel, iterations=1)
-        
-        # Find contours
-        contours, hierarchy = cv2.findContours(edges, cv2.RETR_TREE, cv2.CHAIN_APPROX_SIMPLE)
-        
-        detections = []
-        height, width = image.shape[:2]
-        min_area = (height * width) * 0.05
-        max_area = (height * width) * 0.95
-        
-        for contour in contours:
-            area = cv2.contourArea(contour)
-            
-            if min_area < area < max_area:
-                # Get bounding rectangle
-                x, y, w, h = cv2.boundingRect(contour)
-                aspect_ratio = float(w) / h if h > 0 else 0
-                
-                # Mobile panels have specific aspect ratios
-                # Portrait: 0.4-0.7, Landscape: 1.4-2.5
-                if (0.4 <= aspect_ratio <= 0.75) or (1.4 <= aspect_ratio <= 2.5):
-                    # Calculate additional features
-                    perimeter = cv2.arcLength(contour, True)
-                    circularity = 4 * np.pi * area / (perimeter * perimeter) if perimeter > 0 else 0
+                    w, h = x2 - x1, y2 - y1
+                    aspect_ratio = float(w) / h if h > 0 else 0
                     
-                    # Approximate polygon
-                    epsilon = 0.02 * perimeter
-                    approx = cv2.approxPolyDP(contour, epsilon, True)
-                    
-                    # Rectangularity check (should be close to 4 corners)
-                    if len(approx) >= 4 and len(approx) <= 8:
-                        confidence = min(0.9, (area / max_area) * 0.7 + circularity * 0.3)
+                    # Validate aspect ratio - typical for mobile phones
+                    # Portrait: 0.45-0.75, Landscape: 1.33-2.2
+                    if (0.45 <= aspect_ratio <= 0.75) or (1.33 <= aspect_ratio <= 2.2):
+                        # Additional validation: check if size is reasonable
+                        img_height, img_width = image.shape[:2]
+                        area_ratio = (w * h) / (img_width * img_height)
                         
-                        detections.append({
-                            'bbox': (x, y, w, h),
-                            'confidence': confidence,
-                            'method': 'Contour',
-                            'aspect_ratio': aspect_ratio
-                        })
+                        # Panel should be between 8% and 80% of image
+                        if 0.08 <= area_ratio <= 0.80:
+                            detections.append({
+                                'bbox': (x1, y1, w, h),
+                                'confidence': confidence,
+                                'method': 'YOLO',
+                                'class': class_name,
+                                'aspect_ratio': aspect_ratio,
+                                'area_ratio': area_ratio
+                            })
         
         return detections
-    
-    def detect_with_color(self, image):
-        """Detect based on typical mobile panel colors (screens)"""
-        hsv = cv2.cvtColor(image, cv2.COLOR_BGR2HSV)
-        
-        # Define color ranges for typical screens (blue-ish glow)
-        # Range 1: Blue screens
-        lower_blue = np.array([90, 50, 50])
-        upper_blue = np.array([130, 255, 255])
-        
-        # Range 2: White/bright screens
-        lower_white = np.array([0, 0, 200])
-        upper_white = np.array([180, 30, 255])
-        
-        mask1 = cv2.inRange(hsv, lower_blue, upper_blue)
-        mask2 = cv2.inRange(hsv, lower_white, upper_white)
-        mask = cv2.bitwise_or(mask1, mask2)
-        
-        # Clean up mask
-        kernel = cv2.getStructuringElement(cv2.MORPH_RECT, (5, 5))
-        mask = cv2.morphologyEx(mask, cv2.MORPH_CLOSE, kernel)
-        mask = cv2.morphologyEx(mask, cv2.MORPH_OPEN, kernel)
-        
-        contours, _ = cv2.findContours(mask, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
-        
-        detections = []
-        height, width = image.shape[:2]
-        min_area = (height * width) * 0.03
-        
-        for contour in contours:
-            area = cv2.contourArea(contour)
-            if area > min_area:
-                x, y, w, h = cv2.boundingRect(contour)
-                aspect_ratio = float(w) / h if h > 0 else 0
-                
-                if (0.4 <= aspect_ratio <= 0.75) or (1.4 <= aspect_ratio <= 2.5):
-                    confidence = min(0.85, area / (height * width * 0.5))
-                    detections.append({
-                        'bbox': (x, y, w, h),
-                        'confidence': confidence,
-                        'method': 'Color'
-                    })
-        
-        return detections
-    
-    def merge_detections(self, detections):
-        """Merge overlapping detections using Non-Maximum Suppression"""
-        if not detections:
-            return []
-        
-        boxes = np.array([d['bbox'] for d in detections])
-        scores = np.array([d['confidence'] for d in detections])
-        
-        # Convert to x1, y1, x2, y2 format
-        x1 = boxes[:, 0]
-        y1 = boxes[:, 1]
-        x2 = boxes[:, 0] + boxes[:, 2]
-        y2 = boxes[:, 1] + boxes[:, 3]
-        
-        areas = boxes[:, 2] * boxes[:, 3]
-        order = scores.argsort()[::-1]
-        
-        keep = []
-        while order.size > 0:
-            i = order[0]
-            keep.append(i)
-            
-            xx1 = np.maximum(x1[i], x1[order[1:]])
-            yy1 = np.maximum(y1[i], y1[order[1:]])
-            xx2 = np.minimum(x2[i], x2[order[1:]])
-            yy2 = np.minimum(y2[i], y2[order[1:]])
-            
-            w = np.maximum(0.0, xx2 - xx1)
-            h = np.maximum(0.0, yy2 - yy1)
-            intersection = w * h
-            
-            iou = intersection / (areas[i] + areas[order[1:]] - intersection)
-            
-            inds = np.where(iou <= 0.3)[0]
-            order = order[inds + 1]
-        
-        return [detections[i] for i in keep]
     
     def detect(self, image):
-        """Main detection method combining all approaches"""
-        all_detections = []
-        
-        # Method 1: YOLO (most accurate)
+        """Main detection method - YOLO only for maximum accuracy"""
+        # ONLY use YOLO to prevent false positives from tables/lights
+        # Contour and color methods are disabled as they cause false positives
         yolo_detections = self.detect_with_yolo(image)
-        all_detections.extend(yolo_detections)
-        
-        # Method 2: Advanced contour detection
-        contour_detections = self.detect_with_contours(image)
-        all_detections.extend(contour_detections)
-        
-        # Method 3: Color-based detection
-        color_detections = self.detect_with_color(image)
-        all_detections.extend(color_detections)
-        
-        # Merge overlapping detections
-        final_detections = self.merge_detections(all_detections)
-        
-        return final_detections
+        return yolo_detections
 
 
 def mark_image(image, detections):
@@ -245,7 +95,7 @@ def mark_image(image, detections):
         marked = cv2.addWeighted(overlay, 0.3, marked, 0.7, 0)
         
         # Add OK text
-        font = cv2.FONT_HERSHEY_BOLD
+        font = cv2.FONT_HERSHEY_SIMPLEX
         text = "OK - No Panel Detected"
         font_scale = 1.2
         thickness = 3
@@ -293,7 +143,7 @@ def mark_image(image, detections):
             cv2.line(marked, (x + w, y + h), (x + w, y + h - corner_length), (0, 0, 255), corner_thickness)
             
             # NG Label with background
-            font = cv2.FONT_HERSHEY_BOLD
+            font = cv2.FONT_HERSHEY_SIMPLEX
             label = "NG"
             font_scale = 2.5
             thickness = 4
@@ -353,7 +203,7 @@ def mark_image(image, detections):
         warning_text = f"PANEL DETECTED - NG ({len(detections)} found)"
         font_scale = 1.0
         thickness = 3
-        (text_width, text_height), _ = cv2.getTextSize(warning_text, cv2.FONT_HERSHEY_BOLD, font_scale, thickness)
+        (text_width, text_height), _ = cv2.getTextSize(warning_text, cv2.FONT_HERSHEY_SIMPLEX, font_scale, thickness)
         text_x = (width - text_width) // 2
         text_y = 50
         
@@ -365,9 +215,9 @@ def mark_image(image, detections):
         cv2.line(marked, (icon_x+icon_size, icon_y), (icon_x, icon_y+icon_size), (255, 255, 255), 5)
         
         cv2.putText(marked, warning_text, (text_x+2, text_y+2),
-                   cv2.FONT_HERSHEY_BOLD, font_scale, (0, 0, 0), thickness+1)
+                   cv2.FONT_HERSHEY_SIMPLEX, font_scale, (0, 0, 0), thickness+1)
         cv2.putText(marked, warning_text, (text_x, text_y),
-                   cv2.FONT_HERSHEY_BOLD, font_scale, (255, 255, 255), thickness)
+                   cv2.FONT_HERSHEY_SIMPLEX, font_scale, (255, 255, 255), thickness)
     
     return marked
 
@@ -383,7 +233,8 @@ def health_check():
         "status": "healthy",
         "service": "Advanced Mobile Panel Detection API",
         "yolo_loaded": model is not None,
-        "version": "2.0"
+        "version": "2.1 - False Positive Fix",
+        "confidence_threshold": detector.min_confidence
     })
 
 
@@ -391,7 +242,7 @@ def health_check():
 def detect_panel():
     """
     Main endpoint to detect mobile panel in uploaded image
-    Uses advanced deep learning and computer vision techniques
+    Uses strict YOLOv8 detection to prevent false positives
     """
     try:
         # Read image from request
@@ -418,7 +269,7 @@ def detect_panel():
         if image is None:
             return jsonify({"error": "Invalid image format"}), 400
         
-        # Detect panels using advanced methods
+        # Detect panels using strict YOLO-only method
         detections = detector.detect(image)
         
         # Mark the image
@@ -443,13 +294,16 @@ def detect_panel():
                     "bbox": d['bbox'],
                     "confidence": round(d['confidence'], 3),
                     "method": d.get('method', 'Unknown'),
+                    "class": d.get('class', 'Unknown'),
+                    "aspect_ratio": round(d.get('aspect_ratio', 0), 2),
                     "area": d['bbox'][2] * d['bbox'][3]
                 }
                 for idx, d in enumerate(detections)
             ],
             "marked_image": f"data:image/jpeg;base64,{marked_image_base64}",
             "message": f"Detected {len(detections)} mobile panel(s)" if detections else "No mobile panels detected",
-            "image_size": {"width": image.shape[1], "height": image.shape[0]}
+            "image_size": {"width": image.shape[1], "height": image.shape[0]},
+            "detection_mode": "strict_yolo_only"
         }
         
         return jsonify(response), 200
@@ -460,45 +314,6 @@ def detect_panel():
             "error": str(e),
             "traceback": traceback.format_exc()
         }), 500
-
-
-@app.route('/detect/image', methods=['POST'])
-def detect_panel_return_image():
-    """Returns the marked image directly as a file"""
-    try:
-        if 'file' not in request.files:
-            return jsonify({"error": "No file provided"}), 400
-        
-        file = request.files['file']
-        if file.filename == '':
-            return jsonify({"error": "No file selected"}), 400
-        
-        image_bytes = file.read()
-        nparr = np.frombuffer(image_bytes, np.uint8)
-        image = cv2.imdecode(nparr, cv2.IMREAD_COLOR)
-        
-        if image is None:
-            return jsonify({"error": "Invalid image format"}), 400
-        
-        # Detect and mark
-        detections = detector.detect(image)
-        marked_image = mark_image(image, detections)
-        
-        # Convert to bytes
-        _, buffer = cv2.imencode('.jpg', marked_image, [cv2.IMWRITE_JPEG_QUALITY, 95])
-        byte_io = BytesIO(buffer)
-        byte_io.seek(0)
-        
-        status = "NG" if detections else "OK"
-        return send_file(
-            byte_io,
-            mimetype='image/jpeg',
-            as_attachment=True,
-            download_name=f'marked_{status}_{len(detections)}panels.jpg'
-        )
-        
-    except Exception as e:
-        return jsonify({"error": str(e)}), 500
 
 
 @app.route('/detect/image', methods=['POST'])
@@ -557,11 +372,13 @@ def detect_batch():
                 
                 if image is not None:
                     detections = detector.detect(image)
+                    avg_confidence = sum(d['confidence'] for d in detections) / len(detections) if detections else 0.0
                     
                     results.append({
                         "filename": file.filename,
                         "detected": len(detections) > 0,
                         "panel_count": len(detections),
+                        "confidence": round(avg_confidence, 3),
                         "result": "NG" if detections else "OK"
                     })
         
@@ -569,8 +386,48 @@ def detect_batch():
             "total_images": len(results),
             "ng_count": sum(1 for r in results if r['detected']),
             "ok_count": sum(1 for r in results if not r['detected']),
-            "results": results
+            "results": results,
+            "detection_mode": "strict_yolo_only"
         }), 200
+        
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
+
+
+@app.route('/config', methods=['GET'])
+def get_config():
+    """Get current detection configuration"""
+    return jsonify({
+        "min_confidence": detector.min_confidence,
+        "detection_class": detector.phone_class,
+        "yolo_model": "yolov8n.pt",
+        "detection_methods": ["YOLO-only (strict)"],
+        "false_positive_prevention": "enabled",
+        "aspect_ratio_validation": "enabled",
+        "area_ratio_validation": "enabled"
+    })
+
+
+@app.route('/config', methods=['POST'])
+def update_config():
+    """Update detection configuration"""
+    try:
+        data = request.json
+        if 'min_confidence' in data:
+            new_confidence = float(data['min_confidence'])
+            if 0.0 <= new_confidence <= 1.0:
+                detector.min_confidence = new_confidence
+                return jsonify({
+                    "success": True,
+                    "message": f"Confidence threshold updated to {new_confidence}",
+                    "new_config": {
+                        "min_confidence": detector.min_confidence
+                    }
+                })
+            else:
+                return jsonify({"error": "Confidence must be between 0.0 and 1.0"}), 400
+        
+        return jsonify({"error": "No valid parameters provided"}), 400
         
     except Exception as e:
         return jsonify({"error": str(e)}), 500
@@ -578,16 +435,20 @@ def detect_batch():
 
 if __name__ == '__main__':
     print("=" * 60)
-    print("🚀 Advanced Mobile Panel Detection API v2.0")
+    print("🚀 Advanced Mobile Panel Detection API v2.1")
     print("=" * 60)
-    print("✓ YOLO Model:", "Loaded" if model else "Not available (fallback to CV)")
-    print("✓ Detection Methods: YOLO + Contours + Color Analysis")
-    print("✓ Features: NMS, Multi-method fusion, Professional marking")
+    print("✓ YOLO Model:", "Loaded" if model else "Not available")
+    print("✓ Detection Mode: STRICT (YOLO-only)")
+    print("✓ False Positive Prevention: ENABLED")
+    print("✓ Confidence Threshold:", detector.min_confidence)
+    print("✓ Features: Aspect ratio + Area validation")
     print("\n📡 Endpoints:")
     print("  - POST /detect          (JSON with base64 image)")
     print("  - POST /detect/image    (Direct image file)")
     print("  - POST /detect/batch    (Multiple images)")
     print("  - GET  /health          (Health check)")
+    print("  - GET  /config          (View settings)")
+    print("  - POST /config          (Update settings)")
     print("\n🌐 Server starting on http://0.0.0.0:5000")
     print("=" * 60)
     app.run(debug=True, host='0.0.0.0', port=5000)
