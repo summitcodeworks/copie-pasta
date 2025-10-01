@@ -501,6 +501,45 @@ def detect_panel_return_image():
         return jsonify({"error": str(e)}), 500
 
 
+@app.route('/detect/image', methods=['POST'])
+def detect_panel_return_image():
+    """Returns the marked image directly as a file"""
+    try:
+        if 'file' not in request.files:
+            return jsonify({"error": "No file provided"}), 400
+        
+        file = request.files['file']
+        if file.filename == '':
+            return jsonify({"error": "No file selected"}), 400
+        
+        image_bytes = file.read()
+        nparr = np.frombuffer(image_bytes, np.uint8)
+        image = cv2.imdecode(nparr, cv2.IMREAD_COLOR)
+        
+        if image is None:
+            return jsonify({"error": "Invalid image format"}), 400
+        
+        # Detect and mark
+        detections = detector.detect(image)
+        marked_image = mark_image(image, detections)
+        
+        # Convert to bytes
+        _, buffer = cv2.imencode('.jpg', marked_image, [cv2.IMWRITE_JPEG_QUALITY, 95])
+        byte_io = BytesIO(buffer)
+        byte_io.seek(0)
+        
+        status = "NG" if detections else "OK"
+        return send_file(
+            byte_io,
+            mimetype='image/jpeg',
+            as_attachment=True,
+            download_name=f'marked_{status}_{len(detections)}panels.jpg'
+        )
+        
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
+
+
 @app.route('/detect/batch', methods=['POST'])
 def detect_batch():
     """Process multiple images at once"""
@@ -519,4 +558,36 @@ def detect_batch():
                 if image is not None:
                     detections = detector.detect(image)
                     
-           
+                    results.append({
+                        "filename": file.filename,
+                        "detected": len(detections) > 0,
+                        "panel_count": len(detections),
+                        "result": "NG" if detections else "OK"
+                    })
+        
+        return jsonify({
+            "total_images": len(results),
+            "ng_count": sum(1 for r in results if r['detected']),
+            "ok_count": sum(1 for r in results if not r['detected']),
+            "results": results
+        }), 200
+        
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
+
+
+if __name__ == '__main__':
+    print("=" * 60)
+    print("🚀 Advanced Mobile Panel Detection API v2.0")
+    print("=" * 60)
+    print("✓ YOLO Model:", "Loaded" if model else "Not available (fallback to CV)")
+    print("✓ Detection Methods: YOLO + Contours + Color Analysis")
+    print("✓ Features: NMS, Multi-method fusion, Professional marking")
+    print("\n📡 Endpoints:")
+    print("  - POST /detect          (JSON with base64 image)")
+    print("  - POST /detect/image    (Direct image file)")
+    print("  - POST /detect/batch    (Multiple images)")
+    print("  - GET  /health          (Health check)")
+    print("\n🌐 Server starting on http://0.0.0.0:5000")
+    print("=" * 60)
+    app.run(debug=True, host='0.0.0.0', port=5000)
