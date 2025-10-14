@@ -1,3 +1,41 @@
+<!-- Add these declarations inside the <manifest> tag in your AndroidManifest.xml file.
+     Place them before the <application> tag for clarity.
+     These cover all permissions from the PermissionManager and CameraX integration:
+     - Camera and Audio: Always needed.
+     - Notifications: For API 33+.
+     - Storage: Legacy for pre-API 29; granular for API 33+ shared media access.
+     - Camera feature: Optional, but recommended for CameraX to handle devices without camera gracefully.
+
+     Note: For app-private storage (e.g., getExternalFilesDir), no runtime permissions needed on API 29+.
+     Adjust based on your exact needs (e.g., add READ_MEDIA_VIDEO if accessing videos).
+-->
+
+<!-- Camera Permission -->
+<uses-permission android:name="android.permission.CAMERA" />
+
+<!-- Audio (Microphone) Permission -->
+<uses-permission android:name="android.permission.RECORD_AUDIO" />
+
+<!-- Notification Permission (API 33+) -->
+<uses-permission android:name="android.permission.POST_NOTIFICATIONS" />
+
+<!-- Legacy Storage Permissions (only for API < 29; ignored later) -->
+<uses-permission android:name="android.permission.READ_EXTERNAL_STORAGE"
+    android:maxSdkVersion="28" />
+<uses-permission android:name="android.permission.WRITE_EXTERNAL_STORAGE"
+    android:maxSdkVersion="28" />
+
+<!-- Granular Media Permissions for Android 13+ (API 33+) - For shared media access -->
+<uses-permission android:name="android.permission.READ_MEDIA_IMAGES" />
+<!-- Add if needed: <uses-permission android:name="android.permission.READ_MEDIA_VIDEO" /> -->
+<!-- Add if needed: <uses-permission android:name="android.permission.READ_MEDIA_AUDIO" /> -->
+
+<!-- Camera Feature (for CameraX; set required="false" to support non-camera devices) -->
+<uses-feature android:name="android.hardware.camera"
+    android:required="false" />
+<uses-feature android:name="android.hardware.camera.autofocus"
+    android:required="false" />
+
 import android.Manifest
 import android.content.Context
 import android.content.pm.PackageManager
