@@ -1,0 +1,102 @@
+import android.text.Editable
+import android.text.TextWatcher
+import android.widget.AutoCompleteTextView
+import android.widget.EditText
+import com.google.android.material.textfield.TextInputEditText
+
+/**
+ * A utility class for validating if form fields (EditText variants) have been filled.
+ * Provides methods to check if a field contains non-empty text.
+ * Also includes a TextWatcher for real-time validation (e.g., enable/disable submit button).
+ *
+ * Usage example:
+ * val validator = FieldValidator()
+ * if (validator.isFilled(myEditText)) {
+ *     // Field is filled
+ * }
+ *
+ * For real-time: myEditText.addTextChangedListener(validator.createTextWatcher { isFilled ->
+ *     if (isFilled) { /* Enable button */ }
+ * })
+ */
+class FieldValidator {
+
+    /**
+     * Checks if the AutoCompleteTextView has been filled (non-null, non-empty text).
+     */
+    fun isFilled(autoCompleteTextView: AutoCompleteTextView): Boolean {
+        return autoCompleteTextView.text?.toString()?.isNotEmpty() == true
+    }
+
+    /**
+     * Checks if the TextInputEditText has been filled (non-null, non-empty text).
+     */
+    fun isFilled(textInputEditText: TextInputEditText): Boolean {
+        return textInputEditText.text?.toString()?.isNotEmpty() == true
+    }
+
+    /**
+     * Checks if the standard EditText has been filled (non-null, non-empty text).
+     * Can be used for other EditText subclasses.
+     */
+    fun isFilled(editText: EditText): Boolean {
+        return editText.text?.toString()?.isNotEmpty() == true
+    }
+
+    /**
+     * Generic check for any Editable-providing view (e.g., EditText, TextInputEditText).
+     * Throws IllegalArgumentException if view doesn't implement Editable.
+     */
+    fun isFilled(editableView: Any): Boolean {
+        val text = when (editableView) {
+            is AutoCompleteTextView -> editableView.text
+            is EditText -> editableView.text
+            is TextInputEditText -> editableView.text
+            else -> throw IllegalArgumentException("Unsupported view type: ${editableView.javaClass.simpleName}")
+        }
+        return text?.toString()?.isNotEmpty() == true
+    }
+
+    /**
+     * Creates a TextWatcher for real-time validation on any EditText variant.
+     * Invokes the callback whenever the filled state changes.
+     */
+    fun createTextWatcher(
+        view: EditText,
+        onFilledStateChanged: (Boolean) -> Unit
+    ): TextWatcher {
+        return object : TextWatcher {
+            private var previousLength = 0
+
+            override fun beforeTextChanged(s: CharSequence?, start: Int, count: Int, after: Int) {
+                previousLength = s?.length ?: 0
+            }
+
+            override fun onTextChanged(s: CharSequence?, start: Int, before: Int, count: Int) {}
+
+            override fun afterTextChanged(s: Editable?) {
+                val isCurrentlyFilled = s?.toString()?.isNotEmpty() == true
+                // Only invoke if state actually changed (avoids unnecessary calls)
+                if ((previousLength == 0 && isCurrentlyFilled) || (previousLength > 0 && !isCurrentlyFilled)) {
+                    onFilledStateChanged(isCurrentlyFilled)
+                }
+                previousLength = s?.length ?: 0
+            }
+        }
+    }
+
+    /**
+     * Batch validation: Checks if all provided fields are filled.
+     * Returns true only if every field is filled.
+     */
+    fun areAllFieldsFilled(vararg fields: Any): Boolean {
+        return fields.all { isFilled(it) }
+    }
+
+    /**
+     * Batch validation: Returns a map of field to filled status.
+     */
+    fun getFilledStatus(vararg fields: Any): Map<Any, Boolean> {
+        return fields.associateWith { isFilled(it) }
+    }
+}
