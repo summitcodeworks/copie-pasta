@@ -1,0 +1,928 @@
+
+
+Of course! Here is a comprehensive and modern `PermissionManager` class in Kotlin for Android.
+
+This solution uses the recommended **Activity Result APIs** (`registerForActivityResult`), which is the current best practice. It's cleaner, safer, and avoids the complexities of `onRequestPermissionsResult` and request codes.
+
+### Key Features of this `PermissionManager`:
+
+*   **Modern API:** Uses `registerForActivityResult` for lifecycle-aware permission handling.
+*   **Handles Multiple Permission Types:** Manages standard runtime permissions (Camera, Audio, etc.), the new `POST_NOTIFICATIONS` permission, and the special `MANAGE_EXTERNAL_STORAGE` permission.
+*   **Callback-Based:** Uses simple Kotlin function callbacks (`(Boolean) -> Unit`) to handle the result, making it easy to integrate.
+*   **Extensible:** Designed to be easily extended for other special permissions if needed.
+*   **Clean API:** Provides a simple and readable interface for checking and requesting permissions.
+*   **Handles "Permanently Denied":** Includes a helper method to direct the user to the app settings screen.
+
+---
+
+### 1. `PermissionManager.kt`
+
+Create a new Kotlin file named `PermissionManager.kt`.
+
+```kotlin
+import android.Manifest
+import android.content.Context
+import android.content.Intent
+import android.content.pm.PackageManager
+import android.net.Uri
+import android.os.Build
+import android.os.Environment
+import android.provider.Settings
+import androidx.activity.result.ActivityResultLauncher
+import androidx.activity.result.contract.ActivityResultContracts
+import androidx.appcompat.app.AppCompatActivity
+import androidx.core.content.ContextCompat
+
+/**
+ * A comprehensive permission manager for Android.
+ *
+ * This class handles standard runtime permissions, the post-notification permission,
+ * and the special "All Files Access" storage permission using the modern
+ * Activity Result API.
+ *
+ * @param activity The host activity. It must be a ComponentActivity (e.g., AppCompatActivity, FragmentActivity).
+ *                 The manager should be instantiated in the activity's onCreate() method.
+ */
+class PermissionManager(private val activity: AppCompatActivity) {
+
+    // --- Launcher for a single permission ---
+    private val singlePermissionLauncher: ActivityResultLauncher<String> =
+        activity.registerForActivityResult(ActivityResultContracts.RequestPermission()) { isGranted ->
+            pendingSinglePermissionCallback?.invoke(isGranted)
+            // Clean up the callback reference
+            pendingSinglePermissionCallback = null
+        }
+
+    // --- Launcher for multiple permissions ---
+    private val multiplePermissionsLauncher: ActivityResultLauncher<Array<String>> =
+        activity.registerForActivityResult(ActivityResultContracts.RequestMultiplePermissions()) { permissions ->
+            pendingMultiplePermissionsCallback?.invoke(permissions)
+            // Clean up the callback reference
+            pendingMultiplePermissionsCallback = null
+        }
+
+    // --- Launcher for "Manage All Files Access" permission ---
+    private val manageStorageLauncher: ActivityResultLauncher<Intent> =
+        activity.registerForActivityResult(ActivityResultContracts.StartActivityForResult()) {
+            // After returning from settings, check if the permission was granted
+            val isGranted = checkManageExternalStoragePermission()
+            pendingManageStorageCallback?.invoke(isGranted)
+            // Clean up the callback reference
+            pendingManageStorageCallback = null
+        }
+
+    // --- Callbacks to hold the result from the launchers ---
+    private var pendingSinglePermissionCallback: ((Boolean) -> Unit)? = null
+    private var pendingMultiplePermissionsCallback: ((Map<String, Boolean>) -> Unit)? = null
+    private var pendingManageStorageCallback: ((Boolean) -> Unit)? = null
+
+
+    // --- Public API ---
+
+    /**
+     * Checks if a single permission is granted.
+     */
+    fun isPermissionGranted(permission: String): Boolean {
+        return ContextCompat.checkSelfPermission(activity, permission) == PackageManager.PERMISSION_GRANTED
+    }
+
+    /**
+     * Requests a single permission.
+     * The result is delivered via the [onResult] callback.
+     */
+    fun requestPermission(permission: String, onResult: (Boolean) -> Unit) {
+        if (isPermissionGranted(permission)) {
+            onResult(true)
+            return
+        }
+        pendingSinglePermissionCallback = onResult
+        singlePermissionLauncher.launch(permission)
+    }
+
+    /**
+     * Requests multiple permissions at once.
+     * The result is a map of permission strings to boolean values, delivered via [onResult].
+     */
+    fun requestPermissions(permissions: List<String>, onResult: (Map<String, Boolean>) -> Unit) {
+        val notGrantedPermissions = permissions.filter { !isPermissionGranted(it) }
+        if (notGrantedPermissions.isEmpty()) {
+            onResult(permissions.associateWith { true })
+            return
+        }
+        pendingMultiplePermissionsCallback = onResult
+        multiplePermissionsLauncher.launch(notGrantedPermissions.toTypedArray())
+    }
+
+    /**
+     * Checks and requests the "All Files Access" (MANAGE_EXTERNAL_STORAGE) permission.
+     * This is a special permission that requires sending the user to the system settings.
+     * The result is delivered via the [onResult] callback.
+     */
+    fun requestManageExternalStoragePermission(onResult: (Boolean) -> Unit) {
+        if (checkManageExternalStoragePermission()) {
+            onResult(true)
+            return
+        }
+        pendingManageStorageCallback = onResult
+        try {
+            val intent = Intent(Settings.ACTION_MANAGE_ALL_FILES_ACCESS_PERMISSION)
+            intent.addCategory("android.intent.category.DEFAULT")
+            intent.data = Uri.parse(String.format("package:%s", activity.packageName))
+            manageStorageLauncher.launch(intent)
+        } catch (e: Exception) {
+            val intent = Intent()
+            intent.action = Settings.ACTION_MANAGE_ALL_FILES_ACCESS_PERMISSION
+            manageStorageLauncher.launch(intent)
+        }
+    }
+
+    /**
+     * Opens the app's details settings screen.
+     * This is useful for guiding the user when a permission is permanently denied.
+     */
+    fun openAppSettings() {
+        val intent = Intent(Settings.ACTION_APPLICATION_DETAILS_SETTINGS).apply {
+            data = Uri.fromParts("package", activity.packageName, null)
+        }
+        activity.startActivity(intent)
+    }
+
+    // --- Private Helper Methods ---
+
+    private fun checkManageExternalStoragePermission(): Boolean {
+        return if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
+            Environment.isExternalStorageManager()
+        } else {
+            // For versions below R, this permission is not needed in the same way.
+            // Standard READ/WRITE permissions are used instead.
+            true
+        }
+    }
+
+    companion object {
+        // --- Permission Constants ---
+        const val CAMERA = Manifest.permission.CAMERA
+        const val RECORD_AUDIO = Manifest.permission.RECORD_AUDIO
+        const val READ_EXTERNAL_STORAGE = Manifest.permission.READ_EXTERNAL_STORAGE
+        const val WRITE_EXTERNAL_STORAGE = Manifest.permission.WRITE_EXTERNAL_STORAGE
+        const val ACCESS_FINE_LOCATION = Manifest.permission.ACCESS_FINE_LOCATION
+        const val ACCESS_COARSE_LOCATION = Manifest.permission.ACCESS_COARSE_LOCATION
+
+        // Android 13+ (TIRAMISU) Notification Permission
+        const val POST_NOTIFICATIONS = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+            Manifest.permission.POST_NOTIFICATIONS
+        } else {
+            "" // Not applicable on older versions
+        }
+    }
+}
+```
+
+---
+
+### 2. `AndroidManifest.xml` Permissions
+
+Don't forget to declare the permissions in your `AndroidManifest.xml` file.
+
+```xml
+<?xml version="1.0" encoding="utf-8"?>
+<manifest xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools">
+
+    <!-- Standard Permissions -->
+    <uses-permission android:name="android.permission.CAMERA" />
+    <uses-permission android:name="android.permission.RECORD_AUDIO" />
+    <uses-permission android:name="android.permission.READ_EXTERNAL_STORAGE"
+        android:maxSdkVersion="32" /> <!-- Scoped Storage makes this less critical for newer APIs -->
+    <uses-permission android:name="android.permission.ACCESS_FINE_LOCATION" />
+    <uses-permission android:name="android.permission.ACCESS_COARSE_LOCATION" />
+
+    <!-- Android 13+ (API 33) Notification Permission -->
+    <uses-permission android:name="android.permission.POST_NOTIFICATIONS" />
+
+    <!-- Special Permission for "All Files Access" -->
+    <uses-permission android:name="android.permission.MANAGE_EXTERNAL_STORAGE"
+        tools:ignore="ScopedStorage" />
+
+    <application
+        ...>
+        ...
+    </application>
+
+</manifest>
+```
+**Note:** `android:maxSdkVersion="32"` for `READ_EXTERNAL_STORAGE` is a good practice because on Android 13+ (API 33) and higher, media access is largely handled without this permission for most apps. However, if you need broad access, you'll use `MANAGE_EXTERNAL_STORAGE`.
+
+---
+
+### 3. Usage Example in an `Activity`
+
+Here is how you would use the `PermissionManager` in your `MainActivity`.
+
+```kotlin
+import android.os.Bundle
+import android.util.Log
+import android.widget.Button
+import android.widget.Toast
+import androidx.appcompat.app.AppCompatActivity
+
+class MainActivity : AppCompatActivity() {
+
+    // Instantiate the manager in onCreate. This is crucial!
+    private lateinit var permissionManager: PermissionManager
+
+    override fun onCreate(savedInstanceState: Bundle?) {
+        super.onCreate(savedInstanceState)
+        setContentView(R.layout.activity_main)
+
+        // IMPORTANT: Initialize the PermissionManager here.
+        permissionManager = PermissionManager(this)
+
+        val btnCamera: Button = findViewById(R.id.btn_request_camera)
+        val btnStorage: Button = findViewById(R.id.btn_request_storage)
+        val btnNotifications: Button = findViewById(R.id.btn_request_notifications)
+        val btnMultiple: Button = findViewById(R.id.btn_request_multiple)
+
+        btnCamera.setOnClickListener {
+            requestCameraPermission()
+        }
+
+        btnStorage.setOnClickListener {
+            requestStoragePermission()
+        }
+
+        btnNotifications.setOnClickListener {
+            requestNotificationPermission()
+        }
+
+        btnMultiple.setOnClickListener {
+            requestMultiplePermissions()
+        }
+    }
+
+    private fun requestCameraPermission() {
+        permissionManager.requestPermission(
+            PermissionManager.CAMERA
+        ) { isGranted ->
+            if (isGranted) {
+                Toast.makeText(this, "Camera Permission Granted", Toast.LENGTH_SHORT).show()
+                // Proceed with camera logic
+            } else {
+                Toast.makeText(this, "Camera Permission Denied", Toast.LENGTH_SHORT).show()
+                // Optionally, explain why you need the permission and guide to settings
+                permissionManager.openAppSettings()
+            }
+        }
+    }
+
+    private fun requestStoragePermission() {
+        permissionManager.requestManageExternalStoragePermission { isGranted ->
+            if (isGranted) {
+                Toast.makeText(this, "All Files Access Granted", Toast.LENGTH_SHORT).show()
+                // Proceed with file management logic
+            } else {
+                Toast.makeText(this, "All Files Access Denied", Toast.LENGTH_SHORT).show()
+            }
+        }
+    }
+
+    private fun requestNotificationPermission() {
+        // Check if the permission string is empty (for older Android versions)
+        if (PermissionManager.POST_NOTIFICATIONS.isEmpty()) {
+            Toast.makeText(this, "Notifications are enabled by default on this version.", Toast.LENGTH_SHORT).show()
+            return
+        }
+
+        permissionManager.requestPermission(
+            PermissionManager.POST_NOTIFICATIONS
+        ) { isGranted ->
+            if (isGranted) {
+                Toast.makeText(this, "Notification Permission Granted", Toast.LENGTH_SHORT).show()
+                // You can now post notifications
+            } else {
+                Toast.makeText(this, "Notification Permission Denied", Toast.LENGTH_SHORT).show()
+            }
+        }
+    }
+
+    private fun requestMultiplePermissions() {
+        val permissions = listOf(
+            PermissionManager.CAMERA,
+            PermissionManager.RECORD_AUDIO
+        )
+        permissionManager.requestPermissions(permissions) { results ->
+            val allGranted = results.values.all { it }
+            if (allGranted) {
+                Toast.makeText(this, "All Permissions Granted", Toast.LENGTH_SHORT).show()
+            } else {
+                val deniedPermissions = results.filterValues { !it }.keys
+                Log.d("PermissionResult", "Denied: $deniedPermissions")
+                Toast.makeText(this, "Some permissions were denied.", Toast.LENGTH_SHORT).show()
+            }
+        }
+    }
+}
+```
+
+This setup provides a robust, reusable, and modern way to handle all common permission scenarios in your Android app.
+
+Of course. Here is the complete, self-contained code for a modern `PermissionManager` class in Kotlin, along with all the necessary files to make it a fully functional example in an Android project.
+
+This solution is designed to be copied directly into your project.
+
+---
+
+### 1. `PermissionManager.kt`
+
+Create this new Kotlin file in your project. This class handles all the logic for checking and requesting permissions using the recommended Activity Result API.
+
+```kotlin
+package com.example.permissiondemo // <-- Change to your package name
+
+import android.Manifest
+import android.content.Context
+import android.content.Intent
+import android.content.pm.PackageManager
+import android.net.Uri
+import android.os.Build
+import android.os.Environment
+import android.provider.Settings
+import androidx.activity.result.ActivityResultLauncher
+import androidx.activity.result.contract.ActivityResultContracts
+import androidx.appcompat.app.AppCompatActivity
+import androidx.core.content.ContextCompat
+
+/**
+ * A comprehensive permission manager for Android.
+ *
+ * This class handles standard runtime permissions, the post-notification permission,
+ * and the special "All Files Access" storage permission using the modern
+ * Activity Result API.
+ *
+ * IMPORTANT: Instantiate this class in your Activity's `onCreate()` method.
+ * The launchers are tied to the Activity's lifecycle and will be automatically
+ * unregistered when it is destroyed, preventing memory leaks.
+ *
+ * @param activity The host activity. It must be a ComponentActivity (e.g., AppCompatActivity).
+ */
+class PermissionManager(private val activity: AppCompatActivity) {
+
+    // --- Launcher for a single permission ---
+    private val singlePermissionLauncher: ActivityResultLauncher<String> =
+        activity.registerForActivityResult(ActivityResultContracts.RequestPermission()) { isGranted ->
+            // The result is delivered here. We pass it to the pending callback.
+            pendingSinglePermissionCallback?.invoke(isGranted)
+            // Clean up the callback reference to avoid memory leaks
+            pendingSinglePermissionCallback = null
+        }
+
+    // --- Launcher for multiple permissions ---
+    private val multiplePermissionsLauncher: ActivityResultLauncher<Array<String>> =
+        activity.registerForActivityResult(ActivityResultContracts.RequestMultiplePermissions()) { permissions ->
+            // The result map is delivered here.
+            pendingMultiplePermissionsCallback?.invoke(permissions)
+            // Clean up the callback reference
+            pendingMultiplePermissionsCallback = null
+        }
+
+    // --- Launcher for "Manage All Files Access" permission ---
+    private val manageStorageLauncher: ActivityResultLauncher<Intent> =
+        activity.registerForActivityResult(ActivityResultContracts.StartActivityForResult()) {
+            // After returning from settings, check if the permission was granted
+            val isGranted = checkManageExternalStoragePermission()
+            pendingManageStorageCallback?.invoke(isGranted)
+            // Clean up the callback reference
+            pendingManageStorageCallback = null
+        }
+
+    // --- Callbacks to hold the result from the launchers ---
+    // These allow us to pass the result back to the calling code.
+    private var pendingSinglePermissionCallback: ((Boolean) -> Unit)? = null
+    private var pendingMultiplePermissionsCallback: ((Map<String, Boolean>) -> Unit)? = null
+    private var pendingManageStorageCallback: ((Boolean) -> Unit)? = null
+
+
+    // --- Public API ---
+
+    /**
+     * Checks if a single permission is granted.
+     * @return true if granted, false otherwise.
+     */
+    fun isPermissionGranted(permission: String): Boolean {
+        return ContextCompat.checkSelfPermission(activity, permission) == PackageManager.PERMISSION_GRANTED
+    }
+
+    /**
+     * Requests a single permission.
+     * The result is delivered via the [onResult] callback.
+     * If the permission is already granted, the callback is invoked immediately with true.
+     */
+    fun requestPermission(permission: String, onResult: (Boolean) -> Unit) {
+        if (isPermissionGranted(permission)) {
+            onResult(true)
+            return
+        }
+        pendingSinglePermissionCallback = onResult
+        singlePermissionLauncher.launch(permission)
+    }
+
+    /**
+     * Requests multiple permissions at once.
+     * The result is a map of permission strings to boolean values, delivered via [onResult].
+     * If all permissions are already granted, the callback is invoked immediately.
+     */
+    fun requestPermissions(permissions: List<String>, onResult: (Map<String, Boolean>) -> Unit) {
+        val notGrantedPermissions = permissions.filter { !isPermissionGranted(it) }
+        if (notGrantedPermissions.isEmpty()) {
+            onResult(permissions.associateWith { true })
+            return
+        }
+        pendingMultiplePermissionsCallback = onResult
+        multiplePermissionsLauncher.launch(notGrantedPermissions.toTypedArray())
+    }
+
+    /**
+     * Checks and requests the "All Files Access" (MANAGE_EXTERNAL_STORAGE) permission.
+     * This is a special permission that requires sending the user to the system settings.
+     * The result is delivered via the [onResult] callback.
+     */
+    fun requestManageExternalStoragePermission(onResult: (Boolean) -> Unit) {
+        if (checkManageExternalStoragePermission()) {
+            onResult(true)
+            return
+        }
+        pendingManageStorageCallback = onResult
+        try {
+            val intent = Intent(Settings.ACTION_MANAGE_ALL_FILES_ACCESS_PERMISSION)
+            intent.addCategory("android.intent.category.DEFAULT")
+            intent.data = Uri.parse(String.format("package:%s", activity.packageName))
+            manageStorageLauncher.launch(intent)
+        } catch (e: Exception) {
+            // Some devices might not support the direct package URI intent
+            val intent = Intent()
+            intent.action = Settings.ACTION_MANAGE_ALL_FILES_ACCESS_PERMISSION
+            manageStorageLauncher.launch(intent)
+        }
+    }
+
+    /**
+     * Opens the app's details settings screen.
+     * This is useful for guiding the user when a permission is permanently denied.
+     */
+    fun openAppSettings() {
+        val intent = Intent(Settings.ACTION_APPLICATION_DETAILS_SETTINGS).apply {
+            data = Uri.fromParts("package", activity.packageName, null)
+        }
+        activity.startActivity(intent)
+    }
+
+    // --- Private Helper Methods ---
+
+    private fun checkManageExternalStoragePermission(): Boolean {
+        return if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
+            Environment.isExternalStorageManager()
+        } else {
+            // For versions below R, this permission is not needed in the same way.
+            // Standard READ/WRITE permissions are used instead.
+            true
+        }
+    }
+
+    companion object {
+        // --- Permission Constants for easy access ---
+        const val CAMERA = Manifest.permission.CAMERA
+        const val RECORD_AUDIO = Manifest.permission.RECORD_AUDIO
+        const val READ_EXTERNAL_STORAGE = Manifest.permission.READ_EXTERNAL_STORAGE
+        const val WRITE_EXTERNAL_STORAGE = Manifest.permission.WRITE_EXTERNAL_STORAGE
+        const val ACCESS_FINE_LOCATION = Manifest.permission.ACCESS_FINE_LOCATION
+        const val ACCESS_COARSE_LOCATION = Manifest.permission.ACCESS_COARSE_LOCATION
+
+        // Android 13+ (TIRAMISU) Notification Permission
+        const val POST_NOTIFICATIONS = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+            Manifest.permission.POST_NOTIFICATIONS
+        } else {
+            "" // Not applicable on older versions
+        }
+    }
+}
+```
+
+---
+
+### 2. `AndroidManifest.xml`
+
+Add these permissions inside the `<manifest>` tag, outside the `<application>` tag.
+
+```xml
+<?xml version="1.0" encoding="utf-8"?>
+<manifest xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools">
+
+    <!-- Permissions for Camera and Microphone -->
+    <uses-permission android:name="android.permission.CAMERA" />
+    <uses-permission android:name="android.permission.RECORD_AUDIO" />
+
+    <!-- Permissions for Storage -->
+    <!--
+      For broad access, use MANAGE_EXTERNAL_STORAGE.
+      For specific media access on Android 10+, use MediaStore API.
+      Legacy READ/WRITE is often needed for compatibility.
+    -->
+    <uses-permission android:name="android.permission.READ_EXTERNAL_STORAGE"
+        android:maxSdkVersion="32" />
+    <uses-permission android:name="android.permission.WRITE_EXTERNAL_STORAGE"
+        android:maxSdkVersion="28"
+        tools:ignore="ScopedStorage" />
+
+    <!-- Special Permission for "All Files Access" on Android 11+ -->
+    <uses-permission android:name="android.permission.MANAGE_EXTERNAL_STORAGE"
+        tools:ignore="ScopedStorage" />
+
+    <!-- Android 13+ (API 33) Notification Permission -->
+    <uses-permission android:name="android.permission.POST_NOTIFICATIONS" />
+
+    <application
+        android:allowBackup="true"
+        android:dataExtractionRules="@xml/data_extraction_rules"
+        android:fullBackupContent="@xml/backup_rules"
+        android:icon="@mipmap/ic_launcher"
+        android:label="@string/app_name"
+        android:roundIcon="@mipmap/ic_launcher_round"
+        android:supportsRtl="true"
+        android:theme="@style/Theme.PermissionDemo"
+        tools:targetApi="31">
+        <activity
+            android:name=".MainActivity"
+            android:exported="true">
+            <intent-filter>
+                <action android:name="android.intent.action.MAIN" />
+                <category android:name="android.intent.category.LAUNCHER" />
+            </intent-filter>
+        </activity>
+    </application>
+
+</manifest>
+```
+
+---
+
+### 3. `activity_main.xml`
+
+Create this layout file in `res/layout`. It provides buttons to trigger the permission requests.
+
+```xml
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:orientation="vertical"
+    android:gravity="center"
+    android:padding="16dp"
+    tools:context=".MainActivity">
+
+    <Button
+        android:id="@+id/btn_request_camera"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="Request Camera Permission"
+        android:layout_marginBottom="8dp"/>
+
+    <Button
+        android:id="@+id/btn_request_audio"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="Request Audio Permission"
+        android:layout_marginBottom="8dp"/>
+
+    <Button
+        android:id="@+id/btn_request_storage"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="Request All Files Access"
+        android:layout_marginBottom="8dp"/>
+
+    <Button
+        android:id="@+id/btn_request_notifications"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="Request Notification Permission"
+        android:layout_marginBottom="8dp"/>
+
+    <Button
+        android:id="@+id/btn_request_multiple"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="Request Camera + Audio"/>
+
+</LinearLayout>
+```
+
+---
+
+### 4. `MainActivity.kt`
+
+Replace the content of your main activity with this code. It demonstrates how to use the `PermissionManager`.
+
+```kotlin
+package com.example.permissiondemo // <-- Change to your package name
+
+import android.os.Bundle
+import android.widget.Button
+import android.widget.Toast
+import androidx.appcompat.app.AppCompatActivity
+
+class MainActivity : AppCompatActivity() {
+
+    // IMPORTANT: Instantiate the manager in onCreate. This is crucial!
+    private lateinit var permissionManager: PermissionManager
+
+    override fun onCreate(savedInstanceState: Bundle?) {
+        super.onCreate(savedInstanceState)
+        setContentView(R.layout.activity_main)
+
+        // Initialize the PermissionManager
+        permissionManager = PermissionManager(this)
+
+        setupButtons()
+    }
+
+    private fun setupButtons() {
+        findViewById<Button>(R.id.btn_request_camera).setOnClickListener {
+            requestPermission(PermissionManager.CAMERA, "Camera")
+        }
+
+        findViewById<Button>(R.id.btn_request_audio).setOnClickListener {
+            requestPermission(PermissionManager.RECORD_AUDIO, "Audio")
+        }
+
+        findViewById<Button>(R.id.btn_request_storage).setOnClickListener {
+            requestStoragePermission()
+        }
+
+        findViewById<Button>(R.id.btn_request_notifications).setOnClickListener {
+            requestNotificationPermission()
+        }
+
+        findViewById<Button>(R.id.btn_request_multiple).setOnClickListener {
+            requestMultiplePermissions()
+        }
+    }
+
+    private fun requestPermission(permission: String, permissionName: String) {
+        permissionManager.requestPermission(permission) { isGranted ->
+            if (isGranted) {
+                Toast.makeText(this, "$permissionName Permission Granted", Toast.LENGTH_SHORT).show()
+                // Proceed with your logic (e.g., open camera)
+            } else {
+                Toast.makeText(this, "$permissionName Permission Denied", Toast.LENGTH_SHORT).show()
+                // Optionally, explain why you need the permission and guide to settings
+                // permissionManager.openAppSettings()
+            }
+        }
+    }
+
+    private fun requestStoragePermission() {
+        permissionManager.requestManageExternalStoragePermission { isGranted ->
+            if (isGranted) {
+                Toast.makeText(this, "All Files Access Granted", Toast.LENGTH_SHORT).show()
+                // Proceed with file management logic
+            } else {
+                Toast.makeText(this, "All Files Access Denied", Toast.LENGTH_SHORT).show()
+            }
+        }
+    }
+
+    private fun requestNotificationPermission() {
+        // Check if the permission string is empty (for older Android versions)
+        if (PermissionManager.POST_NOTIFICATIONS.isEmpty()) {
+            Toast.makeText(this, "Notifications are enabled by default on this version.", Toast.LENGTH_SHORT).show()
+            return
+        }
+
+        permissionManager.requestPermission(PermissionManager.POST_NOTIFICATIONS) { isGranted ->
+            if (isGranted) {
+                Toast.makeText(this, "Notification Permission Granted", Toast.LENGTH_SHORT).show()
+                // You can now post notifications
+            } else {
+                Toast.makeText(this, "Notification Permission Denied", Toast.LENGTH_SHORT).show()
+            }
+        }
+    }
+
+    private fun requestMultiplePermissions() {
+        val permissions = listOf(
+            PermissionManager.CAMERA,
+            PermissionManager.RECORD_AUDIO
+        )
+        permissionManager.requestPermissions(permissions) { results ->
+            val allGranted = results.values.all { it }
+            if (allGranted) {
+                Toast.makeText(this, "All Permissions Granted", Toast.LENGTH_SHORT).show()
+            } else {
+                val deniedPermissions = results.filterValues { !it }.keys.joinToString(", ")
+                Toast.makeText(this, "Denied: $deniedPermissions", Toast.LENGTH_LONG).show()
+            }
+        }
+    }
+}
+```
+
+---
+
+### 5. `build.gradle.kts` (Module Level)
+
+Ensure you have the necessary dependencies. The `activity-ktx` and `appcompat` libraries are essential for this code to work.
+
+```kotlin
+plugins {
+    id("com.android.application")
+    id("org.jetbrains.kotlin.android")
+}
+
+android {
+    // ... your other android config
+    buildFeatures {
+        viewBinding = true // Optional, but good practice
+    }
+}
+
+dependencies {
+    // Core Android libraries
+    implementation("androidx.core:core-ktx:1.12.0")
+    implementation("androidx.appcompat:appcompat:1.6.1")
+    implementation("com.google.android.material:material:1.11.0")
+    implementation("androidx.constraintlayout:constraintlayout:2.1.4")
+
+    // This library is required for registerForActivityResult
+    implementation("androidx.activity:activity-ktx:1.8.2")
+    
+    testImplementation("junit:junit:4.13.2")
+    androidTestImplementation("androidx.test.ext:junit:1.1.5")
+    androidTestImplementation("androidx.test.espresso:espresso-core:3.5.1")
+}
+
+
+===================================================================================================================================================================================================
+Grok
+
+import android.Manifest
+import android.content.Context
+import android.content.pm.PackageManager
+import androidx.activity.result.ActivityResultLauncher
+import androidx.activity.result.contract.ActivityResultContracts
+import androidx.appcompat.app.AppCompatActivity
+import androidx.core.content.ContextCompat
+
+/**
+ * A utility class to manage Android runtime permissions for common use cases like notifications,
+ * storage access, camera, and audio recording. It uses the modern Activity Result API to request
+ * permissions and provides immediate callbacks to perform actions once permissions are granted.
+ *
+ * Usage example:
+ * val permissionManager = PermissionManager(activity)
+ * permissionManager.requestAllPermissions { grantedPermissions, deniedPermissions ->
+ *     // Perform actions based on granted/denied
+ *     if (grantedPermissions.contains(Manifest.permission.CAMERA)) {
+ *         // Start camera immediately
+ *     }
+ * }
+ *
+ * Or for individual:
+ * permissionManager.requestNotificationPermission { isGranted ->
+ *     if (isGranted) {
+ *         // Enable notifications right away
+ *     }
+ * }
+ */
+class PermissionManager(
+    private val activity: AppCompatActivity,
+    private val context: Context = activity
+) {
+
+    // Launcher for multiple permissions
+    private val multiplePermissionLauncher: ActivityResultLauncher<Array<String>> =
+        activity.registerForActivityResult(
+            ActivityResultContracts.RequestMultiplePermissions()
+        ) { permissions ->
+            val granted = permissions.filterValues { it }.keys.toSet()
+            val denied = permissions.filterValues { !it }.keys.toSet()
+            allPermissionsCallback?.invoke(granted, denied)
+            allPermissionsCallback = null
+        }
+
+    // Launcher for single permissions (used for notifications, as it's often single)
+    private val singlePermissionLauncher: ActivityResultLauncher<String> =
+        activity.registerForActivityResult(
+            ActivityResultContracts.RequestPermission()
+        ) { isGranted ->
+            notificationCallback?.invoke(isGranted)
+            notificationCallback = null
+        }
+
+    // Callbacks
+    private var allPermissionsCallback: ((Set<String>, Set<String>) -> Unit)? = null
+    private var notificationCallback: ((Boolean) -> Unit)? = null
+
+    // Permission groups for convenience
+    companion object {
+        val NOTIFICATION_PERMISSIONS = arrayOf(Manifest.permission.POST_NOTIFICATIONS)
+        val STORAGE_PERMISSIONS = arrayOf(
+            Manifest.permission.READ_EXTERNAL_STORAGE,
+            Manifest.permission.WRITE_EXTERNAL_STORAGE
+        )
+        val CAMERA_PERMISSIONS = arrayOf(Manifest.permission.CAMERA)
+        val AUDIO_PERMISSIONS = arrayOf(Manifest.permission.RECORD_AUDIO)
+
+        // All combined
+        val ALL_PERMISSIONS = NOTIFICATION_PERMISSIONS + STORAGE_PERMISSIONS + CAMERA_PERMISSIONS + AUDIO_PERMISSIONS
+    }
+
+    /**
+     * Requests all permissions (notifications, storage, camera, audio) and invokes the callback
+     * immediately with granted and denied sets. Use this to perform actions right away for granted ones.
+     */
+    fun requestAllPermissions(callback: (granted: Set<String>, denied: Set<String>) -> Unit) {
+        val permissionsToRequest = ALL_PERMISSIONS.filter { !isPermissionGranted(it) }.toTypedArray()
+        if (permissionsToRequest.isEmpty()) {
+            callback(emptySet(), emptySet())
+            return
+        }
+        allPermissionsCallback = callback
+        multiplePermissionLauncher.launch(permissionsToRequest)
+    }
+
+    /**
+     * Requests notification permission and invokes the callback immediately if granted.
+     * Note: POST_NOTIFICATIONS is API 33+; for older, consider other approaches like notification channels.
+     */
+    fun requestNotificationPermission(callback: (Boolean) -> Unit) {
+        if (isPermissionGranted(Manifest.permission.POST_NOTIFICATIONS)) {
+            callback(true)
+            return
+        }
+        notificationCallback = callback
+        singlePermissionLauncher.launch(Manifest.permission.POST_NOTIFICATIONS)
+    }
+
+    /**
+     * Requests storage permissions (read/write external) and invokes the callback immediately
+     * with granted and denied sets for storage only.
+     */
+    fun requestStoragePermissions(callback: (granted: Set<String>, denied: Set<String>) -> Unit) {
+        val permissionsToRequest = STORAGE_PERMISSIONS.filter { !isPermissionGranted(it) }.toTypedArray()
+        if (permissionsToRequest.isEmpty()) {
+            callback(STORAGE_PERMISSIONS.toSet(), emptySet())
+            return
+        }
+        allPermissionsCallback = { granted, denied ->
+            val storageGranted = granted.intersect(STORAGE_PERMISSIONS.toSet())
+            val storageDenied = denied.intersect(STORAGE_PERMISSIONS.toSet())
+            callback(storageGranted, storageDenied)
+        }
+        multiplePermissionLauncher.launch(permissionsToRequest)
+    }
+
+    /**
+     * Requests camera permission and invokes the callback immediately if granted.
+     */
+    fun requestCameraPermission(callback: (Boolean) -> Unit) {
+        if (isPermissionGranted(Manifest.permission.CAMERA)) {
+            callback(true)
+            return
+        }
+        allPermissionsCallback = { granted, _ ->
+            callback(granted.contains(Manifest.permission.CAMERA))
+        }
+        multiplePermissionLauncher.launch(CAMERA_PERMISSIONS)
+    }
+
+    /**
+     * Requests audio (microphone) permission and invokes the callback immediately if granted.
+     */
+    fun requestAudioPermission(callback: (Boolean) -> Unit) {
+        if (isPermissionGranted(Manifest.permission.RECORD_AUDIO)) {
+            callback(true)
+            return
+        }
+        allPermissionsCallback = { granted, _ ->
+            callback(granted.contains(Manifest.permission.RECORD_AUDIO))
+        }
+        multiplePermissionLauncher.launch(AUDIO_PERMISSIONS)
+    }
+
+    /**
+     * Checks if a specific permission is already granted.
+     */
+    private fun isPermissionGranted(permission: String): Boolean {
+        return ContextCompat.checkSelfPermission(context, permission) == PackageManager.PERMISSION_GRANTED
+    }
+
+    /**
+     * Checks if all permissions in a group are granted.
+     */
+    fun areAllPermissionsGranted(permissions: Array<String>): Boolean {
+        return permissions.all { isPermissionGranted(it) }
+    }
+}
+```
