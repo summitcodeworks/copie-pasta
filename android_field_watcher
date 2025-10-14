@@ -6,13 +6,13 @@ import com.google.android.material.textfield.TextInputEditText
 
 /**
  * A utility class for validating if form fields (EditText variants) have been filled.
- * Provides methods to check if a field contains non-empty text.
+ * Provides methods to check if a field contains non-empty, non-whitespace text (trims spaces).
  * Also includes a TextWatcher for real-time validation (e.g., enable/disable submit button).
  *
  * Usage example:
  * val validator = FieldValidator()
  * if (validator.isFilled(myEditText)) {
- *     // Field is filled
+ *     // Field is filled (no leading/trailing spaces, not empty)
  * }
  *
  * For real-time: myEditText.addTextChangedListener(validator.createTextWatcher { isFilled ->
@@ -22,25 +22,25 @@ import com.google.android.material.textfield.TextInputEditText
 class FieldValidator {
 
     /**
-     * Checks if the AutoCompleteTextView has been filled (non-null, non-empty text).
+     * Checks if the AutoCompleteTextView has been filled (non-null, trimmed text is non-empty).
      */
     fun isFilled(autoCompleteTextView: AutoCompleteTextView): Boolean {
-        return autoCompleteTextView.text?.toString()?.isNotEmpty() == true
+        return autoCompleteTextView.text?.toString()?.trim()?.isNotEmpty() == true
     }
 
     /**
-     * Checks if the TextInputEditText has been filled (non-null, non-empty text).
+     * Checks if the TextInputEditText has been filled (non-null, trimmed text is non-empty).
      */
     fun isFilled(textInputEditText: TextInputEditText): Boolean {
-        return textInputEditText.text?.toString()?.isNotEmpty() == true
+        return textInputEditText.text?.toString()?.trim()?.isNotEmpty() == true
     }
 
     /**
-     * Checks if the standard EditText has been filled (non-null, non-empty text).
+     * Checks if the standard EditText has been filled (non-null, trimmed text is non-empty).
      * Can be used for other EditText subclasses.
      */
     fun isFilled(editText: EditText): Boolean {
-        return editText.text?.toString()?.isNotEmpty() == true
+        return editText.text?.toString()?.trim()?.isNotEmpty() == true
     }
 
     /**
@@ -54,12 +54,12 @@ class FieldValidator {
             is TextInputEditText -> editableView.text
             else -> throw IllegalArgumentException("Unsupported view type: ${editableView.javaClass.simpleName}")
         }
-        return text?.toString()?.isNotEmpty() == true
+        return text?.toString()?.trim()?.isNotEmpty() == true
     }
 
     /**
      * Creates a TextWatcher for real-time validation on any EditText variant.
-     * Invokes the callback whenever the filled state changes.
+     * Invokes the callback whenever the filled state changes (after trimming).
      */
     fun createTextWatcher(
         view: EditText,
@@ -69,24 +69,26 @@ class FieldValidator {
             private var previousLength = 0
 
             override fun beforeTextChanged(s: CharSequence?, start: Int, count: Int, after: Int) {
-                previousLength = s?.length ?: 0
+                previousLength = (s?.toString()?.trim()?.length ?: 0)
             }
 
             override fun onTextChanged(s: CharSequence?, start: Int, before: Int, count: Int) {}
 
             override fun afterTextChanged(s: Editable?) {
-                val isCurrentlyFilled = s?.toString()?.isNotEmpty() == true
+                val trimmedText = s?.toString()?.trim() ?: ""
+                val isCurrentlyFilled = trimmedText.isNotEmpty()
+                val currentTrimmedLength = trimmedText.length
                 // Only invoke if state actually changed (avoids unnecessary calls)
                 if ((previousLength == 0 && isCurrentlyFilled) || (previousLength > 0 && !isCurrentlyFilled)) {
                     onFilledStateChanged(isCurrentlyFilled)
                 }
-                previousLength = s?.length ?: 0
+                previousLength = currentTrimmedLength
             }
         }
     }
 
     /**
-     * Batch validation: Checks if all provided fields are filled.
+     * Batch validation: Checks if all provided fields are filled (trimmed non-empty).
      * Returns true only if every field is filled.
      */
     fun areAllFieldsFilled(vararg fields: Any): Boolean {
@@ -94,7 +96,7 @@ class FieldValidator {
     }
 
     /**
-     * Batch validation: Returns a map of field to filled status.
+     * Batch validation: Returns a map of field to filled status (trimmed check).
      */
     fun getFilledStatus(vararg fields: Any): Map<Any, Boolean> {
         return fields.associateWith { isFilled(it) }
