@@ -1,0 +1,62 @@
+import android.view.View
+
+/**
+ * A debounced click listener to prevent multiple rapid clicks on a View (e.g., Button).
+ * It enforces a minimum interval between clicks to avoid accidental double-taps.
+ * Automatically handles the click logic; just provide your action in the constructor.
+ *
+ * Usage example:
+ * button.setOnClickListener(
+ *     DebouncedClickListener(debounceDelayMs = 600L) {
+ *         // Your click action here (e.g., startActivity, API call)
+ *         Toast.makeText(context, "Action performed!", Toast.LENGTH_SHORT).show()
+ *     }
+ * )
+ *
+ * For global/singleton use across app (shared timer):
+ * val globalPreventer = ClickPreventer()
+ * button.setOnClickListener { if (globalPreventer.canClick()) { doAction() } }
+ */
+class DebouncedClickListener(
+    private val onClick: () -> Unit,
+    private val debounceDelayMs: Long = 600L // Default 600ms interval
+) : View.OnClickListener {
+
+    private var lastClickTime = 0L
+
+    override fun onClick(v: View) {
+        val currentTime = System.currentTimeMillis()
+        if (currentTime - lastClickTime > debounceDelayMs) {
+            lastClickTime = currentTime
+            onClick()
+        }
+        // Optional: Disable button briefly for visual feedback
+        // v.isEnabled = false
+        // v.postDelayed({ v.isEnabled = true }, debounceDelayMs)
+    }
+}
+
+/**
+ * Alternative: A simple utility class for manual click prevention (e.g., for complex listeners).
+ * Use one instance per View or a shared one for app-wide prevention.
+ */
+class ClickPreventer(
+    private val minClickIntervalMs: Long = 500L
+) {
+    private var lastClickTime = 0L
+
+    fun canClick(): Boolean {
+        val currentTime = System.currentTimeMillis()
+        return if (currentTime - lastClickTime > minClickIntervalMs) {
+            lastClickTime = currentTime
+            true
+        } else {
+            false
+        }
+    }
+
+    // Reset if needed (e.g., after long operations)
+    fun reset() {
+        lastClickTime = 0L
+    }
+}
