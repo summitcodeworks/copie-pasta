@@ -1,0 +1,180 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>NOC Status - Application Portal</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: #f0f2f5;
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding: 20px;
+        }
+
+        .container {
+            background: white;
+            border-radius: 15px;
+            box-shadow: 0 10px 40px rgba(0, 0, 0, 0.2);
+            max-width: 600px;
+            width: 100%;
+            padding: 40px;
+            text-align: center;
+        }
+
+        .status-badge {
+            display: inline-block;
+            padding: 10px 25px;
+            border-radius: 25px;
+            margin: 0 auto 20px;
+            font-weight: 600;
+            font-size: 16px;
+        }
+
+        .approved {
+            background: #d4edda;
+            color: #28a745;
+        }
+
+        .pending {
+            background: #fff3cd;
+            color: #ffc107;
+        }
+
+        .rejected {
+            background: #f8d7da;
+            color: #dc3545;
+        }
+
+        h1 {
+            color: #333;
+            margin-bottom: 10px;
+            font-size: 28px;
+        }
+
+        .status-text {
+            font-size: 18px;
+            color: #666;
+            margin-bottom: 30px;
+        }
+
+        .info-card {
+            background: #f8f9fa;
+            border-radius: 10px;
+            padding: 20px;
+            margin: 20px 0;
+            text-align: left;
+        }
+
+        .info-row {
+            display: flex;
+            justify-content: space-between;
+            padding: 10px 0;
+            border-bottom: 1px solid #e0e0e0;
+        }
+
+        .info-row:last-child {
+            border-bottom: none;
+        }
+
+        .info-label {
+            font-weight: 600;
+            color: #555;
+        }
+
+        .info-value {
+            color: #333;
+        }
+
+        .btn {
+            background: #667eea;
+            color: white;
+            border: none;
+            padding: 12px 30px;
+            border-radius: 25px;
+            font-size: 16px;
+            cursor: pointer;
+            margin-top: 20px;
+            transition: transform 0.2s;
+        }
+
+        .btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(102, 126, 234, 0.4);
+            background: #5568d3;
+        }
+
+        .reference-number {
+            background: #667eea;
+            color: white;
+            padding: 8px 16px;
+            border-radius: 20px;
+            display: inline-block;
+            margin: 10px 0;
+            font-weight: 600;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <!-- Using Thymeleaf conditional to show status -->
+        <div th:if="${status == 'approved'}" class="status-badge approved">APPROVED</div>
+        <div th:if="${status == 'pending'}" class="status-badge pending">PENDING</div>
+        <div th:if="${status == 'rejected'}" class="status-badge rejected">REJECTED</div>
+
+        <h1 th:text="${'NOC Status: ' + (status == 'approved' ? 'Approved' : status == 'pending' ? 'Pending' : 'Rejected')}">
+            NOC Status: Approved
+        </h1>
+
+        <p class="status-text" th:text="${statusMessage}">
+            Your No Objection Certificate has been successfully approved!
+        </p>
+
+        <div class="reference-number" th:text="'Ref No: ' + ${referenceNumber}">
+            Ref No: NOC-2024-12345
+        </div>
+
+        <div class="info-card">
+            <div class="info-row">
+                <span class="info-label">Applicant Name:</span>
+                <span class="info-value" th:text="${applicantName}">John Doe</span>
+            </div>
+            <div class="info-row">
+                <span class="info-label">Application Date:</span>
+                <span class="info-value" th:text="${applicationDate}">2024-11-01</span>
+            </div>
+            <div class="info-row">
+                <span class="info-label">Approval Date:</span>
+                <span class="info-value" th:text="${approvalDate}">2024-11-14</span>
+            </div>
+            <div class="info-row">
+                <span class="info-label">Valid Until:</span>
+                <span class="info-value" th:text="${validUntil}">2025-11-14</span>
+            </div>
+            <div class="info-row">
+                <span class="info-label">Department:</span>
+                <span class="info-value" th:text="${department}">Administration</span>
+            </div>
+        </div>
+
+        <button class="btn" onclick="window.print()">Download Certificate</button>
+    </div>
+
+    <script th:inline="javascript">
+        // Thymeleaf can inject JavaScript variables
+        /*<![CDATA[*/
+        var status = /*[[${status}]]*/ 'approved';
+        console.log('NOC Status:', status);
+        /*]]>*/
+    </script>
+</body>
+</html>
