@@ -1,0 +1,253 @@
+import android.app.Dialog
+import android.content.Context
+import android.graphics.Color
+import android.graphics.drawable.ColorDrawable
+import android.view.Gravity
+import android.view.LayoutInflater
+import android.view.ViewGroup
+import android.widget.Button
+import android.widget.ImageView
+import android.widget.TextView
+import androidx.core.content.ContextCompat
+import com.google.android.material.dialog.MaterialAlertDialogBuilder
+
+class AttractiveDialogManager(private val context: Context) {
+    private var currentDialog: Dialog? = null
+    
+    /**
+     * Shows a beautiful Material Design dialog with custom styling
+     */
+    fun showStyledDialog(
+        title: String,
+        message: String,
+        positiveText: String = "OK",
+        negativeText: String? = null,
+        iconRes: Int? = null,
+        onPositive: (() -> Unit)? = null,
+        onNegative: (() -> Unit)? = null
+    ) {
+        dismissCurrent()
+        
+        currentDialog = MaterialAlertDialogBuilder(context)
+            .setTitle(title)
+            .setMessage(message)
+            .apply {
+                iconRes?.let { setIcon(it) }
+                
+                setPositiveButton(positiveText) { dialog, _ ->
+                    onPositive?.invoke()
+                    dialog.dismiss()
+                }
+                
+                negativeText?.let {
+                    setNegativeButton(it) { dialog, _ ->
+                        onNegative?.invoke()
+                        dialog.dismiss()
+                    }
+                }
+            }
+            .setBackground(ContextCompat.getDrawable(context, android.R.drawable.dialog_holo_light_frame))
+            .create()
+            .apply {
+                // Make it more attractive with window styling
+                window?.apply {
+                    setBackgroundDrawable(ColorDrawable(Color.TRANSPARENT))
+                    // Add elevation and rounded corners
+                    setDimAmount(0.7f)
+                }
+                show()
+            }
+    }
+    
+    /**
+     * Shows a fully custom attractive dialog with modern design
+     */
+    fun showCustomStyledDialog(
+        title: String,
+        message: String,
+        iconRes: Int? = null,
+        positiveText: String = "Confirm",
+        negativeText: String? = "Cancel",
+        onPositive: (() -> Unit)? = null,
+        onNegative: (() -> Unit)? = null
+    ) {
+        dismissCurrent()
+        
+        val dialog = Dialog(context)
+        
+        // Create custom layout programmatically
+        val dialogView = LayoutInflater.from(context).inflate(
+            android.R.layout.simple_list_item_1, // Placeholder, use custom layout XML
+            null
+        )
+        
+        dialog.apply {
+            setContentView(dialogView)
+            setCancelable(true)
+            
+            window?.apply {
+                setBackgroundDrawable(ColorDrawable(Color.TRANSPARENT))
+                setLayout(
+                    ViewGroup.LayoutParams.MATCH_PARENT,
+                    ViewGroup.LayoutParams.WRAP_CONTENT
+                )
+                setDimAmount(0.7f)
+                
+                // Add animations
+                attributes = attributes.apply {
+                    windowAnimations = android.R.style.Animation_Dialog
+                    gravity = Gravity.CENTER
+                }
+            }
+            
+            show()
+        }
+        
+        currentDialog = dialog
+    }
+    
+    /**
+     * Shows a success dialog with green theme
+     */
+    fun showSuccessDialog(
+        title: String = "Success!",
+        message: String,
+        buttonText: String = "Great!",
+        onDismiss: (() -> Unit)? = null
+    ) {
+        dismissCurrent()
+        
+        currentDialog = MaterialAlertDialogBuilder(context)
+            .setTitle(title)
+            .setMessage(message)
+            .setPositiveButton(buttonText) { dialog, _ ->
+                onDismiss?.invoke()
+                dialog.dismiss()
+            }
+            .create()
+            .apply {
+                window?.setBackgroundDrawable(ColorDrawable(Color.TRANSPARENT))
+                show()
+                
+                // Style the button with green color
+                getButton(androidx.appcompat.app.AlertDialog.BUTTON_POSITIVE)?.apply {
+                    setTextColor(ContextCompat.getColor(context, android.R.color.holo_green_dark))
+                    textSize = 16f
+                }
+            }
+    }
+    
+    /**
+     * Shows an error dialog with red theme
+     */
+    fun showErrorDialog(
+        title: String = "Error",
+        message: String,
+        buttonText: String = "OK",
+        onDismiss: (() -> Unit)? = null
+    ) {
+        dismissCurrent()
+        
+        currentDialog = MaterialAlertDialogBuilder(context)
+            .setTitle(title)
+            .setMessage(message)
+            .setPositiveButton(buttonText) { dialog, _ ->
+                onDismiss?.invoke()
+                dialog.dismiss()
+            }
+            .create()
+            .apply {
+                window?.setBackgroundDrawable(ColorDrawable(Color.TRANSPARENT))
+                show()
+                
+                // Style the button with red color
+                getButton(androidx.appcompat.app.AlertDialog.BUTTON_POSITIVE)?.apply {
+                    setTextColor(ContextCompat.getColor(context, android.R.color.holo_red_dark))
+                    textSize = 16f
+                }
+            }
+    }
+    
+    /**
+     * Shows a warning dialog with orange theme
+     */
+    fun showWarningDialog(
+        title: String = "Warning",
+        message: String,
+        positiveText: String = "Proceed",
+        negativeText: String = "Cancel",
+        onPositive: (() -> Unit)? = null,
+        onNegative: (() -> Unit)? = null
+    ) {
+        dismissCurrent()
+        
+        currentDialog = MaterialAlertDialogBuilder(context)
+            .setTitle(title)
+            .setMessage(message)
+            .setPositiveButton(positiveText) { dialog, _ ->
+                onPositive?.invoke()
+                dialog.dismiss()
+            }
+            .setNegativeButton(negativeText) { dialog, _ ->
+                onNegative?.invoke()
+                dialog.dismiss()
+            }
+            .create()
+            .apply {
+                window?.setBackgroundDrawable(ColorDrawable(Color.TRANSPARENT))
+                show()
+                
+                // Style buttons
+                getButton(androidx.appcompat.app.AlertDialog.BUTTON_POSITIVE)?.apply {
+                    setTextColor(ContextCompat.getColor(context, android.R.color.holo_orange_dark))
+                    textSize = 16f
+                }
+                getButton(androidx.appcompat.app.AlertDialog.BUTTON_NEGATIVE)?.apply {
+                    setTextColor(ContextCompat.getColor(context, android.R.color.darker_gray))
+                    textSize = 16f
+                }
+            }
+    }
+    
+    fun dismissCurrent() {
+        currentDialog?.dismiss()
+        currentDialog = null
+    }
+    
+    fun isShowing(): Boolean = currentDialog?.isShowing == true
+}
+
+// Usage Examples:
+/*
+val dialogManager = AttractiveDialogManager(this)
+
+// Success dialog
+dialogManager.showSuccessDialog(
+    message = "Your changes have been saved successfully!"
+)
+
+// Error dialog
+dialogManager.showErrorDialog(
+    message = "Failed to connect to server. Please try again."
+)
+
+// Warning dialog
+dialogManager.showWarningDialog(
+    message = "This action cannot be undone. Are you sure?",
+    onPositive = { 
+        // Handle confirmation
+    }
+)
+
+// Custom styled dialog
+dialogManager.showStyledDialog(
+    title = "Update Available",
+    message = "A new version is available. Would you like to update now?",
+    positiveText = "Update",
+    negativeText = "Later",
+    onPositive = { /* Handle update */ }
+)
+
+// Dismiss
+dialogManager.dismissCurrent()
+*/
