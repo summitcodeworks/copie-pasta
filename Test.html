@@ -1,0 +1,213 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Warehouse Floor Map</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            padding: 20px;
+            background: #f5f5f5;
+        }
+
+        .header {
+            text-align: center;
+            margin-bottom: 20px;
+        }
+
+        .header h1 {
+            margin: 0 0 10px 0;
+        }
+
+        .controls {
+            text-align: center;
+            margin-bottom: 20px;
+        }
+
+        button {
+            padding: 10px 20px;
+            margin: 0 5px;
+            cursor: pointer;
+            font-size: 14px;
+        }
+
+        .warehouse {
+            max-width: 900px;
+            margin: 0 auto;
+            background: white;
+            padding: 30px;
+            border: 2px solid #333;
+        }
+
+        .floor-map {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 15px;
+        }
+
+        .zone {
+            height: 120px;
+            border: 2px solid #333;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            font-size: 16px;
+            font-weight: bold;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+
+        .zone:hover {
+            transform: scale(1.05);
+        }
+
+        .zone.empty {
+            background: #90EE90;
+        }
+
+        .zone.occupied {
+            background: #FFB6C1;
+        }
+
+        .zone.partial {
+            background: #FFD700;
+        }
+
+        .zone-id {
+            font-size: 20px;
+            margin-bottom: 8px;
+        }
+
+        .zone-status {
+            font-size: 12px;
+        }
+
+        .legend {
+            margin-top: 30px;
+            display: flex;
+            justify-content: center;
+            gap: 30px;
+        }
+
+        .legend-item {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .legend-box {
+            width: 30px;
+            height: 30px;
+            border: 2px solid #333;
+        }
+
+        .update-info {
+            text-align: center;
+            margin-top: 15px;
+            color: #666;
+        }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <h1>Warehouse Floor Map</h1>
+        <div class="update-info">Last Update: <span id="updateTime">--:--:--</span></div>
+    </div>
+
+    <div class="controls">
+        <button onclick="updateMap()">Refresh Now</button>
+        <button id="pauseBtn" onclick="toggleUpdate()">Pause Auto-Update</button>
+    </div>
+
+    <div class="warehouse">
+        <div class="floor-map" id="floorMap">
+            <!-- Zones will be added here -->
+        </div>
+
+        <div class="legend">
+            <div class="legend-item">
+                <div class="legend-box" style="background: #90EE90;"></div>
+                <span>Empty</span>
+            </div>
+            <div class="legend-item">
+                <div class="legend-box" style="background: #FFD700;"></div>
+                <span>Partial</span>
+            </div>
+            <div class="legend-item">
+                <div class="legend-box" style="background: #FFB6C1;"></div>
+                <span>Occupied</span>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let updateInterval;
+        let isPaused = false;
+
+        // Simulate AJAX call to get warehouse data
+        function fetchData() {
+            return new Promise((resolve) => {
+                setTimeout(() => {
+                    const zones = [];
+                    const statuses = ['empty', 'partial', 'occupied'];
+                    
+                    for (let i = 1; i <= 12; i++) {
+                        zones.push({
+                            id: 'Z-' + i,
+                            status: statuses[Math.floor(Math.random() * statuses.length)],
+                            items: Math.floor(Math.random() * 100)
+                        });
+                    }
+                    
+                    resolve(zones);
+                }, 300);
+            });
+        }
+
+        // Update the map
+        async function updateMap() {
+            const data = await fetchData();
+            const floorMap = document.getElementById('floorMap');
+            
+            floorMap.innerHTML = '';
+            
+            data.forEach(zone => {
+                const div = document.createElement('div');
+                div.className = 'zone ' + zone.status;
+                div.innerHTML = `
+                    <div class="zone-id">${zone.id}</div>
+                    <div class="zone-status">${zone.items} items</div>
+                `;
+                floorMap.appendChild(div);
+            });
+            
+            // Update time
+            const now = new Date();
+            document.getElementById('updateTime').textContent = now.toLocaleTimeString();
+        }
+
+        // Toggle auto-update
+        function toggleUpdate() {
+            const btn = document.getElementById('pauseBtn');
+            
+            if (isPaused) {
+                updateInterval = setInterval(updateMap, 5000);
+                btn.textContent = 'Pause Auto-Update';
+                isPaused = false;
+            } else {
+                clearInterval(updateInterval);
+                btn.textContent = 'Resume Auto-Update';
+                isPaused = true;
+            }
+        }
+
+        // Start on load
+        window.onload = function() {
+            updateMap();
+            updateInterval = setInterval(updateMap, 5000); // Update every 5 seconds
+        };
+    </script>
+</body>
+</html>
