@@ -3,282 +3,204 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Warehouse Floor Map</title>
+    <title>Header with Label, Legend & Date Selector</title>
+    
+    <!-- Bootstrap CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    
     <style>
         body {
-            font-family: Arial, sans-serif;
             margin: 0;
             padding: 0;
-            background: #f5f5f5;
+            background-color: #f8f9fa;
         }
 
-        .header {
-            background: #1a3a52;
-            color: white;
-            padding: 25px;
-            margin-bottom: 20px;
-        }
-
-        .header-content {
-            max-width: 900px;
-            margin: 0 auto;
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-        }
-
-        .header h1 {
+        .header-container {
+            background-color: #001f3f;
+            padding: 15px 20px;
             margin: 0;
-            font-size: 28px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.2);
         }
 
-        .header-info {
-            text-align: right;
-        }
-
-        .current-date {
-            font-size: 16px;
-            margin-bottom: 5px;
-        }
-
-        .update-info {
-            font-size: 14px;
-            opacity: 0.9;
-        }
-
-        .status-indicators {
-            display: flex;
-            gap: 15px;
-            margin-top: 15px;
-            justify-content: center;
-        }
-
-        .indicator {
+        .header-label {
+            font-size: 1.25rem;
+            font-weight: 600;
+            color: #ffffff;
             display: flex;
             align-items: center;
-            gap: 8px;
-            background: rgba(255, 255, 255, 0.1);
-            padding: 8px 15px;
-            border-radius: 5px;
         }
 
-        .indicator-dot {
-            width: 12px;
-            height: 12px;
-            border-radius: 50%;
-        }
-
-        .controls {
-            text-align: center;
-            margin-bottom: 20px;
-            padding: 0 20px;
-        }
-
-        button {
-            padding: 10px 20px;
-            margin: 0 5px;
-            cursor: pointer;
-            font-size: 14px;
-        }
-
-        .warehouse {
-            max-width: 900px;
-            margin: 0 auto;
-            background: white;
-            padding: 30px;
-            border: 2px solid #333;
-        }
-
-        .floor-map {
-            display: grid;
-            grid-template-columns: repeat(4, 1fr);
-            gap: 15px;
-        }
-
-        .zone {
-            height: 120px;
-            border: 2px solid #333;
+        .legend-container {
             display: flex;
-            flex-direction: column;
+            justify-content: center;
             align-items: center;
-            justify-content: center;
-            font-size: 16px;
-            font-weight: bold;
-            cursor: pointer;
-            transition: all 0.3s;
-        }
-
-        .zone:hover {
-            transform: scale(1.05);
-        }
-
-        .zone.empty {
-            background: #90EE90;
-        }
-
-        .zone.occupied {
-            background: #FFB6C1;
-        }
-
-        .zone.partial {
-            background: #FFD700;
-        }
-
-        .zone-id {
-            font-size: 20px;
-            margin-bottom: 8px;
-        }
-
-        .zone-status {
-            font-size: 12px;
-        }
-
-        .legend {
-            margin-top: 30px;
-            display: flex;
-            justify-content: center;
-            gap: 30px;
+            flex-wrap: wrap;
+            gap: 15px;
         }
 
         .legend-item {
             display: flex;
             align-items: center;
+            gap: 8px;
+            font-size: 0.9rem;
+            color: #ffffff;
+        }
+
+        .legend-color {
+            width: 20px;
+            height: 20px;
+            border-radius: 4px;
+            border: 1px solid rgba(0,0,0,0.1);
+        }
+
+        .date-selector-container {
+            display: flex;
+            align-items: center;
+            justify-content: flex-end;
             gap: 10px;
         }
 
-        .legend-box {
-            width: 30px;
-            height: 30px;
-            border: 2px solid #333;
+        .date-display {
+            font-weight: 500;
+            color: #ffffff;
+            min-width: 120px;
+            text-align: right;
         }
 
-        .update-info {
-            text-align: center;
-            margin-top: 15px;
-            color: #666;
+        .date-input {
+            cursor: pointer;
+        }
+
+        /* Color codes for legend */
+        .color-active {
+            background-color: #28a745;
+        }
+
+        .color-pending {
+            background-color: #ffc107;
+        }
+
+        .color-inactive {
+            background-color: #dc3545;
+        }
+
+        .color-review {
+            background-color: #17a2b8;
+        }
+
+        /* Add margin to content below header */
+        .content-area {
+            margin-top: 20px;
+        }
+
+        @media (max-width: 768px) {
+            .header-container {
+                padding: 10px 15px;
+            }
+            
+            .legend-container {
+                margin: 10px 0;
+            }
+            
+            .date-selector-container {
+                justify-content: flex-start;
+                margin-top: 10px;
+            }
         }
     </style>
 </head>
 <body>
-    <div class="header">
-        <div class="header-content">
-            <div>
-                <h1>Warehouse Floor Map</h1>
-            </div>
-            <div class="header-info">
-                <div class="current-date" id="currentDate">--/--/----</div>
-                <div class="update-info">Last Update: <span id="updateTime">--:--:--</span></div>
-            </div>
-        </div>
-        <div class="status-indicators">
-            <div class="indicator">
-                <div class="indicator-dot" style="background: #90EE90;"></div>
-                <span>Empty</span>
-            </div>
-            <div class="indicator">
-                <div class="indicator-dot" style="background: #FFD700;"></div>
-                <span>Partial</span>
-            </div>
-            <div class="indicator">
-                <div class="indicator-dot" style="background: #FFB6C1;"></div>
-                <span>Occupied</span>
-            </div>
-        </div>
-    </div>
+    <div class="header-container">
+        <div class="container-fluid">
+            <div class="row align-items-center">
+                <!-- Left: Label -->
+                <div class="col-lg-3 col-md-12 mb-2 mb-lg-0">
+                    <div class="header-label">
+                        Dashboard Overview
+                    </div>
+                </div>
 
-    <div class="controls">
-        <button onclick="updateMap()">Refresh Now</button>
-        <button id="pauseBtn" onclick="toggleUpdate()">Pause Auto-Update</button>
-    </div>
+                <!-- Center: Color-coded Legend -->
+                <div class="col-lg-6 col-md-12 mb-2 mb-lg-0">
+                    <div class="legend-container">
+                        <div class="legend-item">
+                            <div class="legend-color color-active"></div>
+                            <span>Active</span>
+                        </div>
+                        <div class="legend-item">
+                            <div class="legend-color color-pending"></div>
+                            <span>Pending</span>
+                        </div>
+                        <div class="legend-item">
+                            <div class="legend-color color-inactive"></div>
+                            <span>Inactive</span>
+                        </div>
+                        <div class="legend-item">
+                            <div class="legend-color color-review"></div>
+                            <span>Review</span>
+                        </div>
+                    </div>
+                </div>
 
-    <div class="warehouse">
-        <div class="floor-map" id="floorMap">
-            <!-- Zones will be added here -->
-        </div>
-
-        <div class="legend">
-            <div class="legend-item">
-                <div class="legend-box" style="background: #90EE90;"></div>
-                <span>Empty</span>
-            </div>
-            <div class="legend-item">
-                <div class="legend-box" style="background: #FFD700;"></div>
-                <span>Partial</span>
-            </div>
-            <div class="legend-item">
-                <div class="legend-box" style="background: #FFB6C1;"></div>
-                <span>Occupied</span>
+                <!-- Right: Date and Date Selector -->
+                <div class="col-lg-3 col-md-12">
+                    <div class="date-selector-container">
+                        <span class="date-display" id="dateDisplay">Feb 10, 2026</span>
+                        <input 
+                            type="date" 
+                            class="form-control form-control-sm date-input" 
+                            id="dateSelector"
+                            style="max-width: 150px;"
+                        >
+                    </div>
+                </div>
             </div>
         </div>
     </div>
 
+    <div class="container-fluid content-area" style="padding: 20px;">
+        <!-- Demo content below header -->
+        <div class="card">
+            <div class="card-body">
+                <h5 class="card-title">Content Area</h5>
+                <p class="card-text">This is where your main content would go. The header above contains:</p>
+                <ul>
+                    <li><strong>Left:</strong> Dashboard label/title</li>
+                    <li><strong>Center:</strong> Color-coded legend with status indicators</li>
+                    <li><strong>Right:</strong> Current date display and date selector</li>
+                </ul>
+            </div>
+        </div>
+    </div>
+
+    <!-- Bootstrap JS Bundle -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    
     <script>
-        let updateInterval;
-        let isPaused = false;
-
-        // Simulate AJAX call to get warehouse data
-        function fetchData() {
-            return new Promise((resolve) => {
-                setTimeout(() => {
-                    const zones = [];
-                    const statuses = ['empty', 'partial', 'occupied'];
-                    
-                    for (let i = 1; i <= 12; i++) {
-                        zones.push({
-                            id: 'Z-' + i,
-                            status: statuses[Math.floor(Math.random() * statuses.length)],
-                            items: Math.floor(Math.random() * 100)
-                        });
-                    }
-                    
-                    resolve(zones);
-                }, 300);
-            });
+        // Initialize date selector with today's date
+        const dateSelector = document.getElementById('dateSelector');
+        const dateDisplay = document.getElementById('dateDisplay');
+        
+        // Set initial date to today
+        const today = new Date();
+        dateSelector.valueAsDate = today;
+        
+        // Format and display the date
+        function formatDate(date) {
+            const options = { year: 'numeric', month: 'short', day: 'numeric' };
+            return date.toLocaleDateString('en-US', options);
         }
-
-        // Update the map
-        async function updateMap() {
-            const data = await fetchData();
-            const floorMap = document.getElementById('floorMap');
-            
-            floorMap.innerHTML = '';
-            
-            data.forEach(zone => {
-                const div = document.createElement('div');
-                div.className = 'zone ' + zone.status;
-                div.innerHTML = `
-                    <div class="zone-id">${zone.id}</div>
-                    <div class="zone-status">${zone.items} items</div>
-                `;
-                floorMap.appendChild(div);
-            });
-            
-            // Update time and date
-            const now = new Date();
-            document.getElementById('updateTime').textContent = now.toLocaleTimeString();
-            document.getElementById('currentDate').textContent = now.toLocaleDateString();
-        }
-
-        // Toggle auto-update
-        function toggleUpdate() {
-            const btn = document.getElementById('pauseBtn');
-            
-            if (isPaused) {
-                updateInterval = setInterval(updateMap, 5000);
-                btn.textContent = 'Pause Auto-Update';
-                isPaused = false;
-            } else {
-                clearInterval(updateInterval);
-                btn.textContent = 'Resume Auto-Update';
-                isPaused = true;
-            }
-        }
-
-        // Start on load
-        window.onload = function() {
-            updateMap();
-            updateInterval = setInterval(updateMap, 5000); // Update every 5 seconds
-        };
+        
+        // Update display when date is changed
+        dateSelector.addEventListener('change', function() {
+            const selectedDate = new Date(this.value);
+            dateDisplay.textContent = formatDate(selectedDate);
+            console.log('Date changed to:', this.value);
+            // Add your custom logic here when date changes
+        });
+        
+        // Initialize display
+        dateDisplay.textContent = formatDate(today);
     </script>
 </body>
 </html>
