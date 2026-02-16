@@ -466,7 +466,7 @@
     <div id="W">
 
         <div id="hdr">
-            <h1>GOC WAREHOUSE A-F MOS</h1>
+            <h1>Floor Map</h1>
             <div class="legend-wrap">
                 <div class="legend green">0-20<span>Day</span></div>
                 <div class="legend gold">20-30<span>Day</span></div>
@@ -476,6 +476,7 @@
                 <div class="legend blue">GHO Sale</div>
             </div>
             <div class="hr"><span>DATE</span><input type="date" id="dt" value="2026-02-15"><span>Date</span>
+                <div class="tb" id="countdown">2:00</div>
                 <div class="tb">EST</div>
             </div>
         </div>
@@ -654,6 +655,22 @@
     <script>
         (function () {
             var filter = '0-20', data = {};
+            var countdownTime = 120; // 120 seconds
+            
+            function updateCountdown() {
+                var display = countdownTime + 's';
+                var countdownElement = document.getElementById('countdown');
+                if (countdownElement) {
+                    countdownElement.textContent = display;
+                }
+                
+                if (countdownTime <= 0) {
+                    countdownTime = 120; // Reset to 120 seconds
+                    load(); // Reload data
+                } else {
+                    countdownTime--;
+                }
+            }
             
             function scale() {
                 var w = document.getElementById('W');
@@ -665,6 +682,10 @@
             
             window.addEventListener('resize', scale);
             scale();
+            
+            // Start countdown timer
+            setInterval(updateCountdown, 1000);
+            updateCountdown(); // Initialize display
 
             var rackElements = document.querySelectorAll('.rc');
             for (var i = 0; i < rackElements.length; i++) {
