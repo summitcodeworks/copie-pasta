@@ -2,7 +2,7 @@
 <html>
 <head>
     <meta charset="UTF-8">
-    <title>Side Sheet Dropdown</title>
+    <title>Side Sheet With Selected Indicator</title>
 
     <style>
         body {
@@ -23,12 +23,11 @@
             margin: 0;
         }
 
-        header button {
+        #filterBtn {
             padding: 6px 12px;
             cursor: pointer;
         }
 
-        /* Overlay */
         .overlay {
             position: fixed;
             top: 0;
@@ -39,7 +38,6 @@
             display: none;
         }
 
-        /* Side Sheet */
         .side-sheet {
             position: fixed;
             top: 0;
@@ -56,10 +54,6 @@
 
         .side-sheet.open {
             right: 0;
-        }
-
-        .side-sheet h3 {
-            margin-top: 0;
         }
 
         .select-group {
@@ -87,7 +81,7 @@
 
 <header>
     <h2>Application Header</h2>
-    <button onclick="openSheet()">Open Filters</button>
+    <button id="filterBtn" onclick="openSheet()">Filters</button>
 </header>
 
 <div class="overlay" id="overlay" onclick="closeSheet()"></div>
@@ -137,19 +131,25 @@
         var multi = document.getElementById("multiSelect");
         var single = document.getElementById("singleSelect");
 
-        var selectedMulti = [];
+        var count = 0;
+
         for (var i = 0; i < multi.options.length; i++) {
             if (multi.options[i].selected) {
-                selectedMulti.push(multi.options[i].value);
+                count++;
             }
         }
 
-        var singleValue = single.value;
+        if (single.value !== "") {
+            count++;
+        }
 
-        alert(
-            "Multi: " + (selectedMulti.length ? selectedMulti.join(", ") : "None") +
-            "\nSingle: " + (singleValue ? singleValue : "None")
-        );
+        var btn = document.getElementById("filterBtn");
+
+        if (count > 0) {
+            btn.innerHTML = "Filters (" + count + ")";
+        } else {
+            btn.innerHTML = "Filters";
+        }
 
         closeSheet();
     }
