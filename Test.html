@@ -1,206 +1,135 @@
 <!DOCTYPE html>
-<html lang="en">
+<html>
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Header with Label, Legend & Date Selector</title>
-    
-    <!-- Bootstrap CSS -->
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
-    
+    <title>Multi & Single Select Popup</title>
     <style>
         body {
+            font-family: Arial, sans-serif;
             margin: 0;
             padding: 0;
-            background-color: #f8f9fa;
         }
 
-        .header-container {
-            background-color: #001f3f;
-            padding: 15px 20px;
-            margin: 0;
-            box-shadow: 0 2px 4px rgba(0,0,0,0.2);
+        header {
+            background: #2c3e50;
+            color: #fff;
+            padding: 15px;
+            text-align: center;
         }
 
-        .header-label {
-            font-size: 1.25rem;
-            font-weight: 600;
-            color: #ffffff;
-            display: flex;
-            align-items: center;
+        .container {
+            padding: 20px;
         }
 
-        .legend-container {
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            flex-wrap: wrap;
-            gap: 15px;
+        .select-group {
+            margin-bottom: 15px;
         }
 
-        .legend-item {
-            display: flex;
-            align-items: center;
-            gap: 8px;
-            font-size: 0.9rem;
-            color: #ffffff;
+        select {
+            width: 250px;
+            padding: 6px;
         }
 
-        .legend-color {
-            width: 20px;
-            height: 20px;
-            border-radius: 4px;
-            border: 1px solid rgba(0,0,0,0.1);
-        }
-
-        .date-selector-container {
-            display: flex;
-            align-items: center;
-            justify-content: flex-end;
-            gap: 10px;
-        }
-
-        .date-display {
-            font-weight: 500;
-            color: #ffffff;
-            min-width: 120px;
-            text-align: right;
-        }
-
-        .date-input {
+        button {
+            padding: 8px 15px;
             cursor: pointer;
         }
 
-        /* Color codes for legend */
-        .color-active {
-            background-color: #28a745;
+        /* Popup */
+        .popup-overlay {
+            display: none;
+            position: fixed;
+            left: 0;
+            top: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0,0,0,0.4);
         }
 
-        .color-pending {
-            background-color: #ffc107;
+        .popup {
+            background: #fff;
+            width: 300px;
+            padding: 20px;
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            border-radius: 5px;
         }
 
-        .color-inactive {
-            background-color: #dc3545;
-        }
-
-        .color-review {
-            background-color: #17a2b8;
-        }
-
-        /* Add margin to content below header */
-        .content-area {
-            margin-top: 20px;
-        }
-
-        @media (max-width: 768px) {
-            .header-container {
-                padding: 10px 15px;
-            }
-            
-            .legend-container {
-                margin: 10px 0;
-            }
-            
-            .date-selector-container {
-                justify-content: flex-start;
-                margin-top: 10px;
-            }
+        .close-btn {
+            margin-top: 15px;
         }
     </style>
 </head>
 <body>
-    <div class="header-container">
-        <div class="container-fluid">
-            <div class="row align-items-center">
-                <!-- Left: Label -->
-                <div class="col-lg-3 col-md-12 mb-2 mb-lg-0">
-                    <div class="header-label">
-                        Dashboard Overview
-                    </div>
-                </div>
 
-                <!-- Center: Color-coded Legend -->
-                <div class="col-lg-6 col-md-12 mb-2 mb-lg-0">
-                    <div class="legend-container">
-                        <div class="legend-item">
-                            <div class="legend-color color-active"></div>
-                            <span>Active</span>
-                        </div>
-                        <div class="legend-item">
-                            <div class="legend-color color-pending"></div>
-                            <span>Pending</span>
-                        </div>
-                        <div class="legend-item">
-                            <div class="legend-color color-inactive"></div>
-                            <span>Inactive</span>
-                        </div>
-                        <div class="legend-item">
-                            <div class="legend-color color-review"></div>
-                            <span>Review</span>
-                        </div>
-                    </div>
-                </div>
+<header>
+    <h2>Selection Header</h2>
+</header>
 
-                <!-- Right: Date and Date Selector -->
-                <div class="col-lg-3 col-md-12">
-                    <div class="date-selector-container">
-                        <span class="date-display" id="dateDisplay">Feb 10, 2026</span>
-                        <input 
-                            type="date" 
-                            class="form-control form-control-sm date-input" 
-                            id="dateSelector"
-                            style="max-width: 150px;"
-                        >
-                    </div>
-                </div>
-            </div>
-        </div>
-    </div>
-
-    <div class="container-fluid content-area" style="padding: 20px;">
-        <!-- Demo content below header -->
-        <div class="card">
-            <div class="card-body">
-                <h5 class="card-title">Content Area</h5>
-                <p class="card-text">This is where your main content would go. The header above contains:</p>
-                <ul>
-                    <li><strong>Left:</strong> Dashboard label/title</li>
-                    <li><strong>Center:</strong> Color-coded legend with status indicators</li>
-                    <li><strong>Right:</strong> Current date display and date selector</li>
-                </ul>
-            </div>
-        </div>
-    </div>
-
-    <!-- Bootstrap JS Bundle -->
-    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+<div class="container">
     
-    <script>
-        // Initialize date selector with today's date
-        const dateSelector = document.getElementById('dateSelector');
-        const dateDisplay = document.getElementById('dateDisplay');
-        
-        // Set initial date to today
-        const today = new Date();
-        dateSelector.valueAsDate = today;
-        
-        // Format and display the date
-        function formatDate(date) {
-            const options = { year: 'numeric', month: 'short', day: 'numeric' };
-            return date.toLocaleDateString('en-US', options);
+    <div class="select-group">
+        <label>Multi Select:</label><br>
+        <select id="multiSelect" multiple>
+            <option value="Java">Java</option>
+            <option value="Spring Boot">Spring Boot</option>
+            <option value="Angular">Angular</option>
+            <option value="React">React</option>
+            <option value="Docker">Docker</option>
+        </select>
+    </div>
+
+    <div class="select-group">
+        <label>Single Select:</label><br>
+        <select id="singleSelect">
+            <option value="">-- Select Experience --</option>
+            <option value="1-3 Years">1-3 Years</option>
+            <option value="3-5 Years">3-7 Years</option>
+            <option value="7+ Years">7+ Years</option>
+        </select>
+    </div>
+
+    <button onclick="showPopup()">Show Selection</button>
+
+</div>
+
+<!-- Popup -->
+<div class="popup-overlay" id="popupOverlay">
+    <div class="popup">
+        <h3>Selected Values</h3>
+        <div id="result"></div>
+        <button class="close-btn" onclick="closePopup()">Close</button>
+    </div>
+</div>
+
+<script>
+    function showPopup() {
+        var multi = document.getElementById("multiSelect");
+        var single = document.getElementById("singleSelect");
+        var result = document.getElementById("result");
+
+        var selectedMulti = [];
+        for (var i = 0; i < multi.options.length; i++) {
+            if (multi.options[i].selected) {
+                selectedMulti.push(multi.options[i].value);
+            }
         }
-        
-        // Update display when date is changed
-        dateSelector.addEventListener('change', function() {
-            const selectedDate = new Date(this.value);
-            dateDisplay.textContent = formatDate(selectedDate);
-            console.log('Date changed to:', this.value);
-            // Add your custom logic here when date changes
-        });
-        
-        // Initialize display
-        dateDisplay.textContent = formatDate(today);
-    </script>
+
+        var singleValue = single.value;
+
+        result.innerHTML = 
+            "<strong>Multi Select:</strong> " + (selectedMulti.length ? selectedMulti.join(", ") : "None") +
+            "<br><br><strong>Single Select:</strong> " + (singleValue ? singleValue : "None");
+
+        document.getElementById("popupOverlay").style.display = "block";
+    }
+
+    function closePopup() {
+        document.getElementById("popupOverlay").style.display = "none";
+    }
+</script>
+
 </body>
 </html>
