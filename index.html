@@ -1,0 +1,842 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Floor Map</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: "Segoe UI", Arial, Helvetica, sans-serif;
+            background: #f7f8fb;
+            overflow-x: hidden;
+            overflow-y: auto;
+            min-height: 100vh;
+            position: relative;
+            color: #0f1b36;
+        }
+
+        #W {
+            width: 1920px;
+            height: 1080px;
+            background: #ffffff;
+            border: 1px solid #d7dbe8;
+            box-shadow: 0 18px 45px rgba(20, 27, 45, .18);
+            position: absolute;
+            top: 0;
+            left: 50%;
+            transform-origin: top center;
+            border-radius: 18px;
+        }
+
+        #hdr {
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            background: #071736;
+            border-bottom: 1px solid #020813;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 18px 48px;
+            gap: 12px;
+            z-index: 20;
+            border-top-left-radius: 18px;
+            border-top-right-radius: 18px;
+        }
+
+        #hdr h1 {
+            font-size: 22px;
+            color: #eef3ff;
+            white-space: nowrap;
+            letter-spacing: 1.2px;
+            text-transform: uppercase;
+            margin: 0;
+        }
+
+        .legend-wrap {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 12px;
+            flex-wrap: 1;
+        }
+
+        .legend {
+            padding: 6px 18px;
+            border-radius: 999px;
+            font-size: 11px;
+            font-weight: 600;
+            text-transform: uppercase;
+            color: #0f1b36;
+            border: 1px solid rgba(255, 255, 255, .25);
+            background: rgba(255, 255, 255, .9);
+            letter-spacing: .3px;
+            box-shadow: inset 0 0 0 2px rgba(255, 255, 255, .2);
+            text-align: center;
+            min-width: 110px;
+        }
+
+        .legend.green {
+            background: #39b26d;
+            color: #041314;
+            border-color: #39b26d
+        }
+
+        .legend.gold {
+            background: #f8c536;
+            color: #3c2500;
+            border-color: #f2b10a
+        }
+
+        .legend.orange {
+            background: #ff9800;
+            color: #2c1300;
+            border-color: #ff9800
+        }
+
+        .legend.red {
+            background: #f44336;
+            color: #fff;
+            border-color: #f44336
+        }
+
+        .legend.maroon {
+            background: #b71c1c;
+            color: #fff;
+            border-color: #b71c1c
+        }
+
+        .legend.blue {
+            background: #1d4ed8;
+            color: #fff;
+            border-color: #1d4ed8
+        }
+
+        .hr {
+            display: flex;
+            align-items: center;
+            justify-content: flex-end;
+            gap: 12px;
+            font-size: 12px;
+            font-weight: 600;
+            color: #eef3ff;
+            flex-wrap: wrap;
+            flex-shrink: 0
+        }
+
+        .hr input[type="date"] {
+            padding: 4px 8px;
+            border: 1px solid #888;
+            font-size: 12px;
+            min-width: 120px;
+        }
+
+        .hr .tb {
+            padding: 4px 10px;
+            border: 1px solid #e0e6ff;
+            background: #fff;
+            font-size: 10px;
+            font-weight: bold;
+            color: #0f1b36;
+            border-radius: 6px;
+            min-width: 44px;
+            text-align: center
+        }
+
+        .zn {
+            position: absolute;
+            border: 1px solid #d5d8e3;
+            background: #ffffff;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 11px;
+            font-weight: 700;
+            text-align: center;
+            text-transform: uppercase;
+            line-height: 1.25;
+            border-radius: 6px;
+            box-shadow: 0 4px 12px rgba(12, 25, 54, .08)
+        }
+
+        .rc {
+            position: absolute;
+            border: 1px solid #1f2a44;
+            background: #fff;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 9px;
+            font-weight: 700;
+            text-align: center;
+            cursor: pointer;
+            white-space: pre-line;
+            transition: opacity .15s, border-color .2s;
+            letter-spacing: .3px;
+            border-radius: 4px
+        }
+
+        .rc:hover {
+            opacity: .8;
+            outline: 2px solid #000
+        }
+
+        .lb {
+            position: absolute;
+            font-size: 9px;
+            font-weight: bold;
+            color: #5c6689;
+            display: flex;
+            align-items: center;
+            justify-content: center
+        }
+
+        .at {
+            position: absolute;
+            height: 24px;
+            border: 1px solid #d5d8e3;
+            background: #fff;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 9px;
+            font-weight: 700;
+            border-radius: 4px
+        }
+
+        .st {
+            position: absolute;
+            border: 1px solid #d8dbe4;
+            background: #fff;
+            font-size: 9px;
+            border-radius: 6px;
+            box-shadow: 0 6px 18px rgba(12, 25, 54, .08)
+        }
+
+        .sth {
+            background: #eef1f7;
+            border-bottom: 1px solid #dfe2eb;
+            padding: 4px 8px;
+            font-weight: 700;
+            text-align: center;
+            font-size: 10px;
+            color: #0f1b36;
+            border-top-left-radius: 6px;
+            border-top-right-radius: 6px
+        }
+
+        .sr {
+            display: flex;
+            justify-content: space-between;
+            padding: 3px 8px;
+            border-bottom: 1px solid #edf0f5;
+            font-size: 9px;
+            color: #2d3550
+        }
+
+        .sr:last-child {
+            border-bottom: none
+        }
+
+        .sr span:last-child {
+            font-weight: 700;
+            color: #0f1b36
+        }
+
+        #mo {
+            display: none;
+            position: fixed;
+            z-index: 100;
+            left: 0;
+            top: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, .5)
+        }
+
+        #mb {
+            background: #fff;
+            margin: 10% auto;
+            padding: 20px;
+            border: 2px solid #000;
+            width: 400px;
+            border-radius: 4px
+        }
+
+        #mx {
+            float: right;
+            font-size: 24px;
+            font-weight: bold;
+            cursor: pointer
+        }
+
+        #mx:hover {
+            color: #888
+        }
+
+        #mb h2 {
+            font-size: 16px;
+            margin-bottom: 10px;
+            clear: both
+        }
+
+        #mb p {
+            font-size: 13px;
+            margin: 6px 0
+        }
+
+        .c0 {
+            background: #4CAF50 !important;
+            color: #fff
+        }
+
+        .c1 {
+            background: #FFEB3B !important;
+            color: #000
+        }
+
+        .c2 {
+            background: #FF9800 !important;
+            color: #fff
+        }
+
+        .c3 {
+            background: #F44336 !important;
+            color: #fff
+        }
+
+        .c4 {
+            background: #B71C1C !important;
+            color: #fff
+        }
+
+        /* Modal Styles */
+        #mo {
+            display: none;
+            align-items: center;
+            justify-content: center;
+            position: fixed;
+            z-index: 1000;
+            left: 0;
+            top: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, .5);
+            backdrop-filter: blur(4px);
+        }
+
+        #mb {
+            position: relative;
+            background: #fff;
+            padding: 0;
+            border: none;
+            width: 500px;
+            max-width: 90%;
+            max-height: 90vh;
+            border-radius: 12px;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, .3);
+            animation: modalSlideIn 0.3s ease-out;
+            display: flex;
+            flex-direction: column;
+        }
+
+        @keyframes modalSlideIn {
+            from {
+                opacity: 0;
+                transform: translateY(-50px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .modal-header {
+            padding: 20px 24px;
+            border-bottom: 1px solid #dee2e6;
+            background: #ffffff;
+            color: #212529;
+            border-top-left-radius: 12px;
+            border-top-right-radius: 12px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .modal-title {
+            margin: 0;
+            font-size: 18px;
+            font-weight: 600;
+        }
+
+        .btn-close {
+            background: none;
+            border: none;
+            font-size: 24px;
+            color: #6c757d;
+            opacity: 0.8;
+            cursor: pointer;
+            padding: 0;
+            width: 30px;
+            height: 30px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border-radius: 50%;
+            transition: all 0.2s;
+        }
+
+        .btn-close:hover {
+            opacity: 1;
+            background: #f8f9fa;
+        }
+
+        .modal-body-scrollable {
+            padding: 0;
+            flex: 1;
+            overflow-y: auto;
+            max-height: calc(90vh - 120px);
+        }
+
+        .modal-body-scrollable .table {
+            margin: 0;
+            border-collapse: separate;
+            border-spacing: 0;
+        }
+
+        .modal-body-scrollable .table th {
+            background: #f8f9fa;
+            font-weight: 600;
+            color: #495057;
+            border: 1px solid #dee2e6;
+            padding: 12px 16px;
+            position: sticky;
+            top: 0;
+            z-index: 10;
+        }
+
+        .modal-body-scrollable .table td {
+            border: 1px solid #dee2e6;
+            padding: 12px 16px;
+            font-weight: 500;
+            color: #212529;
+        }
+
+        .modal-footer {
+            padding: 16px 24px;
+            border-top: 1px solid #dee2e6;
+            background: #f8f9fa;
+            border-bottom-left-radius: 12px;
+            border-bottom-right-radius: 12px;
+            text-align: right;
+            flex-shrink: 0;
+        }
+
+        .btn {
+            padding: 8px 16px;
+            border: none;
+            border-radius: 6px;
+            font-size: 14px;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .btn-secondary {
+            background: #6c757d;
+            color: white;
+        }
+
+        .btn-secondary:hover {
+            background: #5a6268;
+            transform: translateY(-1px);
+        }
+    </style>
+</head>
+
+<body>
+    <div id="W">
+
+        <div id="hdr">
+            <h1>GOC WAREHOUSE A-F MOS</h1>
+            <div class="legend-wrap">
+                <div class="legend green">0-20<span>Day</span></div>
+                <div class="legend gold">20-30<span>Day</span></div>
+                <div class="legend orange">30-45<span>Day</span></div>
+                <div class="legend red">45-60<span>Day</span></div>
+                <div class="legend maroon">S-Grade</div>
+                <div class="legend blue">GHO Sale</div>
+            </div>
+            <div class="hr"><span>DATE</span><input type="date" id="dt" value="2026-02-15"><span>Date</span>
+                <div class="tb">EST</div>
+            </div>
+        </div>
+
+        <div class="zn" style="left:20px;top:78px;width:110px;height:55px">Vacuum Pack</div>
+        <div class="zn" style="left:20px;top:140px;width:190px;height:26px">SBP Pack</div>
+        <div class="zn" style="left:240px;top:78px;width:160px;height:30px">Carton Stock</div>
+        <div class="zn" style="left:420px;top:78px;width:300px;height:30px">Packing Material Storage</div>
+        <div class="zn" style="left:420px;top:140px;width:210px;height:26px;border-width:2px">PACK ZONE</div>
+        <div class="zn" style="left:1350px;top:78px;width:130px;height:30px">LBP Pack</div>
+
+        <div class="lb" style="left:590px;top:174px;width:130px;height:16px;font-size:10px">G-RW</div>
+        <div class="lb" style="left:1060px;top:174px;width:100px;height:16px;font-size:10px">GVR06</div>
+
+        <div class="zn" style="right:12px;top:78px;width:88px;height:108px;font-size:11px">ELEVATOR</div>
+        <div class="zn" style="right:12px;top:196px;width:88px;height:34px;font-size:8px">G01X-04</div>
+        <div class="zn" style="right:12px;top:238px;width:88px;height:34px;font-size:9px">GVR07</div>
+        <div class="zn" style="right:12px;top:280px;width:88px;height:34px;font-size:8px">G01X-02</div>
+        <div class="zn" style="right:12px;top:322px;width:88px;height:38px;font-size:8px">SERVER ROOM</div>
+        <div class="zn" style="right:12px;top:368px;width:88px;height:38px;font-size:7px">WH UTILITY ROOM</div>
+        <div class="zn" style="right:12px;top:414px;width:88px;height:38px;font-size:8px">GOC OFFICE</div>
+
+        <!-- RACK GRID: 6 groups, each B+A pair, 3 rows. All rows share same X coords.
+     Cell=100x52. Group=100+2+100=202. Aisle=40. Wide aisle=68.
+     G06 B=20 A=122 | gap40 | G05 B=264 A=366 | gap40 | G04 B=508 A=610 | gap68 | G03 B=780 A=882 | gap40 | G02 B=1024 A=1126 | gap40 | G01 B=1268 A=1370
+     Row03 y=196, Row02 y=278, Row01 y=360 -->
+        <div id="rack-container" style="position:absolute;top:80px;left:50%;transform:translateX(-50%);width:1450px;">
+
+            <!-- ROW -03 y=196 -->
+            <div class="rc" data-rack="G06B-03" style="left:20px;top:196px;width:100px;height:52px">G06B-03</div>
+            <div class="rc" data-rack="G06A-03" style="left:122px;top:196px;width:100px;height:52px">G06A-03</div>
+            <div class="lb" style="left:222px;top:196px;width:42px;height:52px;font-size:8px">GVR05</div>
+            <div class="rc" data-rack="G05B-03" style="left:264px;top:196px;width:100px;height:52px">G05B-03</div>
+            <div class="rc" data-rack="G05A-03" style="left:366px;top:196px;width:100px;height:52px">G05A-03</div>
+            <div class="lb" style="left:466px;top:196px;width:42px;height:52px;font-size:8px">GVR05</div>
+            <div class="rc" data-rack="G04B-03" style="left:508px;top:196px;width:100px;height:52px">G04B-03</div>
+            <div class="rc" data-rack="G04A-03" style="left:610px;top:196px;width:100px;height:52px">G04A-03</div>
+            <div class="lb" style="left:710px;top:196px;width:60px;height:52px;font-size:8px">G-RW1</div>
+            <div class="rc" data-rack="G03B-03" style="left:770px;top:196px;width:100px;height:52px">G03B-03</div>
+            <div class="rc" data-rack="G03A-03" style="left:872px;top:196px;width:100px;height:52px">G03A-03</div>
+            <div class="lb" style="left:972px;top:196px;width:42px;height:52px;font-size:8px">GVR03</div>
+            <div class="rc" data-rack="G02B-03" style="left:1014px;top:196px;width:100px;height:52px">G02B-03</div>
+            <div class="rc" data-rack="G02A-03" style="left:1116px;top:196px;width:100px;height:52px">G02A-03</div>
+            <div class="lb" style="left:1216px;top:196px;width:42px;height:52px;font-size:8px">GVR02</div>
+            <div class="rc" data-rack="G01B-03" style="left:1258px;top:196px;width:100px;height:52px">G01B-03</div>
+            <div class="rc" data-rack="G01A-03" style="left:1360px;top:196px;width:100px;height:52px">G01A-03</div>
+            <div class="lb" style="left:1460px;top:196px;width:42px;height:52px;font-size:8px">GVR01</div>
+
+            <!-- ROW -02 y=278 -->
+            <div class="rc" data-rack="G06B-02" style="left:20px;top:278px;width:100px;height:52px">G06B-02</div>
+            <div class="rc" data-rack="G06A-02" style="left:122px;top:278px;width:100px;height:52px">G06A-02</div>
+            <div class="lb" style="left:222px;top:278px;width:42px;height:52px;font-size:8px">GVR06</div>
+            <div class="rc" data-rack="G05B-02" style="left:264px;top:278px;width:100px;height:52px">G05B-02</div>
+            <div class="rc" data-rack="G05A-02" style="left:366px;top:278px;width:100px;height:52px">G05A-02</div>
+            <div class="lb" style="left:466px;top:278px;width:42px;height:52px;font-size:8px">GVR05</div>
+            <div class="rc" data-rack="G04B-02" style="left:508px;top:278px;width:100px;height:52px">G04B-02</div>
+            <div class="rc" data-rack="G04A-02" style="left:610px;top:278px;width:100px;height:52px">G04A-02</div>
+            <div class="lb" style="left:710px;top:278px;width:60px;height:52px;font-size:8px">GVR04</div>
+            <div class="rc" data-rack="G03B-02" style="left:770px;top:278px;width:100px;height:52px">G03B-02</div>
+            <div class="rc" data-rack="G03A-02" style="left:872px;top:278px;width:100px;height:52px">G03A-02</div>
+            <div class="lb" style="left:972px;top:278px;width:42px;height:52px;font-size:8px">GVR03</div>
+            <div class="rc" data-rack="G02B-02" style="left:1014px;top:278px;width:100px;height:52px">G02B-02</div>
+            <div class="rc" data-rack="G02A-02" style="left:1116px;top:278px;width:100px;height:52px">G02A-02</div>
+            <div class="lb" style="left:1216px;top:278px;width:42px;height:52px;font-size:8px">GVR02</div>
+            <div class="rc" data-rack="G01B-02" style="left:1258px;top:278px;width:100px;height:52px">G01B-02</div>
+            <div class="rc" data-rack="G01A-02" style="left:1360px;top:278px;width:100px;height:52px">G01A-02</div>
+            <div class="lb" style="left:1460px;top:278px;width:42px;height:52px;font-size:8px">GVR01</div>
+
+            <!-- ROW -01 y=360 -->
+            <div class="rc" data-rack="G06B-01" style="left:20px;top:360px;width:100px;height:52px">G06B-01</div>
+            <div class="rc" data-rack="G06A-01" style="left:122px;top:360px;width:100px;height:52px">G06A-01</div>
+            <div class="lb" style="left:222px;top:360px;width:42px;height:52px;font-size:8px">GVR06</div>
+            <div class="rc" data-rack="G05B-01" style="left:264px;top:360px;width:100px;height:52px">G05B-01</div>
+            <div class="rc" data-rack="G05A-01" style="left:366px;top:360px;width:100px;height:52px">G05A-01</div>
+            <div class="lb" style="left:466px;top:360px;width:42px;height:52px;font-size:8px">GVR05</div>
+            <div class="rc" data-rack="G04B-01" style="left:508px;top:360px;width:100px;height:52px">G04B-01</div>
+            <div class="rc" data-rack="G04A-01" style="left:610px;top:360px;width:100px;height:52px">G04A-01</div>
+            <div class="lb" style="left:710px;top:360px;width:60px;height:52px;font-size:8px">GVR04</div>
+            <div class="rc" data-rack="G03B-01" style="left:770px;top:360px;width:100px;height:52px">G03B-01</div>
+            <div class="rc" data-rack="G03A-01" style="left:872px;top:360px;width:100px;height:52px">G03A-01</div>
+            <div class="lb" style="left:972px;top:360px;width:42px;height:52px;font-size:8px">GVR03</div>
+            <div class="rc" data-rack="G02B-01" style="left:1014px;top:360px;width:100px;height:52px">G02B-01</div>
+            <div class="rc" data-rack="G02A-01" style="left:1116px;top:360px;width:100px;height:52px">G02A-01</div>
+            <div class="lb" style="left:1216px;top:360px;width:42px;height:52px;font-size:8px">GVR02</div>
+            <div class="rc" data-rack="G01B-01" style="left:1258px;top:360px;width:100px;height:52px">G01B-01</div>
+            <div class="rc" data-rack="G01A-01" style="left:1360px;top:360px;width:100px;height:52px">G01A-01</div>
+            <div class="lb" style="left:1460px;top:360px;width:42px;height:52px;font-size:8px">GVR01</div>
+
+            <!-- AISLE TABS y=420 -->
+            <div class="at" style="left:20px;top:420px;width:100px">6B</div>
+            <div class="at" style="left:122px;top:420px;width:100px">6A</div>
+            <div class="at" style="left:264px;top:420px;width:100px">5B</div>
+            <div class="lb" style="left:366px;top:420px;width:40px;height:22px;font-size:8px;color:#999">G05</div>
+            <div class="at" style="left:406px;top:420px;width:100px">5A</div>
+            <div class="lb" style="left:508px;top:420px;width:40px;height:22px;font-size:8px;color:#999">G05</div>
+            <div class="at" style="left:550px;top:420px;width:100px">4A</div>
+            <div class="lb" style="left:652px;top:420px;width:40px;height:22px;font-size:8px;color:#999">G01</div>
+            <div class="at" style="left:780px;top:420px;width:100px">3B</div>
+            <div class="at" style="left:882px;top:420px;width:100px">3A</div>
+            <div class="at" style="left:1024px;top:420px;width:100px">2B</div>
+            <div class="at" style="left:1126px;top:420px;width:100px">2A</div>
+            <div class="at" style="left:1370px;top:420px;width:100px">G01</div>
+        </div>
+
+        <!-- BOTTOM ZONES -->
+        <div class="zn" style="left:20px;top:580px;width:80px;height:34px;font-size:7px">SPEED<br>SHUTTER 8</div>
+        <div class="zn" style="left:110px;top:580px;width:220px;height:34px;font-size:9px">RAW MAT RACK</div>
+        <div class="zn" style="left:420px;top:580px;width:260px;height:34px;font-size:9px">SPEED SHUTTER 7</div>
+        <div class="zn" style="left:720px;top:580px;width:320px;height:34px;font-size:9px">SPEED SHUTTER 6</div>
+        <div class="zn" style="left:1440px;top:580px;width:240px;height:34px;font-size:9px">SPEED SHUTTERS 5</div>
+
+        <div class="zn" style="left:20px;top:680px;width:220px;height:28px;font-size:9px">BATTERY CHARGING</div>
+        <div class="zn" style="left:460px;top:680px;width:540px;height:28px;font-size:9px">G-SR</div>
+
+        <!-- STATS -->
+        <div class="st" style="left:20px;top:780px;width:150px">
+            <div class="sth">Warehouse Area</div>
+            <div class="sr"><span>Area</span><span>1000m Sq</span></div>
+            <div class="sr"><span>Capacity</span><span>570</span></div>
+            <div class="sr"><span>Dock</span><span>-</span></div>
+            <div class="sr"><span>Room</span><span>2</span></div>
+        </div>
+        <div class="st" style="left:180px;top:780px;width:160px">
+            <div class="sth">Stock</div>
+            <div class="sr"><span>Total Stock</span><span>925</span></div>
+            <div class="sr"><span>Normal</span><span>515</span></div>
+            <div class="sr"><span>Emergency</span><span>410</span></div>
+            <div class="sr"><span>Actual Stock</span><span>-</span></div>
+            <div class="sr"><span>Balance Stock</span><span>-</span></div>
+        </div>
+        <div class="st" style="left:350px;top:780px;width:160px">
+            <div class="sth">Man Power</div>
+            <div class="sr"><span>Total Man</span><span>28</span></div>
+            <div class="sr"><span>Non Staff</span><span>5</span></div>
+            <div class="sr"><span>Supervisors</span><span>7</span></div>
+            <div class="sr"><span>Casual</span><span>12</span></div>
+            <div class="sr"><span>ED Driver</span><span>-</span></div>
+        </div>
+
+    </div>
+
+    <div id="mo">
+        <div id="mb">
+            <div class="modal-header">
+                <h5 class="modal-title" id="m-id">Rack Details</h5>
+                <button type="button" class="btn-close" id="mx">&times;</button>
+            </div>
+            <div class="modal-body-scrollable">
+                <table class="table table-bordered">
+                    <thead>
+                        <tr>
+                            <th>Rack ID</th>
+                            <th>Stock Count</th>
+                            <th>Aging (Days)</th>
+                            <th>Last Updated</th>
+                            <th>Status</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td id="m-id-value">-</td>
+                            <td id="m-cnt">-</td>
+                            <td id="m-age">-</td>
+                            <td id="m-upd">-</td>
+                            <td id="m-status">-</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" id="mx-close">Close</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        (function () {
+            var filter = '0-20', data = {};
+            
+            function scale() {
+                var w = document.getElementById('W');
+                if (!w) return;
+                var zoom = window.innerWidth / 1920;
+                zoom = Math.min(Math.max(zoom, 0.8), 1.3);
+                w.style.transform = 'translateX(-50%) scale(' + zoom + ')';
+            }
+            
+            window.addEventListener('resize', scale);
+            scale();
+
+            var rackElements = document.querySelectorAll('.rc');
+            for (var i = 0; i < rackElements.length; i++) {
+                var c = rackElements[i];
+                c.addEventListener('click', function () {
+                    var id = this.getAttribute('data-rack'), d = data[id];
+                    document.getElementById('m-id').textContent = id;
+                    document.getElementById('m-id-value').textContent = id;
+                    document.getElementById('m-cnt').textContent = d ? d.count : '0';
+                    document.getElementById('m-age').textContent = d ? d.aging + ' days' : '0 days';
+                    document.getElementById('m-upd').textContent = d ? (d.lastUpdated || new Date().toLocaleString()) : new Date().toLocaleString();
+                    
+                    // Calculate status based on aging
+                    var status = 'Unknown';
+                    var statusColor = '#6c757d';
+                    if (d) {
+                        var aging = d.aging;
+                        if (aging <= 20) {
+                            status = 'Good (0-20 days)';
+                            statusColor = '#28a745';
+                        } else if (aging <= 30) {
+                            status = 'Warning (20-30 days)';
+                            statusColor = '#ffc107';
+                        } else if (aging <= 45) {
+                            status = 'Alert (30-45 days)';
+                            statusColor = '#fd7e14';
+                        } else if (aging <= 60) {
+                            status = 'Critical (45-60 days)';
+                            statusColor = '#dc3545';
+                        } else {
+                            status = 'S-Grade (>60 days)';
+                            statusColor = '#721c24';
+                        }
+                    }
+                    
+                    var statusElement = document.getElementById('m-status');
+                    statusElement.textContent = status;
+                    statusElement.style.color = statusColor;
+                    statusElement.style.fontWeight = '600';
+                    
+                    document.getElementById('mo').style.display = 'flex';
+                });
+            }
+
+            document.getElementById('mx').addEventListener('click', function () {
+                document.getElementById('mo').style.display = 'none';
+            });
+            
+            document.getElementById('mx-close').addEventListener('click', function () {
+                document.getElementById('mo').style.display = 'none';
+            });
+            
+            window.addEventListener('click', function (e) {
+                if (e.target.id === 'mo') document.getElementById('mo').style.display = 'none';
+            });
+
+            function load() {
+                var rackElements = document.querySelectorAll('.rc');
+                for (var i = 0; i < rackElements.length; i++) {
+                    rackElements[i].style.opacity = '0.5';
+                }
+                
+                // Use XMLHttpRequest for IE11 compatibility
+                var xhr = new XMLHttpRequest();
+                xhr.onreadystatechange = function() {
+                    if (xhr.readyState === 4) {
+                        if (xhr.status === 200) {
+                            try {
+                                data = JSON.parse(xhr.responseText);
+                                paint();
+                            } catch (e) {
+                                loadMockData();
+                            }
+                        } else {
+                            loadMockData();
+                        }
+                    }
+                };
+                xhr.open('GET', '/api/racks?filter=' + filter, true);
+                xhr.send();
+            }
+            
+            function loadMockData() {
+                var mockXhr = new XMLHttpRequest();
+                mockXhr.onreadystatechange = function() {
+                    if (mockXhr.readyState === 4) {
+                        if (mockXhr.status === 200) {
+                            try {
+                                data = JSON.parse(mockXhr.responseText);
+                                paint();
+                            } catch (e) {
+                                fb();
+                            }
+                        } else {
+                            fb();
+                        }
+                    }
+                };
+                mockXhr.open('GET', 'mock-data.json', true);
+                mockXhr.send();
+            }
+
+            function fb() {
+                data = {
+                    "G06A-01": { count: 25, aging: 18 },
+                    "G06A-02": { count: 40, aging: 32 },
+                    "G06A-03": { count: 15, aging: 12 },
+                    "G06B-01": { count: 30, aging: 55 },
+                    "G06B-02": { count: 22, aging: 28 },
+                    "G06B-03": { count: 18, aging: 65 },
+                    "G05A-01": { count: 35, aging: 8 },
+                    "G05A-02": { count: 28, aging: 42 },
+                    "G05A-03": { count: 20, aging: 15 },
+                    "G05B-01": { count: 45, aging: 70 },
+                    "G05B-02": { count: 32, aging: 25 },
+                    "G05B-03": { count: 27, aging: 38 },
+                    "G04A-01": { count: 38, aging: 5 },
+                    "G04A-02": { count: 42, aging: 48 },
+                    "G04A-03": { count: 19, aging: 22 },
+                    "G04B-01": { count: 33, aging: 62 },
+                    "G04B-02": { count: 29, aging: 35 },
+                    "G04B-03": { count: 24, aging: 58 },
+                    "G03A-01": { count: 31, aging: 10 },
+                    "G03A-02": { count: 36, aging: 52 },
+                    "G03A-03": { count: 21, aging: 18 },
+                    "G03B-01": { count: 26, aging: 68 },
+                    "G03B-02": { count: 34, aging: 29 },
+                    "G03B-03": { count: 23, aging: 44 },
+                    "G02A-01": { count: 39, aging: 7 },
+                    "G02A-02": { count: 41, aging: 56 },
+                    "G02A-03": { count: 17, aging: 20 },
+                    "G02B-01": { count: 37, aging: 72 },
+                    "G02B-02": { count: 30, aging: 31 },
+                    "G02B-03": { count: 25, aging: 50 },
+                    "G01A-01": { count: 43, aging: 3 },
+                    "G01A-02": { count: 44, aging: 60 },
+                    "G01A-03": { count: 16, aging: 16 },
+                    "G01B-01": { count: 28, aging: 75 },
+                    "G01B-02": { count: 35, aging: 27 },
+                    "G01B-03": { count: 22, aging: 40 }
+                };
+                paint();
+            }
+
+            function paint() {
+                var rackElements = document.querySelectorAll('.rc');
+                for (var i = 0; i < rackElements.length; i++) {
+                    var c = rackElements[i];
+                    var id = c.getAttribute('data-rack'), d = data[id];
+                    c.style.opacity = '1';
+                    
+                    // Remove classes using className for IE11 compatibility
+                    c.className = c.className.replace(/\bc0\b|\bc1\b|\bc2\b|\bc3\b|\bc4\b/g, '');
+                    
+                    if (d) {
+                        var a = d.aging;
+                        if (a <= 20) c.className += ' c0';
+                        else if (a <= 30) c.className += ' c1';
+                        else if (a <= 45) c.className += ' c2';
+                        else if (a <= 60) c.className += ' c3';
+                        else c.className += ' c4';
+                        c.textContent = id + '\n(' + d.count + ')';
+                    } else {
+                        c.textContent = id;
+                    }
+                }
+            }
+
+            load();
+            setInterval(load, 30000);
+        })();
+    </script>
+</body>
+
+</html>
