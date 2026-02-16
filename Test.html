@@ -2,7 +2,7 @@
 <html>
 <head>
     <meta charset="UTF-8">
-    <title>Popup Dropdown Example</title>
+    <title>Side Sheet Dropdown</title>
 
     <style>
         body {
@@ -28,29 +28,37 @@
             cursor: pointer;
         }
 
-        /* Popup overlay */
+        /* Overlay */
         .overlay {
-            display: none;
             position: fixed;
-            left: 0;
             top: 0;
+            left: 0;
             width: 100%;
             height: 100%;
             background: rgba(0,0,0,0.4);
+            display: none;
         }
 
-        .popup {
-            background: #fff;
+        /* Side Sheet */
+        .side-sheet {
+            position: fixed;
+            top: 0;
+            right: -350px;
             width: 350px;
+            height: 100%;
+            background: #ffffff;
+            box-shadow: -2px 0 8px rgba(0,0,0,0.2);
+            transition: right 0.3s ease;
             padding: 20px;
-            position: absolute;
-            top: 50%;
-            left: 50%;
-            transform: translate(-50%, -50%);
-            border-radius: 6px;
+            box-sizing: border-box;
+            overflow-y: auto;
         }
 
-        .popup h3 {
+        .side-sheet.open {
+            right: 0;
+        }
+
+        .side-sheet h3 {
             margin-top: 0;
         }
 
@@ -64,12 +72,13 @@
         }
 
         .actions {
+            margin-top: 20px;
             text-align: right;
         }
 
         .actions button {
-            margin-left: 10px;
             padding: 6px 12px;
+            margin-left: 10px;
         }
     </style>
 </head>
@@ -78,52 +87,53 @@
 
 <header>
     <h2>Application Header</h2>
-    <button onclick="openPopup()">Open Filters</button>
+    <button onclick="openSheet()">Open Filters</button>
 </header>
 
-<!-- Popup -->
-<div class="overlay" id="overlay">
-    <div class="popup">
-        <h3>Select Options</h3>
+<div class="overlay" id="overlay" onclick="closeSheet()"></div>
 
-        <div class="select-group">
-            <label>Multi Select Skills</label>
-            <select id="multiSelect" multiple>
-                <option value="Java">Java</option>
-                <option value="Spring Boot">Spring Boot</option>
-                <option value="Angular">Angular</option>
-                <option value="React">React</option>
-                <option value="Docker">Docker</option>
-            </select>
-        </div>
+<div class="side-sheet" id="sideSheet">
+    <h3>Filter Options</h3>
 
-        <div class="select-group">
-            <label>Experience</label>
-            <select id="singleSelect">
-                <option value="">-- Select --</option>
-                <option value="1-3 Years">1-3 Years</option>
-                <option value="3-5 Years">3-5 Years</option>
-                <option value="5+ Years">5+ Years</option>
-            </select>
-        </div>
+    <div class="select-group">
+        <label>Multi Select Skills</label>
+        <select id="multiSelect" multiple>
+            <option value="Java">Java</option>
+            <option value="Spring Boot">Spring Boot</option>
+            <option value="Angular">Angular</option>
+            <option value="React">React</option>
+            <option value="Docker">Docker</option>
+        </select>
+    </div>
 
-        <div class="actions">
-            <button onclick="closePopup()">Cancel</button>
-            <button onclick="submitSelection()">Apply</button>
-        </div>
+    <div class="select-group">
+        <label>Experience</label>
+        <select id="singleSelect">
+            <option value="">-- Select --</option>
+            <option value="1-3 Years">1-3 Years</option>
+            <option value="3-5 Years">3-5 Years</option>
+            <option value="5+ Years">5+ Years</option>
+        </select>
+    </div>
+
+    <div class="actions">
+        <button onclick="closeSheet()">Close</button>
+        <button onclick="applySelection()">Apply</button>
     </div>
 </div>
 
 <script>
-    function openPopup() {
+    function openSheet() {
         document.getElementById("overlay").style.display = "block";
+        document.getElementById("sideSheet").className = "side-sheet open";
     }
 
-    function closePopup() {
+    function closeSheet() {
         document.getElementById("overlay").style.display = "none";
+        document.getElementById("sideSheet").className = "side-sheet";
     }
 
-    function submitSelection() {
+    function applySelection() {
         var multi = document.getElementById("multiSelect");
         var single = document.getElementById("singleSelect");
 
@@ -141,7 +151,7 @@
             "\nSingle: " + (singleValue ? singleValue : "None")
         );
 
-        closePopup();
+        closeSheet();
     }
 </script>
 
