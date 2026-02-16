@@ -2,7 +2,7 @@
 <html>
 <head>
     <meta charset="UTF-8">
-    <title>Side Sheet With Selected Indicator</title>
+    <title>Side Sheet With Badge</title>
 
     <style>
         body {
@@ -23,9 +23,31 @@
             margin: 0;
         }
 
+        /* Filter Button */
+        .filter-wrapper {
+            position: relative;
+            display: inline-block;
+        }
+
         #filterBtn {
-            padding: 6px 12px;
+            padding: 8px 16px;
             cursor: pointer;
+        }
+
+        /* Badge */
+        .badge {
+            position: absolute;
+            top: -6px;
+            right: -6px;
+            background: red;
+            color: #fff;
+            font-size: 12px;
+            min-width: 18px;
+            height: 18px;
+            line-height: 18px;
+            border-radius: 50%;
+            text-align: center;
+            display: none;
         }
 
         .overlay {
@@ -81,7 +103,11 @@
 
 <header>
     <h2>Application Header</h2>
-    <button id="filterBtn" onclick="openSheet()">Filters</button>
+
+    <div class="filter-wrapper">
+        <button id="filterBtn" onclick="openSheet()">Filters</button>
+        <span class="badge" id="filterBadge">0</span>
+    </div>
 </header>
 
 <div class="overlay" id="overlay" onclick="closeSheet()"></div>
@@ -130,6 +156,7 @@
     function applySelection() {
         var multi = document.getElementById("multiSelect");
         var single = document.getElementById("singleSelect");
+        var badge = document.getElementById("filterBadge");
 
         var count = 0;
 
@@ -143,12 +170,11 @@
             count++;
         }
 
-        var btn = document.getElementById("filterBtn");
-
         if (count > 0) {
-            btn.innerHTML = "Filters (" + count + ")";
+            badge.style.display = "block";
+            badge.innerHTML = count;
         } else {
-            btn.innerHTML = "Filters";
+            badge.style.display = "none";
         }
 
         closeSheet();
