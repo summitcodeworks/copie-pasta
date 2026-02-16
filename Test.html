@@ -2,7 +2,7 @@
 <html>
 <head>
     <meta charset="UTF-8">
-    <title>Side Sheet With Badge</title>
+    <title>Unique Side Sheet Filter</title>
 
     <style>
         body {
@@ -10,7 +10,7 @@
             font-family: Arial, sans-serif;
         }
 
-        header {
+        .uxf-header {
             background: #1f2d3d;
             color: #fff;
             padding: 15px;
@@ -19,23 +19,21 @@
             align-items: center;
         }
 
-        header h2 {
+        .uxf-header h2 {
             margin: 0;
         }
 
-        /* Filter Button */
-        .filter-wrapper {
+        .uxf-filter-wrapper {
             position: relative;
             display: inline-block;
         }
 
-        #filterBtn {
+        #uxfFilterBtn {
             padding: 8px 16px;
             cursor: pointer;
         }
 
-        /* Badge */
-        .badge {
+        .uxf-badge {
             position: absolute;
             top: -6px;
             right: -6px;
@@ -50,7 +48,7 @@
             display: none;
         }
 
-        .overlay {
+        .uxf-overlay {
             position: fixed;
             top: 0;
             left: 0;
@@ -60,7 +58,7 @@
             display: none;
         }
 
-        .side-sheet {
+        .uxf-side-sheet {
             position: fixed;
             top: 0;
             right: -350px;
@@ -74,25 +72,25 @@
             overflow-y: auto;
         }
 
-        .side-sheet.open {
+        .uxf-side-sheet.uxf-open {
             right: 0;
         }
 
-        .select-group {
+        .uxf-select-group {
             margin-bottom: 15px;
         }
 
-        select {
+        .uxf-select-group select {
             width: 100%;
             padding: 6px;
         }
 
-        .actions {
+        .uxf-actions {
             margin-top: 20px;
             text-align: right;
         }
 
-        .actions button {
+        .uxf-actions button {
             padding: 6px 12px;
             margin-left: 10px;
         }
@@ -101,23 +99,23 @@
 
 <body>
 
-<header>
+<div class="uxf-header">
     <h2>Application Header</h2>
 
-    <div class="filter-wrapper">
-        <button id="filterBtn" onclick="openSheet()">Filters</button>
-        <span class="badge" id="filterBadge">0</span>
+    <div class="uxf-filter-wrapper">
+        <button id="uxfFilterBtn" onclick="uxfOpenSheet()">Filters</button>
+        <span class="uxf-badge" id="uxfBadge">0</span>
     </div>
-</header>
+</div>
 
-<div class="overlay" id="overlay" onclick="closeSheet()"></div>
+<div class="uxf-overlay" id="uxfOverlay" onclick="uxfCloseSheet()"></div>
 
-<div class="side-sheet" id="sideSheet">
+<div class="uxf-side-sheet" id="uxfSideSheet">
     <h3>Filter Options</h3>
 
-    <div class="select-group">
+    <div class="uxf-select-group">
         <label>Multi Select Skills</label>
-        <select id="multiSelect" multiple>
+        <select id="uxfMultiSelect" multiple>
             <option value="Java">Java</option>
             <option value="Spring Boot">Spring Boot</option>
             <option value="Angular">Angular</option>
@@ -126,9 +124,9 @@
         </select>
     </div>
 
-    <div class="select-group">
+    <div class="uxf-select-group">
         <label>Experience</label>
-        <select id="singleSelect">
+        <select id="uxfSingleSelect">
             <option value="">-- Select --</option>
             <option value="1-3 Years">1-3 Years</option>
             <option value="3-5 Years">3-5 Years</option>
@@ -136,27 +134,27 @@
         </select>
     </div>
 
-    <div class="actions">
-        <button onclick="closeSheet()">Close</button>
-        <button onclick="applySelection()">Apply</button>
+    <div class="uxf-actions">
+        <button onclick="uxfCloseSheet()">Close</button>
+        <button onclick="uxfApplySelection()">Apply</button>
     </div>
 </div>
 
 <script>
-    function openSheet() {
-        document.getElementById("overlay").style.display = "block";
-        document.getElementById("sideSheet").className = "side-sheet open";
+    function uxfOpenSheet() {
+        document.getElementById("uxfOverlay").style.display = "block";
+        document.getElementById("uxfSideSheet").className = "uxf-side-sheet uxf-open";
     }
 
-    function closeSheet() {
-        document.getElementById("overlay").style.display = "none";
-        document.getElementById("sideSheet").className = "side-sheet";
+    function uxfCloseSheet() {
+        document.getElementById("uxfOverlay").style.display = "none";
+        document.getElementById("uxfSideSheet").className = "uxf-side-sheet";
     }
 
-    function applySelection() {
-        var multi = document.getElementById("multiSelect");
-        var single = document.getElementById("singleSelect");
-        var badge = document.getElementById("filterBadge");
+    function uxfApplySelection() {
+        var multi = document.getElementById("uxfMultiSelect");
+        var single = document.getElementById("uxfSingleSelect");
+        var badge = document.getElementById("uxfBadge");
 
         var count = 0;
 
@@ -177,7 +175,7 @@
             badge.style.display = "none";
         }
 
-        closeSheet();
+        uxfCloseSheet();
     }
 </script>
 
