@@ -1,0 +1,405 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>GOC Warehouse Ageing</title>
+  <style>
+    :root {
+      --paper: #f2f2f2;
+      --paper-2: #ececec;
+      --ink: #292929;
+      --line: #838383;
+      --line-soft: #9a9a9a;
+      --header-dark: #7d7d7d;
+      --header-light: #9c9c9c;
+    }
+
+    * {
+      box-sizing: border-box;
+    }
+
+    body {
+      margin: 0;
+      background:
+        radial-gradient(circle at 8% 14%, #f7f7f7 0, #ededed 45%, #e4e4e4 100%);
+      font-family: "Bahnschrift", "DIN Alternate", "Franklin Gothic Medium", sans-serif;
+      color: var(--ink);
+      overflow: hidden;
+      padding: 0;
+    }
+
+    .sheet {
+      width: 100vw;
+      height: 100vh;
+      margin: 0;
+      background:
+        linear-gradient(180deg, rgba(255, 255, 255, 0.54), rgba(255, 255, 255, 0)),
+        repeating-linear-gradient(
+          0deg,
+          rgba(0, 0, 0, 0.015) 0,
+          rgba(0, 0, 0, 0.015) 1px,
+          transparent 1px,
+          transparent 9px
+        ),
+        var(--paper);
+      border: 1px solid #6f6f6f;
+      position: relative;
+      box-shadow: none;
+      border-radius: 0;
+    }
+
+    .topbar {
+      height: 54px;
+      border-bottom: 1px solid #616161;
+      background: linear-gradient(var(--header-light), var(--header-dark));
+      color: #f8f8f8;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 0 18px;
+      font-size: 15px;
+      letter-spacing: 0.2px;
+    }
+
+    .title {
+      min-width: 360px;
+      font-size: 40px;
+      letter-spacing: 0.3px;
+      line-height: 1;
+      transform: scaleY(0.84);
+      transform-origin: left center;
+    }
+
+    .badges {
+      display: flex;
+      gap: 10px;
+      align-items: center;
+    }
+
+    .badge {
+      min-width: 92px;
+      border: 1px solid #676767;
+      background: #f0f0f0;
+      color: #282828;
+      text-align: center;
+      font-size: 12px;
+      padding: 2px 8px;
+      height: 26px;
+      line-height: 20px;
+    }
+
+    .right {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      min-width: 380px;
+      justify-content: flex-end;
+      font-size: 20px;
+    }
+
+    .date-box {
+      border: 1px solid #666;
+      background: #f6f6f6;
+      color: #3e3e3e;
+      width: 220px;
+      height: 30px;
+      padding: 4px 10px;
+      font-size: 15px;
+      display: flex;
+      align-items: center;
+    }
+
+    .date-input {
+      border: 1px solid #666;
+      background: #f6f6f6;
+      color: #2f2f2f;
+      width: 220px;
+      height: 30px;
+      padding: 4px 10px;
+      font-size: 15px;
+      font-family: inherit;
+    }
+
+    .countdown-box {
+      min-width: 68px;
+      height: 30px;
+      border: 1px solid #666;
+      background: #f6f6f6;
+      color: #2f2f2f;
+      font-size: 15px;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      padding: 0 10px;
+    }
+
+    .map {
+      position: relative;
+      height: 830px;
+      border-top: 1px solid #8f8f8f;
+      background:
+        linear-gradient(180deg, rgba(0, 0, 0, 0.01), rgba(0, 0, 0, 0.02)),
+        var(--paper-2);
+    }
+
+    .box {
+      position: absolute;
+      border: 1px solid var(--line);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      text-align: center;
+      font-size: 14px;
+      line-height: 1.1;
+      background: transparent;
+    }
+
+    .lane {
+      position: absolute;
+      border: 1px solid var(--line);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: #303030;
+      font-size: 36px;
+      line-height: 1;
+      background: transparent;
+    }
+
+    .rack {
+      position: absolute;
+      border: 1px solid var(--line);
+      font-size: 38px;
+      line-height: 1;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      background: transparent;
+    }
+
+    .cell {
+      position: absolute;
+      border: 1px solid var(--line-soft);
+      font-size: 14px;
+      line-height: 1.1;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      background: transparent;
+      text-align: center;
+    }
+
+    .small {
+      font-size: 11px;
+    }
+
+    .footer-table {
+      position: absolute;
+      bottom: 46px;
+      left: 20px;
+      width: 530px;
+      height: 98px;
+      display: flex;
+      gap: 8px;
+    }
+
+    .mini {
+      flex: 1;
+      border: 1px solid var(--line);
+      font-size: 12px;
+      background: rgba(245, 245, 245, 0.88);
+    }
+
+    .mini table {
+      border-collapse: collapse;
+      width: 100%;
+      height: 100%;
+    }
+
+    .mini td,
+    .mini th {
+      border: 1px solid var(--line-soft);
+      padding: 1px 4px;
+      text-align: left;
+    }
+
+    .mini th {
+      text-align: center;
+      background: #e9e9e9;
+      font-weight: 700;
+    }
+
+    @media (max-width: 1740px) {
+      body {
+        padding: 0;
+      }
+
+      .sheet {
+        margin: 0;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="sheet">
+    <div class="topbar">
+      <div class="title">GOC WAREHOUSE AGEING</div>
+      <div class="badges">
+        <div class="badge">0-20 Day</div>
+        <div class="badge">20-30 Day</div>
+        <div class="badge">30-45 Day</div>
+        <div class="badge">45-60 Day</div>
+        <div class="badge">S Grade</div>
+      </div>
+      <div class="right">
+        <div>DATE</div>
+        <input id="warehouse-date" class="date-input" type="date" aria-label="Warehouse date">
+        <div id="countdown-seconds" class="countdown-box">120s</div>
+      </div>
+    </div>
+
+    <div class="map">
+      <div class="box" style="left:82px;top:22px;width:170px;height:176px;">Vacuum Pack</div>
+      <div class="box" style="left:252px;top:22px;width:250px;height:46px;">Carton Stock</div>
+      <div class="box" style="left:460px;top:22px;width:540px;height:46px;">Packing Material Storage</div>
+      <div class="box" style="left:252px;top:86px;width:242px;height:108px;">SBP pack</div>
+      <div class="box" style="left:494px;top:140px;width:112px;height:20px;"></div>
+      <div class="box" style="left:690px;top:86px;width:320px;height:108px;"><span style="border:1px solid #888;padding:2px 28px;">PACK-ZONE</span></div>
+      <div class="box" style="right:144px;top:64px;width:338px;height:92px;"><span style="border:1px solid #888;padding:2px 30px;">LBP Pack</span></div>
+      <div class="box" style="right:144px;top:156px;width:56px;height:58px;"></div>
+
+      <div class="box" style="right:18px;top:22px;width:112px;height:170px;">ELEVATOR</div>
+      <div class="box" style="right:18px;top:192px;width:112px;height:142px;">GVR07</div>
+      <div class="box" style="right:18px;top:334px;width:112px;height:58px;">SERVER ROOM</div>
+      <div class="box" style="right:18px;top:392px;width:112px;height:58px;">WH UTILITY ROOM</div>
+      <div class="box" style="right:18px;top:450px;width:112px;height:66px;">GOC OFFICE</div>
+
+      <div class="cell" style="right:194px;top:244px;width:58px;height:58px;">G01X-04</div>
+
+      <div class="lane" style="left:690px;top:228px;width:360px;height:50px;font-size:34px;">G-RW</div>
+      <div class="lane" style="left:1050px;top:228px;width:360px;height:50px;font-size:34px;">GVR06</div>
+
+      <div class="box" style="left:20px;top:260px;width:270px;height:364px;"></div>
+      <div class="rack" style="left:112px;top:260px;width:178px;height:294px;">G07X-01</div>
+      <div class="box" style="left:88px;top:488px;width:130px;height:30px;border:none;font-size:16px;line-height:1;justify-content:flex-start;">Ship Tray</div>
+
+      <div class="cell" style="left:290px;top:260px;width:56px;height:98px;">G06B-03</div>
+      <div class="cell" style="left:346px;top:260px;width:56px;height:98px;">G06A-03</div>
+      <div class="cell" style="left:290px;top:358px;width:56px;height:98px;">G06B-02</div>
+      <div class="cell" style="left:346px;top:358px;width:56px;height:98px;">G06A-02</div>
+      <div class="cell" style="left:290px;top:456px;width:56px;height:98px;">G06B-01</div>
+      <div class="cell" style="left:346px;top:456px;width:56px;height:98px;">G06A-01</div>
+      <div class="lane" style="left:402px;top:260px;width:112px;height:294px;">GVR05</div>
+
+      <div class="cell" style="left:514px;top:260px;width:56px;height:98px;">G05B-03</div>
+      <div class="cell" style="left:570px;top:260px;width:56px;height:98px;">G05A-03</div>
+      <div class="cell" style="left:514px;top:358px;width:56px;height:98px;">G05B-02</div>
+      <div class="cell" style="left:570px;top:358px;width:56px;height:98px;">G05A-02</div>
+      <div class="cell" style="left:514px;top:456px;width:56px;height:98px;">G05B-01</div>
+      <div class="cell" style="left:570px;top:456px;width:56px;height:98px;">G05A-01</div>
+      <div class="lane" style="left:626px;top:260px;width:122px;height:294px;">GVR04</div>
+
+      <div class="cell" style="left:748px;top:260px;width:56px;height:98px;">G04B-03</div>
+      <div class="cell" style="left:804px;top:260px;width:56px;height:98px;">G04A-03</div>
+      <div class="cell" style="left:748px;top:358px;width:56px;height:98px;">G04B-02</div>
+      <div class="cell" style="left:804px;top:358px;width:56px;height:98px;">G04A-02</div>
+      <div class="cell" style="left:748px;top:456px;width:56px;height:98px;">G04B-01</div>
+      <div class="cell" style="left:804px;top:456px;width:56px;height:98px;">G04A-01</div>
+      <div class="lane" style="left:860px;top:260px;width:112px;height:294px;">GVR03</div>
+
+      <div class="cell" style="left:972px;top:260px;width:56px;height:98px;">G03B-03</div>
+      <div class="cell" style="left:1028px;top:260px;width:56px;height:98px;">G03A-03</div>
+      <div class="cell" style="left:972px;top:358px;width:56px;height:98px;">G03B-02</div>
+      <div class="cell" style="left:1028px;top:358px;width:56px;height:98px;">G03A-02</div>
+      <div class="cell" style="left:972px;top:456px;width:56px;height:98px;">G03B-01</div>
+      <div class="cell" style="left:1028px;top:456px;width:56px;height:98px;">G03A-01</div>
+      <div class="lane" style="left:1084px;top:260px;width:120px;height:294px;">GVR02</div>
+
+      <div class="cell" style="left:1204px;top:260px;width:56px;height:98px;">G02B-03</div>
+      <div class="cell" style="left:1260px;top:260px;width:56px;height:98px;">G02A-03</div>
+      <div class="cell" style="left:1204px;top:358px;width:56px;height:98px;">G02B-02</div>
+      <div class="cell" style="left:1260px;top:358px;width:56px;height:98px;">G02A-02</div>
+      <div class="cell" style="left:1204px;top:456px;width:56px;height:98px;">G02B-01</div>
+      <div class="cell" style="left:1260px;top:456px;width:56px;height:98px;">G02A-01</div>
+      <div class="lane" style="left:1316px;top:260px;width:78px;height:294px;">GVR01</div>
+
+      <div class="cell" style="left:1394px;top:260px;width:56px;height:98px;">G01X-03</div>
+      <div class="cell" style="left:1394px;top:358px;width:56px;height:98px;">G01X-02</div>
+      <div class="cell" style="left:1394px;top:456px;width:56px;height:98px;">G01X-01</div>
+
+      <div class="box" style="left:172px;top:560px;width:90px;height:64px;">SPEED<br>SHUTTER<br>8</div>
+      <div class="box" style="left:264px;top:560px;width:248px;height:64px;">RAW MAT RACK</div>
+      <div class="box" style="left:402px;top:560px;width:258px;height:22px;">SPEED SHUTTER 7</div>
+      <div class="box" style="left:914px;top:560px;width:448px;height:22px;">SPEED SHUTTER 6</div>
+      <div class="box" style="right:182px;top:560px;width:150px;height:22px;">SPEED SHUTTER 5</div>
+
+      <div class="box" style="left:20px;top:636px;width:1518px;height:48px;justify-content:flex-start;padding-left:12px;">BATTERY CHARGING</div>
+      <div class="box" style="left:540px;top:676px;width:998px;height:52px;font-size:34px;">G-SR</div>
+
+      <div class="footer-table">
+        <div class="mini">
+          <table>
+            <tr><th colspan="2">Warehouse Area</th></tr>
+            <tr><td>Area</td><td>1100m Sq</td></tr>
+            <tr><td>Capacity</td><td>925</td></tr>
+            <tr><td>Dock</td><td>3</td></tr>
+            <tr><td>Room</td><td>2</td></tr>
+          </table>
+        </div>
+        <div class="mini">
+          <table>
+            <tr><th colspan="2">Stock</th></tr>
+            <tr><td>Total Stock</td><td>925</td></tr>
+            <tr><td>Normal Stock</td><td>515</td></tr>
+            <tr><td>Emergencd</td><td>410</td></tr>
+            <tr><td>Actual Stock</td><td>-</td></tr>
+            <tr><td>Balance Stock</td><td>-</td></tr>
+          </table>
+        </div>
+        <div class="mini">
+          <table>
+            <tr><th colspan="2">Man Power</th></tr>
+            <tr><td>Total Man</td><td>28</td></tr>
+            <tr><td>Non Staff</td><td>5</td></tr>
+            <tr><td>Supervisor</td><td>7</td></tr>
+            <tr><td>Casual</td><td>12</td></tr>
+            <tr><td>FD Driver</td><td>4</td></tr>
+          </table>
+        </div>
+      </div>
+    </div>
+  </div>
+  <script>
+    (function () {
+      var countdownEl = document.getElementById('countdown-seconds');
+      var dateInput = document.getElementById('warehouse-date');
+      var remaining = 120;
+      var timerId;
+
+      function pad2(value) {
+        return value < 10 ? '0' + value : '' + value;
+      }
+
+      function setTodayDate() {
+        var now = new Date();
+        var formatted = now.getFullYear() + '-' + pad2(now.getMonth() + 1) + '-' + pad2(now.getDate());
+        dateInput.value = formatted;
+      }
+
+      function updateCountdown() {
+        countdownEl.innerHTML = remaining + 's';
+        if (remaining <= 0) {
+          clearInterval(timerId);
+          return;
+        }
+        remaining = remaining - 1;
+      }
+
+      setTodayDate();
+      updateCountdown();
+      timerId = setInterval(updateCountdown, 1000);
+    })();
+  </script>
+</body>
+</html>
