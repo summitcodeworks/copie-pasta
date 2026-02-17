@@ -3,27 +3,35 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>GOC Warehouse Ageing</title>
+  <title>Floor Map</title>
   <style>
     :root {
-      --paper: #f2f2f2;
-      --paper-2: #ececec;
-      --ink: #292929;
-      --line: #838383;
-      --line-soft: #9a9a9a;
-      --header-dark: #7d7d7d;
-      --header-light: #9c9c9c;
+      --paper: #eef3fb;
+      --paper-2: #e4ecf8;
+      --ink: #1f2a44;
+      --line: #7f95ba;
+      --line-soft: #adc0de;
+      --header-dark: #0a1f4d;
+      --header-light: #1f4fa3;
+      --surface: #ffffff;
+      --surface-soft: #f4f8ff;
+      --shadow: rgba(16, 34, 74, 0.16);
     }
 
     * {
       box-sizing: border-box;
     }
 
+    html,
     body {
       margin: 0;
-      background:
-        radial-gradient(circle at 8% 14%, #f7f7f7 0, #ededed 45%, #e4e4e4 100%);
-      font-family: "Bahnschrift", "DIN Alternate", "Franklin Gothic Medium", sans-serif;
+      padding: 0;
+    }
+
+    body {
+      margin: 0;
+      background: #e5e7eb;
+      font-family: "Trebuchet MS", "Lucida Sans", "Segoe UI", sans-serif;
       color: var(--ink);
       overflow: hidden;
       padding: 0;
@@ -33,42 +41,36 @@
       width: 100vw;
       height: 100vh;
       margin: 0;
-      background:
-        linear-gradient(180deg, rgba(255, 255, 255, 0.54), rgba(255, 255, 255, 0)),
-        repeating-linear-gradient(
-          0deg,
-          rgba(0, 0, 0, 0.015) 0,
-          rgba(0, 0, 0, 0.015) 1px,
-          transparent 1px,
-          transparent 9px
-        ),
-        var(--paper);
-      border: 1px solid #6f6f6f;
+      background: var(--paper);
+      border: none;
       position: relative;
       box-shadow: none;
       border-radius: 0;
+      display: flex;
+      flex-direction: column;
     }
 
     .topbar {
-      height: 54px;
-      border-bottom: 1px solid #616161;
+      height: 62px;
+      border-bottom: 1px solid #17376f;
       background: linear-gradient(var(--header-light), var(--header-dark));
-      color: #f8f8f8;
+      color: #f5f8ff;
       display: flex;
       align-items: center;
       justify-content: space-between;
-      padding: 0 18px;
+      padding: 0 20px;
       font-size: 15px;
-      letter-spacing: 0.2px;
+      letter-spacing: 0.3px;
+      box-shadow: inset 0 -1px 0 rgba(255, 255, 255, 0.14);
     }
 
     .title {
       min-width: 360px;
-      font-size: 40px;
-      letter-spacing: 0.3px;
+      font-size: 22px;
+      letter-spacing: 0.8px;
       line-height: 1;
-      transform: scaleY(0.84);
-      transform-origin: left center;
+      text-transform: uppercase;
+      font-weight: 700;
     }
 
     .badges {
@@ -79,14 +81,47 @@
 
     .badge {
       min-width: 92px;
-      border: 1px solid #676767;
-      background: #f0f0f0;
-      color: #282828;
+      border: 1px solid rgba(16, 34, 74, 0.22);
+      background: #f8fbff;
+      color: #1f2a44;
       text-align: center;
       font-size: 12px;
-      padding: 2px 8px;
-      height: 26px;
-      line-height: 20px;
+      padding: 4px 10px;
+      height: 28px;
+      line-height: 18px;
+      border-radius: 999px;
+      font-weight: 700;
+      box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.6);
+    }
+
+    .badge-0-20 {
+      background: #5fbf6b;
+      border-color: #4b9d56;
+      color: #0f2b12;
+    }
+
+    .badge-20-30 {
+      background: #ffe066;
+      border-color: #c9ae3f;
+      color: #3a310f;
+    }
+
+    .badge-30-45 {
+      background: #ffb347;
+      border-color: #c48631;
+      color: #3a2307;
+    }
+
+    .badge-45-60 {
+      background: #ef6b5a;
+      border-color: #b95345;
+      color: #2f0e09;
+    }
+
+    .badge-s-grade {
+      background: #ffea00;
+      border-color: #c9ba00;
+      color: #2f2a00;
     }
 
     .right {
@@ -95,7 +130,9 @@
       gap: 12px;
       min-width: 380px;
       justify-content: flex-end;
-      font-size: 20px;
+      font-size: 15px;
+      font-weight: 700;
+      letter-spacing: 0.5px;
     }
 
     .date-box {
@@ -111,36 +148,38 @@
     }
 
     .date-input {
-      border: 1px solid #666;
-      background: #f6f6f6;
-      color: #2f2f2f;
+      border: 1px solid #2e56a2;
+      background: #f8fbff;
+      color: #1f2a44;
       width: 220px;
-      height: 30px;
+      height: 34px;
       padding: 4px 10px;
-      font-size: 15px;
+      font-size: 14px;
       font-family: inherit;
+      border-radius: 6px;
     }
 
     .countdown-box {
       min-width: 68px;
-      height: 30px;
-      border: 1px solid #666;
-      background: #f6f6f6;
-      color: #2f2f2f;
-      font-size: 15px;
+      height: 34px;
+      border: 1px solid #2e56a2;
+      background: #f8fbff;
+      color: #15356f;
+      font-size: 14px;
       display: inline-flex;
       align-items: center;
       justify-content: center;
       padding: 0 10px;
+      border-radius: 6px;
+      font-weight: 700;
     }
 
     .map {
       position: relative;
-      height: 830px;
-      border-top: 1px solid #8f8f8f;
-      background:
-        linear-gradient(180deg, rgba(0, 0, 0, 0.01), rgba(0, 0, 0, 0.02)),
-        var(--paper-2);
+      flex: 1;
+      min-height: 0;
+      border-top: 1px solid #a8bad8;
+      background: var(--paper-2);
     }
 
     .box {
@@ -150,9 +189,9 @@
       align-items: center;
       justify-content: center;
       text-align: center;
-      font-size: 14px;
+      font-size: 13px;
       line-height: 1.1;
-      background: transparent;
+      background: rgba(255, 255, 255, 0.25);
     }
 
     .lane {
@@ -161,33 +200,42 @@
       display: flex;
       align-items: center;
       justify-content: center;
-      color: #303030;
-      font-size: 36px;
+      color: #25365c;
+      font-size: 18px;
+      font-weight: 700;
       line-height: 1;
-      background: transparent;
+      background: rgba(255, 255, 255, 0.3);
     }
 
     .rack {
       position: absolute;
       border: 1px solid var(--line);
-      font-size: 38px;
+      font-size: 22px;
+      font-weight: 700;
       line-height: 1;
       display: flex;
       align-items: center;
       justify-content: center;
-      background: transparent;
+      background: rgba(255, 255, 255, 0.35);
     }
 
     .cell {
       position: absolute;
-      border: 1px solid var(--line-soft);
+      border: 1px solid var(--line);
       font-size: 14px;
       line-height: 1.1;
       display: flex;
       align-items: center;
       justify-content: center;
-      background: transparent;
+      background: rgba(255, 255, 255, 0.22);
       text-align: center;
+      cursor: pointer;
+      transition: background 0.16s ease, box-shadow 0.16s ease;
+    }
+
+    .cell:hover {
+      background: rgba(255, 255, 255, 0.78);
+      box-shadow: inset 0 0 0 1px rgba(40, 70, 130, 0.18);
     }
 
     .small {
@@ -208,7 +256,7 @@
       flex: 1;
       border: 1px solid var(--line);
       font-size: 12px;
-      background: rgba(245, 245, 245, 0.88);
+      background: rgba(255, 255, 255, 0.78);
     }
 
     .mini table {
@@ -226,8 +274,102 @@
 
     .mini th {
       text-align: center;
-      background: #e9e9e9;
+      background: #edf3ff;
       font-weight: 700;
+    }
+
+    .modal-overlay {
+      position: fixed;
+      left: 0;
+      top: 0;
+      width: 100%;
+      height: 100%;
+      background: rgba(8, 16, 36, 0.44);
+      display: none;
+      z-index: 9999;
+    }
+
+    .modal-dialog {
+      position: absolute;
+      left: 50%;
+      top: 50%;
+      width: 680px;
+      height: 440px;
+      margin-left: -340px;
+      margin-top: -220px;
+      background: var(--surface);
+      border: 1px solid #8ea8d3;
+      box-shadow: 0 20px 48px var(--shadow);
+      border-radius: 12px;
+      overflow: hidden;
+    }
+
+    .modal-header {
+      height: 52px;
+      padding: 0 16px;
+      background: linear-gradient(#1c3b71, #122a52);
+      color: #fff;
+      border-bottom: 1px solid #102a5f;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      font-size: 20px;
+    }
+
+    .modal-title {
+      font-weight: 700;
+      letter-spacing: 0.2px;
+    }
+
+    .modal-close {
+      width: 30px;
+      height: 30px;
+      border: 1px solid rgba(255, 255, 255, 0.25);
+      background: rgba(255, 255, 255, 0.12);
+      color: #fff;
+      cursor: pointer;
+      font-size: 18px;
+      line-height: 1;
+      border-radius: 6px;
+    }
+
+    .modal-body {
+      height: 388px;
+      overflow-y: auto;
+      background: var(--surface-soft);
+      padding: 14px;
+    }
+
+    .modal-meta,
+    .modal-data {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 14px;
+      background: #ffffff;
+      margin-bottom: 10px;
+      border-radius: 10px;
+      overflow: hidden;
+      box-shadow: 0 1px 0 rgba(0, 0, 0, 0.03);
+    }
+
+    .modal-meta th,
+    .modal-meta td,
+    .modal-data th,
+    .modal-data td {
+      border: 1px solid #c8d5ea;
+      padding: 8px 10px;
+      text-align: left;
+      vertical-align: top;
+    }
+
+    .modal-meta th,
+    .modal-data th {
+      background: #eaf1ff;
+      font-weight: 700;
+    }
+
+    .modal-data tbody tr:nth-child(even) td {
+      background: #f5f8ff;
     }
 
     @media (max-width: 1740px) {
@@ -244,13 +386,13 @@
 <body>
   <div class="sheet">
     <div class="topbar">
-      <div class="title">GOC WAREHOUSE AGEING</div>
+      <div class="title">Floor Map</div>
       <div class="badges">
-        <div class="badge">0-20 Day</div>
-        <div class="badge">20-30 Day</div>
-        <div class="badge">30-45 Day</div>
-        <div class="badge">45-60 Day</div>
-        <div class="badge">S Grade</div>
+        <div class="badge badge-0-20">0-20 Day</div>
+        <div class="badge badge-20-30">20-30 Day</div>
+        <div class="badge badge-30-45">30-45 Day</div>
+        <div class="badge badge-45-60">45-60 Day</div>
+        <div class="badge badge-s-grade">S Grade</div>
       </div>
       <div class="right">
         <div>DATE</div>
@@ -370,10 +512,48 @@
       </div>
     </div>
   </div>
+  <div id="cell-modal" class="modal-overlay">
+    <div class="modal-dialog">
+      <div class="modal-header">
+        <div id="cell-modal-title" class="modal-title">Cell Details</div>
+        <button id="cell-modal-close" class="modal-close" type="button">x</button>
+      </div>
+      <div class="modal-body">
+        <table class="modal-meta">
+          <thead>
+            <tr>
+              <th>Cell</th>
+              <th>Date</th>
+              <th>Timer</th>
+              <th>Status</th>
+            </tr>
+          </thead>
+          <tbody id="cell-modal-meta-body"></tbody>
+        </table>
+        <table class="modal-data">
+          <thead>
+            <tr>
+              <th>Metric</th>
+              <th>Value</th>
+              <th>Reference</th>
+              <th>Remarks</th>
+            </tr>
+          </thead>
+          <tbody id="cell-modal-body"></tbody>
+        </table>
+      </div>
+    </div>
+  </div>
   <script>
     (function () {
       var countdownEl = document.getElementById('countdown-seconds');
       var dateInput = document.getElementById('warehouse-date');
+      var modalEl = document.getElementById('cell-modal');
+      var modalTitleEl = document.getElementById('cell-modal-title');
+      var modalMetaBodyEl = document.getElementById('cell-modal-meta-body');
+      var modalBodyEl = document.getElementById('cell-modal-body');
+      var modalCloseEl = document.getElementById('cell-modal-close');
+      var cells = document.getElementsByClassName('cell');
       var remaining = 120;
       var timerId;
 
@@ -396,8 +576,93 @@
         remaining = remaining - 1;
       }
 
+      function getTodayString() {
+        var now = new Date();
+        return now.getFullYear() + '-' + pad2(now.getMonth() + 1) + '-' + pad2(now.getDate());
+      }
+
+      function buildMetaRow(cellName, selectedDate, timerText, status) {
+        return '<tr>' +
+          '<td>' + cellName + '</td>' +
+          '<td>' + selectedDate + '</td>' +
+          '<td>' + timerText + '</td>' +
+          '<td>' + status + '</td>' +
+          '</tr>';
+      }
+
+      function buildDataRow(metric, value, reference, remarks) {
+        return '<tr>' +
+          '<td>' + metric + '</td>' +
+          '<td>' + value + '</td>' +
+          '<td>' + reference + '</td>' +
+          '<td>' + remarks + '</td>' +
+          '</tr>';
+      }
+
+      function openCellModal(cellName) {
+        var selectedDate = dateInput.value || getTodayString();
+        var status = 'Available';
+        var metaHtml = '';
+        var rowsHtml = '';
+        metaHtml += buildMetaRow(cellName, selectedDate, countdownEl.innerHTML, status);
+        rowsHtml += buildDataRow('Capacity', '100', cellName, 'Max units');
+        rowsHtml += buildDataRow('Occupied', '42', selectedDate, 'Current load');
+        rowsHtml += buildDataRow('Free Space', '58', countdownEl.innerHTML, 'Available units');
+        rowsHtml += buildDataRow('Zone', 'WH', 'Warehouse', status);
+        rowsHtml += buildDataRow('Last Update', '09:00', selectedDate, 'Sync complete');
+        rowsHtml += buildDataRow('Item 1', 'A12', 'Batch 006', 'OK');
+        rowsHtml += buildDataRow('Item 2', 'B03', 'Batch 014', 'OK');
+        rowsHtml += buildDataRow('Item 3', 'C07', 'Batch 019', 'Review');
+        rowsHtml += buildDataRow('Item 4', 'D02', 'Batch 021', 'OK');
+        rowsHtml += buildDataRow('Item 5', 'E11', 'Batch 024', 'OK');
+        rowsHtml += buildDataRow('Item 6', 'F05', 'Batch 026', 'Hold');
+        rowsHtml += buildDataRow('Item 7', 'G08', 'Batch 029', 'OK');
+        rowsHtml += buildDataRow('Item 8', 'H04', 'Batch 031', 'OK');
+        modalTitleEl.innerHTML = 'Cell Details';
+        modalMetaBodyEl.innerHTML = metaHtml;
+        modalBodyEl.innerHTML = rowsHtml;
+        modalEl.style.display = 'block';
+      }
+
+      function closeCellModal() {
+        modalEl.style.display = 'none';
+      }
+
+      function bindCellClickEvents() {
+        var i;
+        for (i = 0; i < cells.length; i++) {
+          (function (cell) {
+            cell.onclick = function () {
+              var cellName = cell.innerText || cell.textContent || 'Cell';
+              cellName = cellName.replace(/\s+/g, ' ').replace(/^\s+|\s+$/g, '');
+              openCellModal(cellName);
+            };
+          })(cells[i]);
+        }
+      }
+
+      modalCloseEl.onclick = function () {
+        closeCellModal();
+      };
+
+      modalEl.onclick = function (event) {
+        var e = event || window.event;
+        var target = e.target || e.srcElement;
+        if (target === modalEl) {
+          closeCellModal();
+        }
+      };
+
+      document.onkeydown = function (event) {
+        var e = event || window.event;
+        if (e.keyCode === 27) {
+          closeCellModal();
+        }
+      };
+
       setTodayDate();
       updateCountdown();
+      bindCellClickEvents();
       timerId = setInterval(updateCountdown, 1000);
     })();
   </script>
