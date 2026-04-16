@@ -1,0 +1,674 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dynamic Sketch Layout</title>
+    <style type="text/css">
+        html, body {
+            margin: 0;
+            padding: 0;
+            background: #f4f9fd;
+            color: #183247;
+            font-family: Arial, Helvetica, sans-serif;
+            height: 100%;
+            overflow-y: hidden;
+            overflow-x: hidden;
+        }
+
+        body {
+            min-width: 1024px;
+        }
+
+        .top-bar {
+            width: 100%;
+            background: #bfe5fb;
+            border-bottom: 2px solid #8ebdd8;
+            box-shadow: 0 2px 0 #dff3ff;
+            box-sizing: border-box;
+            padding: 15px 34px 14px;
+        }
+
+        .top-bar-title,
+        .top-bar-timer {
+            display: inline-block;
+            vertical-align: middle;
+            font-size: 28px;
+            line-height: 1.2;
+            color: #143a52;
+            font-weight: bold;
+        }
+
+        .top-bar-title {
+            float: left;
+            text-align: left;
+        }
+
+        .top-bar-timer {
+            float: right;
+            text-align: right;
+        }
+
+        .top-bar:after {
+            content: '';
+            display: block;
+            clear: both;
+        }
+
+        .page {
+            width: 94%;
+            max-width: 3840px;
+            margin: 0 auto;
+            height: calc(100vh - 74px);
+            padding: 1.6vh 0 1.2vh;
+            box-sizing: border-box;
+            overflow: hidden;
+        }
+
+        .section {
+            height: 43vh;
+            margin-bottom: 1.5vh;
+        }
+
+        .section-title {
+            margin: 0 0 1.1vh 36px;
+            padding-top: 4px;
+            position: relative;
+            z-index: 4;
+            font-size: 25px;
+            font-weight: bold;
+            color: #13384d;
+            letter-spacing: 0.3px;
+        }
+
+        .panel-row {
+            margin: 0 -22px;
+            font-size: 0;
+            height: calc(100% - 62px);
+            position: relative;
+        }
+
+        .panel-cell {
+            display: inline-block;
+            width: 33.3333%;
+            height: 100%;
+            padding: 0 22px;
+            vertical-align: top;
+            font-size: 16px;
+            box-sizing: border-box;
+            position: relative;
+        }
+
+        .panel-cell.with-arrow:after {
+            content: '\2192';
+            position: absolute;
+            top: 50%;
+            right: -18px;
+            width: 34px;
+            height: 34px;
+            margin-top: -17px;
+            border: 2px solid #7398af;
+            border-radius: 50%;
+            background: #f7fcff;
+            color: #497791;
+            font-size: 22px;
+            line-height: 30px;
+            text-align: center;
+            z-index: 3;
+            box-sizing: border-box;
+            box-shadow: 0 2px 6px rgba(92, 137, 160, 0.16);
+        }
+
+        .metric-card {
+            position: relative;
+            border: 2px dashed #4e748c;
+            background: #ffffff;
+            border-radius: 16px;
+            box-shadow: inset 0 0 0 1px #f0f8fd;
+            height: 100%;
+            padding: 62px 18px 20px;
+            box-sizing: border-box;
+        }
+
+        .metric-header {
+            position: absolute;
+            top: -20px;
+            left: 32px;
+            height: 32px;
+            z-index: 2;
+        }
+
+        .metric-header-label,
+        .metric-header-value {
+            position: absolute;
+            font-size: 18px;
+            line-height: 1.2;
+            box-sizing: border-box;
+        }
+
+        .metric-header-label {
+            left: 0;
+            top: 0;
+            min-width: 170px;
+            padding: 12px 18px;
+            background: #dfe6eb;
+            border: 1px solid #cad7df;
+            border-radius: 10px;
+            color: #213c4f;
+            text-align: center;
+            box-shadow: 0 2px 0 #edf4f8;
+        }
+
+        .metric-header-value {
+            left: 186px;
+            top: -12px;
+            font-size: 20px;
+            color: #102f42;
+            font-weight: bold;
+        }
+
+        .metric-items {
+            width: 100%;
+            font-size: 0;
+            height: 100%;
+        }
+
+        .metric-item {
+            display: inline-block;
+            width: 25%;
+            height: 100%;
+            vertical-align: top;
+            text-align: center;
+            font-size: 16px;
+            box-sizing: border-box;
+            padding: 0 10px 40px;
+            position: relative;
+        }
+
+        .metric-box {
+            display: block;
+            position: relative;
+            width: 100%;
+            height: 104px;
+            background: #cfeeff;
+            border-top: 2px solid #f7fcff;
+            border-left: 2px solid #eef9ff;
+            border-right: 1px solid #8ab2c8;
+            border-bottom: 1px solid #7ca8bf;
+            border-radius: 14px;
+            box-shadow: 7px 0 0 #a7cadc, 7px 7px 0 #88adc1, 12px 16px 18px rgba(84, 131, 156, 0.18);
+            table-layout: fixed;
+        }
+
+        .metric-box:after {
+            content: '';
+            position: absolute;
+            left: 14px;
+            right: 10px;
+            bottom: -12px;
+            height: 14px;
+            background: #dff5ff;
+            border-radius: 18px;
+            filter: alpha(opacity=75);
+            opacity: 0.75;
+            z-index: -1;
+        }
+
+        .metric-box-text {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            width: 86%;
+            margin-left: -43%;
+            margin-top: -22px;
+            text-align: center;
+            padding: 0;
+            font-size: 17px;
+            line-height: 1.3;
+            font-weight: bold;
+            color: #16394d;
+            word-wrap: normal;
+            word-break: normal;
+        }
+
+        .metric-accounts {
+            height: 58px;
+            padding: 14px 0 8px;
+            text-align: center;
+            box-sizing: border-box;
+        }
+
+        .account-badge {
+            display: inline-block;
+            width: 32px;
+            height: 32px;
+            margin: 2px 3px;
+            border: 2px solid #47687c;
+            border-radius: 50%;
+            background: #fbfdff;
+            text-align: center;
+            line-height: 28px;
+            font-size: 12px;
+            font-weight: bold;
+            color: #294a5c;
+            overflow: hidden;
+            box-sizing: border-box;
+        }
+
+        .account-badge img {
+            display: block;
+            width: 100%;
+            height: 100%;
+            border: 0;
+        }
+
+        .account-badge.more {
+            border-style: solid;
+            background: #eaf6fd;
+            font-size: 13px;
+            line-height: 28px;
+        }
+
+        .metric-value {
+            position: absolute;
+            left: 50%;
+            bottom: 6px;
+            width: 100%;
+            margin-left: -50%;
+            font-size: 19px;
+            line-height: 1.2;
+            color: #17384c;
+            font-weight: bold;
+        }
+
+        @media screen and (max-width: 1400px) {
+            .page {
+                width: 96%;
+            }
+
+            .panel-cell {
+                padding-left: 14px;
+                padding-right: 14px;
+            }
+
+            .metric-card {
+                height: 100%;
+            }
+
+            .metric-header-label {
+                min-width: 150px;
+            }
+
+            .metric-box {
+                height: 96px;
+            }
+
+            .metric-accounts {
+                height: 54px;
+            }
+        }
+
+        @media screen and (min-width: 2560px) {
+            .page {
+                width: 92%;
+                padding-top: 2vh;
+            }
+
+            .top-bar {
+                padding-top: 22px;
+                padding-bottom: 22px;
+            }
+
+            .top-bar-title,
+            .top-bar-timer {
+                font-size: 38px;
+            }
+
+            .section {
+                height: 44vh;
+                margin-bottom: 1.5vh;
+            }
+
+            .section-title {
+                margin-left: 42px;
+                margin-bottom: 1.6vh;
+                padding-top: 6px;
+                position: relative;
+                z-index: 4;
+                font-size: 34px;
+            }
+
+            .panel-row {
+                margin-left: -28px;
+                margin-right: -28px;
+            }
+
+            .panel-cell {
+                padding-left: 28px;
+                padding-right: 28px;
+                padding-bottom: 0;
+            }
+
+            .panel-cell.with-arrow:after {
+                right: -22px;
+                width: 46px;
+                height: 46px;
+                margin-top: -23px;
+                font-size: 30px;
+                line-height: 40px;
+                border-width: 3px;
+            }
+
+            .metric-card {
+                height: 100%;
+                border-width: 3px;
+                padding: 78px 24px 28px;
+            }
+
+            .metric-header {
+                top: -28px;
+                left: 40px;
+                height: 48px;
+            }
+
+            .metric-header-label,
+            .metric-header-value {
+                font-size: 30px;
+            }
+
+            .metric-header-label {
+                left: 0;
+                top: 0;
+                min-width: 245px;
+                padding: 16px 26px;
+            }
+
+            .metric-header-value {
+                left: 270px;
+                top: -14px;
+            }
+
+            .metric-box {
+                height: 146px;
+                box-shadow: 10px 0 0 #a7cadc, 10px 10px 0 #88adc1, 18px 22px 28px rgba(84, 131, 156, 0.2);
+            }
+
+            .metric-box-text {
+                font-size: 28px;
+                margin-top: -34px;
+            }
+
+            .metric-accounts {
+                height: 82px;
+                padding-top: 18px;
+            }
+
+            .account-badge {
+                width: 46px;
+                height: 46px;
+                margin: 3px 4px;
+                line-height: 42px;
+                font-size: 17px;
+                border-width: 3px;
+            }
+
+            .account-badge.more {
+                line-height: 40px;
+                font-size: 17px;
+            }
+
+            .metric-value {
+                bottom: 10px;
+                font-size: 31px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="top-bar">
+        <div class="top-bar-title">Tracking</div>
+        <div class="top-bar-timer">Refresh In: <span id="countdown">120s</span></div>
+    </div>
+    <div id="app" class="page"></div>
+
+    <script type="text/javascript">
+        (function () {
+            var MAX_ACCOUNTS = 6;
+            var COUNTDOWN_START = 120;
+            var countdownSeconds = COUNTDOWN_START;
+            var countdownInterval = null;
+
+            var dashboardData = [
+                {
+                    title: 'Rigid',
+                    cards: [
+                        {
+                            label: 'Sample Text 1',
+                            score: '20.5',
+                            items: [
+                                { text: 'Sample Text', value: '0.5', accounts: [] },
+                                { text: 'Sample Text', value: '0.5', accounts: [] },
+                                { text: 'Sample Text', value: '1.5', accounts: [{ initials: 'A' }] },
+                                { text: 'Sample Text', value: '2.5', accounts: [{ initials: 'B' }, { initials: 'C' }, { initials: 'D' }] }
+                            ]
+                        },
+                        {
+                            label: 'Sample Text 1',
+                            score: '20.5',
+                            items: [
+                                { text: 'Sample Text', value: '0.5', accounts: [{ initials: 'E' }] },
+                                { text: 'Sample Text', value: '0.5', accounts: [] },
+                                { text: 'Sample Text', value: '1.5', accounts: [{ initials: 'F' }, { initials: 'G' }] },
+                                { text: 'Sample Text', value: '2.5', accounts: [] }
+                            ]
+                        },
+                        {
+                            label: 'Sample Text 1',
+                            score: '20.5',
+                            items: [
+                                { text: 'Sample Text', value: '0.5', accounts: [] },
+                                { text: 'Sample Text', value: '0.5', accounts: [{ initials: 'H' }] },
+                                { text: 'Sample Text', value: '1.5', accounts: [{ initials: 'I' }, { initials: 'J' }, { initials: 'K' }] },
+                                { text: 'Sample Text', value: '2.5', accounts: [] }
+                            ]
+                        }
+                    ]
+                },
+                {
+                    title: 'Youm',
+                    cards: [
+                        {
+                            label: 'Sample Text 1',
+                            score: '20.5',
+                            items: [
+                                { text: 'Sample Text', value: '0.5', accounts: [] },
+                                { text: 'Sample Text', value: '0.5', accounts: [{ initials: 'L' }, { initials: 'M' }, { initials: 'N' }] },
+                                { text: 'Sample Text', value: '1.5', accounts: [] },
+                                { text: 'Sample Text', value: '2.5', accounts: [] }
+                            ]
+                        },
+                        {
+                            label: 'Sample Text 1',
+                            score: '20.5',
+                            items: [
+                                { text: 'Sample Text', value: '0.5', accounts: [] },
+                                { text: 'Sample Text', value: '0.5', accounts: [{ initials: 'O' }, { initials: 'P' }] },
+                                { text: 'Sample Text', value: '1.5', accounts: [] },
+                                { text: 'Sample Text', value: '2.5', accounts: [{ initials: 'Q' }] }
+                            ]
+                        },
+                        {
+                            label: 'Sample Text 1',
+                            score: '20.5',
+                            items: [
+                                { text: 'Sample Text', value: '0.5', accounts: [] },
+                                {
+                                    text: 'Sample Text',
+                                    value: '0.5',
+                                    accounts: [
+                                        { initials: 'R' }, { initials: 'S' }, { initials: 'T' },
+                                        { initials: 'U' }, { initials: 'V' }, { initials: 'W' },
+                                        { initials: 'X' }, { initials: 'Y' }
+                                    ]
+                                },
+                                { text: 'Sample Text', value: '1.5', accounts: [] },
+                                { text: 'Sample Text', value: '2.5', accounts: [{ initials: 'Z' }] }
+                            ]
+                        }
+                    ]
+                }
+            ];
+
+            function escapeHtml(value) {
+                return String(value)
+                    .replace(/&/g, '&amp;')
+                    .replace(/</g, '&lt;')
+                    .replace(/>/g, '&gt;')
+                    .replace(/"/g, '&quot;')
+                    .replace(/'/g, '&#39;');
+            }
+
+            function getInitials(account) {
+                if (!account) {
+                    return '?';
+                }
+
+                if (account.initials) {
+                    return String(account.initials).substr(0, 2).toUpperCase();
+                }
+
+                if (account.name) {
+                    return String(account.name).substr(0, 2).toUpperCase();
+                }
+
+                return '?';
+            }
+
+            function renderAccounts(accounts) {
+                var html = '';
+                var list = accounts || [];
+                var visibleCount = list.length;
+                var hiddenCount = 0;
+                var i;
+
+                if (visibleCount > MAX_ACCOUNTS) {
+                    visibleCount = MAX_ACCOUNTS - 1;
+                    hiddenCount = list.length - visibleCount;
+                }
+
+                for (i = 0; i < visibleCount; i++) {
+                    html += renderAccountBadge(list[i]);
+                }
+
+                if (hiddenCount > 0) {
+                    html += '<span class="account-badge more">+' + hiddenCount + '</span>';
+                }
+
+                return html;
+            }
+
+            function renderAccountBadge(account) {
+                if (account && account.image) {
+                    return '<span class="account-badge"><img src="' + escapeHtml(account.image) + '" alt="' + escapeHtml(account.name || 'Account') + '"></span>';
+                }
+
+                return '<span class="account-badge">' + escapeHtml(getInitials(account)) + '</span>';
+            }
+
+            function renderItem(item) {
+                return '' +
+                    '<div class="metric-item">' +
+                        '<div class="metric-box">' +
+                            '<div class="metric-box-text">' + escapeHtml(item.text) + '</div>' +
+                        '</div>' +
+                        '<div class="metric-accounts">' + renderAccounts(item.accounts) + '</div>' +
+                        '<div class="metric-value">' + escapeHtml(item.value) + '</div>' +
+                    '</div>';
+            }
+
+            function renderCard(card, cardIndex, totalCards) {
+                var itemsHtml = '';
+                var items = card.items || [];
+                var i;
+                var cellClass = 'panel-cell';
+
+                if (cardIndex < totalCards - 1) {
+                    cellClass += ' with-arrow';
+                }
+
+                for (i = 0; i < items.length; i++) {
+                    itemsHtml += renderItem(items[i]);
+                }
+
+                return '' +
+                    '<div class="' + cellClass + '">' +
+                        '<div class="metric-card">' +
+                            '<div class="metric-header">' +
+                                '<span class="metric-header-label">' + escapeHtml(card.label) + '</span>' +
+                                '<span class="metric-header-value">' + escapeHtml(card.score) + '</span>' +
+                            '</div>' +
+                            '<div class="metric-items">' + itemsHtml + '</div>' +
+                        '</div>' +
+                    '</div>';
+            }
+
+            function renderSection(section) {
+                var cardsHtml = '';
+                var cards = section.cards || [];
+                var i;
+
+                for (i = 0; i < cards.length; i++) {
+                    cardsHtml += renderCard(cards[i], i, cards.length);
+                }
+
+                return '' +
+                    '<div class="section">' +
+                        '<h2 class="section-title">' + escapeHtml(section.title) + '</h2>' +
+                        '<div class="panel-row">' + cardsHtml + '</div>' +
+                    '</div>';
+            }
+
+            function renderPage(data) {
+                var html = '';
+                var i;
+
+                for (i = 0; i < data.length; i++) {
+                    html += renderSection(data[i]);
+                }
+
+                return html;
+            }
+
+            function updateCountdown() {
+                var countdownNode = document.getElementById('countdown');
+
+                if (countdownNode) {
+                    countdownNode.innerHTML = countdownSeconds + 's';
+                }
+
+                if (countdownSeconds <= 0) {
+                    window.location.reload();
+                    return;
+                }
+
+                countdownSeconds -= 1;
+            }
+
+            function startCountdown() {
+                countdownSeconds = COUNTDOWN_START;
+                updateCountdown();
+
+                if (countdownInterval) {
+                    window.clearInterval(countdownInterval);
+                }
+
+                countdownInterval = window.setInterval(updateCountdown, 1000);
+            }
+
+            document.getElementById('app').innerHTML = renderPage(dashboardData);
+            startCountdown();
+        }());
+    </script>
+</body>
+</html>
