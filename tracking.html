@@ -4,525 +4,670 @@
     <meta http-equiv="X-UA-Compatible" content="IE=edge">
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Dynamic Sketch Layout</title>
+    <title>Direct Manpower Pos - Y26</title>
     <style type="text/css">
         html, body {
             margin: 0;
             padding: 0;
-            background: #dff3ff;
-            background: -webkit-linear-gradient(left, #bfe5fb 0%, #d8f0ff 34%, #eef8ff 68%, #f7fbff 100%);
-            background: linear-gradient(to right, #bfe5fb 0%, #d8f0ff 34%, #eef8ff 68%, #f7fbff 100%);
-            color: #183247;
-            font-family: Arial, Helvetica, sans-serif;
             height: 100%;
-            overflow-y: hidden;
-            overflow-x: hidden;
+            background: #f4f9ff;
+            background: -webkit-linear-gradient(left, #d5ebff 0%, #edf6ff 52%, #ffffff 100%);
+            background: linear-gradient(to right, #d5ebff 0%, #edf6ff 52%, #ffffff 100%);
+            font-family: Georgia, "Times New Roman", serif;
+            color: #111111;
+            overflow: hidden;
+            cursor: grab;
+        }
+
+        html.is-dragging,
+        html.is-dragging body {
+            cursor: grabbing;
+            -webkit-user-select: none;
+            -moz-user-select: none;
+            -ms-user-select: none;
+            user-select: none;
         }
 
         body {
-            min-width: 1024px;
+            min-width: 0;
         }
 
-        .top-bar {
-            width: 100%;
-            background: #bfe5fb;
-            background: -webkit-linear-gradient(left, #8fc9ea 0%, #a9daf6 36%, #cfeaff 72%, #eef8ff 100%);
-            background: linear-gradient(to right, #8fc9ea 0%, #a9daf6 36%, #cfeaff 72%, #eef8ff 100%);
-            border-bottom: 2px solid #8ebdd8;
-            box-shadow: 0 2px 0 #dff3ff;
+        .page {
+            width: 3000px;
+            margin: 0;
+            padding: 28px 18px 36px;
             box-sizing: border-box;
-            padding: 15px 34px 14px;
         }
 
-        .top-bar-title,
-        .top-bar-timer {
-            display: inline-block;
-            vertical-align: middle;
-            font-size: 28px;
-            line-height: 1.2;
-            color: #143a52;
-            font-weight: bold;
+        .viewport {
+            width: 100%;
+            height: 100%;
+            overflow: auto;
+            cursor: grab;
         }
 
-        .top-bar-title {
-            float: left;
-            text-align: left;
+        .viewport.is-dragging {
+            cursor: grabbing;
         }
 
-        .top-bar-timer {
-            float: right;
-            text-align: right;
+        .top-header {
+            margin: 0 0 28px;
+            padding: 0;
+            box-sizing: border-box;
         }
 
-        .top-bar:after {
+        .top-header:after {
             content: '';
             display: block;
             clear: both;
         }
 
-        .page {
-            width: 94%;
-            max-width: 3840px;
-            margin: 0 auto;
-            height: calc(100vh - 74px);
-            padding: 1.6vh 0 1.2vh;
+        .top-header-title,
+        .top-header-timer {
+            display: inline-block;
+            vertical-align: middle;
+            font-family: Arial, Helvetica, sans-serif;
+            color: #153b57;
+            font-weight: bold;
+            line-height: 1.2;
+        }
+
+        .top-header-title {
+            font-size: 36px;
+            letter-spacing: 0.2px;
+        }
+
+        .top-header-timer {
+            float: none;
+            margin-left: 14px;
+            font-size: 18px;
+            font-weight: normal;
+            padding-top: 0;
+        }
+
+        .top-header-separator {
+            display: inline-block;
+            width: 8px;
+            height: 8px;
+            margin-left: 16px;
+            margin-right: 2px;
+            border-radius: 50%;
+            background: #4c6480;
+            vertical-align: middle;
+        }
+
+        .countdown-value {
+            color: #2f4cff;
+            font-weight: bold;
+        }
+
+        .board {
+            font-size: 0;
+        }
+
+        .product-section {
+            margin-bottom: 46px;
+            font-size: 16px;
+        }
+
+        .product-header {
+            margin-bottom: 18px;
+            white-space: nowrap;
+        }
+
+        .product-pill,
+        .product-total {
+            display: inline-block;
+            vertical-align: middle;
+        }
+
+        .product-pill {
+            min-width: 150px;
+            padding: 12px 20px;
+            background: #1119f0;
+            background: -webkit-linear-gradient(top, #252bff 0%, #090cc9 100%);
+            background: linear-gradient(to bottom, #252bff 0%, #090cc9 100%);
+            color: #ffffff;
+            font-family: Arial, Helvetica, sans-serif;
+            font-size: 26px;
+            font-weight: bold;
+            text-align: center;
+            text-transform: uppercase;
+            box-shadow: 0 6px 14px rgba(14, 26, 140, 0.24);
+        }
+
+        .product-total {
+            margin-left: 18px;
+            color: #0a2f72;
+            font-family: Arial, Helvetica, sans-serif;
+            font-size: 28px;
+            font-weight: bold;
+        }
+
+        .product-total-value {
+            color: #3247ff;
+            font-size: 30px;
+        }
+
+        .dept-track {
+            font-size: 0;
+            white-space: nowrap;
+        }
+
+        .dept-card {
+            display: inline-block;
+            vertical-align: top;
+            box-sizing: border-box;
+            font-size: 16px;
+            margin: 0 18px 0 0;
+        }
+
+        .dept-card.last {
+            margin-right: 0;
+        }
+
+        .dept-card.is-wide {
+            width: 1320px;
+        }
+
+        .dept-arrow {
+            display: inline-block;
+            width: 74px;
+            vertical-align: top;
+            text-align: center;
+            font-size: 16px;
+            box-sizing: border-box;
+            padding-top: 112px;
+        }
+
+        .dept-arrow-icon {
+            display: inline-block;
+            width: 52px;
+            height: 52px;
+            border: 4px solid #6e8fb0;
+            border-radius: 50%;
+            background: #ffffff;
+            color: #5f7b9b;
+            font-family: Arial, Helvetica, sans-serif;
+            font-size: 30px;
+            line-height: 42px;
+            text-align: center;
+            box-sizing: border-box;
+            box-shadow: 0 8px 18px rgba(89, 124, 159, 0.16);
+        }
+
+        .dept-heading {
+            margin: 0 0 10px;
+            text-align: center;
+            font-family: Arial, Helvetica, sans-serif;
+            font-size: 24px;
+            font-weight: bold;
+            color: #111111;
+        }
+
+        .dept-heading-total {
+            color: #111111;
+        }
+
+        .dept-frame {
+            position: relative;
+            height: 250px;
+            padding: 26px 26px 22px;
+            border: 2px dashed #63a6de;
+            border-radius: 22px;
+            background: rgba(255, 255, 255, 0.92);
             box-sizing: border-box;
             overflow: hidden;
         }
 
-        .section {
-            height: 43vh;
-            margin-bottom: 1.5vh;
-        }
-
-        .section-title {
-            margin: 0 0 1.1vh 36px;
-            padding-top: 4px;
-            position: relative;
-            z-index: 4;
-            font-size: 25px;
-            font-weight: bold;
-            color: #13384d;
-            letter-spacing: 0.3px;
-        }
-
-        .panel-row {
-            margin: 0 -22px;
-            font-size: 0;
-            height: calc(100% - 62px);
-            position: relative;
-        }
-
-        .panel-cell {
-            display: inline-block;
-            width: 33.3333%;
-            height: 100%;
-            padding: 0 22px;
-            vertical-align: top;
-            font-size: 16px;
-            box-sizing: border-box;
-            position: relative;
-        }
-
-        .panel-cell.with-arrow:after {
-            content: '\2192';
-            position: absolute;
-            top: 50%;
-            right: -18px;
-            width: 34px;
-            height: 34px;
-            margin-top: -17px;
-            border: 2px solid #7398af;
-            border-radius: 50%;
-            background: #f7fcff;
-            color: #497791;
-            font-size: 22px;
-            line-height: 30px;
-            text-align: center;
-            z-index: 3;
-            box-sizing: border-box;
-            box-shadow: 0 2px 6px rgba(92, 137, 160, 0.16);
-        }
-
-        .metric-card {
-            position: relative;
-            border: 2px dashed #4e748c;
-            background: #ffffff;
-            border-radius: 16px;
-            box-shadow: inset 0 0 0 1px #f0f8fd;
-            height: 100%;
-            padding: 62px 18px 20px;
-            box-sizing: border-box;
-        }
-
-        .metric-header {
-            position: absolute;
-            top: -20px;
-            left: 32px;
-            height: 32px;
-            z-index: 2;
-        }
-
-        .metric-header-label,
-        .metric-header-value {
-            position: absolute;
-            font-size: 18px;
-            line-height: 1.2;
-            box-sizing: border-box;
-        }
-
-        .metric-header-label {
-            left: 0;
-            top: 0;
-            min-width: 170px;
-            padding: 12px 18px;
-            background: #dfe6eb;
-            border: 1px solid #cad7df;
-            border-radius: 10px;
-            color: #213c4f;
-            text-align: center;
-            box-shadow: 0 2px 0 #edf4f8;
-        }
-
-        .metric-header-value {
-            left: 186px;
-            top: -12px;
-            font-size: 20px;
-            color: #102f42;
-            font-weight: bold;
-        }
-
-        .metric-items {
-            width: 100%;
-            font-size: 0;
-            height: 100%;
-        }
-
-        .metric-item {
-            display: inline-block;
-            width: 25%;
-            height: 100%;
-            vertical-align: top;
-            text-align: center;
-            font-size: 16px;
-            box-sizing: border-box;
-            padding: 0 10px 40px;
-            position: relative;
-        }
-
-        .metric-box {
-            display: block;
-            position: relative;
-            width: 100%;
-            height: 104px;
-            background: #cfeeff;
-            border-top: 2px solid #f7fcff;
-            border-left: 2px solid #eef9ff;
-            border-right: 1px solid #8ab2c8;
-            border-bottom: 1px solid #7ca8bf;
-            border-radius: 14px;
-            box-shadow: 7px 0 0 #a7cadc, 7px 7px 0 #88adc1, 12px 16px 18px rgba(84, 131, 156, 0.18);
-            table-layout: fixed;
-        }
-
-        .metric-box:after {
+        .dept-frame:before {
             content: '';
             position: absolute;
-            left: 14px;
-            right: 10px;
-            bottom: -12px;
-            height: 14px;
-            background: #dff5ff;
-            border-radius: 18px;
-            filter: alpha(opacity=75);
-            opacity: 0.75;
-            z-index: -1;
+            left: 30px;
+            right: 30px;
+            top: 92px;
+            height: 18px;
+            background: rgba(104, 114, 126, 0.15);
+            z-index: 0;
         }
 
-        .metric-box-text {
-            position: absolute;
-            top: 50%;
-            left: 50%;
-            width: 86%;
-            margin-left: -43%;
-            margin-top: -22px;
-            text-align: center;
-            padding: 0;
-            font-size: 17px;
-            line-height: 1.3;
-            font-weight: bold;
-            color: #16394d;
-            word-wrap: normal;
-            word-break: normal;
+        .line-list {
+            position: relative;
+            z-index: 1;
+            font-size: 0;
+            height: 100%;
         }
 
-        .metric-accounts {
-            height: 58px;
-            padding: 14px 0 8px;
-            text-align: center;
-            box-sizing: border-box;
-        }
-
-        .account-badge {
+        .line-card {
             display: inline-block;
-            width: 32px;
-            height: 32px;
-            margin: 2px 3px;
-            border: 2px solid #47687c;
-            border-radius: 50%;
-            background: #fbfdff;
-            text-align: center;
-            line-height: 28px;
-            font-size: 12px;
-            font-weight: bold;
-            color: #294a5c;
-            overflow: hidden;
+            vertical-align: top;
             box-sizing: border-box;
+            height: 100%;
+            padding: 0 7px;
+            text-align: center;
+            font-family: Arial, Helvetica, sans-serif;
+            font-size: 14px;
+            position: relative;
         }
 
-        .account-badge img {
-            display: block;
+        .line-card.compact {
+            padding-left: 5px;
+            padding-right: 5px;
+        }
+
+        .line-card.dense {
+            padding-left: 4px;
+            padding-right: 4px;
+        }
+
+        .line-box {
+            display: table;
+            position: relative;
+            width: 100%;
+            height: 92px;
+            border-radius: 12px;
+            background: #eff8ff;
+            background: -webkit-linear-gradient(top, #f8fdff 0%, #edf8ff 20%, #dbefff 100%);
+            background: linear-gradient(to bottom, #f8fdff 0%, #edf8ff 20%, #dbefff 100%);
+            border: 1px solid #91aec6;
+            box-shadow: 4px 6px 0 #93afc4, 0 10px 16px rgba(108, 140, 165, 0.22);
+            box-sizing: border-box;
+            overflow: hidden;
+        }
+
+        .line-box.is-highlight {
+            background: #fff2e6;
+            background: -webkit-linear-gradient(top, #fff9f3 0%, #ffe7d4 18%, #ffd4b4 100%);
+            background: linear-gradient(to bottom, #fff9f3 0%, #ffe7d4 18%, #ffd4b4 100%);
+        }
+
+        .line-box-text {
+            display: table-cell;
             width: 100%;
             height: 100%;
-            border: 0;
+            padding: 0 8px;
+            vertical-align: middle;
+            text-align: center;
+            color: #1e2e3f;
+            font-size: 16px;
+            line-height: 1.16;
+            word-wrap: break-word;
+            word-break: break-word;
+            white-space: normal;
+            box-sizing: border-box;
         }
 
-        .account-badge.more {
-            border-style: solid;
-            background: #eaf6fd;
+        .line-box-text.compact {
+            padding-left: 5px;
+            padding-right: 5px;
             font-size: 13px;
-            line-height: 28px;
+            line-height: 1.08;
         }
 
-        .metric-value {
+        .line-box.compact-box {
+            height: 76px;
+            border-radius: 10px;
+            box-shadow: 3px 5px 0 #93afc4, 0 8px 12px rgba(108, 140, 165, 0.18);
+        }
+
+        .line-box-text.dense {
+            padding-left: 4px;
+            padding-right: 4px;
+            font-size: 10px;
+            line-height: 1.06;
+        }
+
+        .line-emp {
+            min-height: 56px;
+            padding-top: 28px;
+            position: relative;
+        }
+
+        .line-emp.compact {
+            min-height: 42px;
+            padding-top: 22px;
+        }
+
+        .emp-icon,
+        .emp-plus {
+            display: inline-block;
+            vertical-align: top;
+        }
+
+        .emp-icon {
+            width: 18px;
+            height: 18px;
+            margin: 0 2px 4px;
+            border-radius: 50%;
+            position: relative;
+            box-shadow: 0 1px 0 rgba(0, 0, 0, 0.18);
+        }
+
+        .emp-icon:before,
+        .emp-icon:after {
+            content: '';
             position: absolute;
-            left: 50%;
-            bottom: 6px;
-            width: 100%;
-            margin-left: -50%;
-            font-size: 19px;
-            line-height: 1.2;
-            color: #17384c;
-            font-weight: bold;
+            display: block;
+            background: inherit;
         }
 
-        @media screen and (max-width: 1400px) {
-            .page {
-                width: 96%;
-            }
+        .emp-icon:before {
+            left: 4px;
+            top: -8px;
+            width: 10px;
+            height: 10px;
+            border-radius: 50%;
+        }
 
-            .panel-cell {
-                padding-left: 14px;
-                padding-right: 14px;
-            }
+        .emp-icon:after {
+            left: 1px;
+            top: 7px;
+            width: 16px;
+            height: 9px;
+            border-radius: 8px 8px 4px 4px;
+        }
 
-            .metric-card {
-                height: 100%;
-            }
+        .emp-plus {
+            display: block;
+            min-width: 30px;
+            height: 22px;
+            margin: 4px auto 0;
+            padding: 0 6px;
+            border-radius: 11px;
+            background: #ffffff;
+            border: 1px solid #7f97ad;
+            color: #39546b;
+            font-size: 13px;
+            font-weight: bold;
+            line-height: 20px;
+            box-sizing: border-box;
+        }
 
-            .metric-header-label {
-                min-width: 150px;
-            }
+        .line-manpower {
+            position: absolute;
+            left: 0;
+            bottom: 0;
+            width: 100%;
+            font-size: 18px;
+            font-weight: bold;
+            color: #111111;
+        }
 
-            .metric-box {
-                height: 96px;
-            }
+        .line-manpower.compact {
+            font-size: 14px;
+        }
 
-            .metric-accounts {
-                height: 54px;
-            }
+        .footer-note {
+            margin-top: 10px;
+            text-align: center;
+            font-family: Arial, Helvetica, sans-serif;
+            font-size: 16px;
+            color: #222222;
+        }
+
+        .dept-cp-olb {
+            background: #ff8d1a;
+        }
+
+        .dept-lami {
+            background: #7d54ff;
+        }
+
+        .dept-assembly {
+            background: #2378ff;
+        }
+
+        .dept-manu {
+            background: #ff4040;
+        }
+
+        .dept-qa {
+            background: #1fbf63;
+        }
+
+        .dept-default {
+            background: #607d8b;
         }
 
         @media screen and (min-width: 2560px) {
             .page {
-                width: 92%;
-                padding-top: 2vh;
+                width: 3600px;
+                padding-top: 34px;
             }
 
-            .top-bar {
-                padding-top: 22px;
-                padding-bottom: 22px;
+            .top-header {
+                margin-bottom: 40px;
+                padding: 0;
             }
 
-            .top-bar-title,
-            .top-bar-timer {
-                font-size: 38px;
+            .top-header-title {
+                font-size: 48px;
             }
 
-            .section {
-                height: 44vh;
-                margin-bottom: 1.5vh;
+            .top-header-timer {
+                margin-left: 18px;
+                font-size: 24px;
             }
 
-            .section-title {
-                margin-left: 42px;
-                margin-bottom: 1.6vh;
-                padding-top: 6px;
-                position: relative;
-                z-index: 4;
+            .top-header-separator {
+                width: 10px;
+                height: 10px;
+                margin-left: 18px;
+                margin-right: 4px;
+            }
+
+            .product-section {
+                margin-bottom: 64px;
+            }
+
+            .product-header {
+                margin-bottom: 24px;
+            }
+
+            .product-pill {
+                min-width: 204px;
+                padding: 15px 28px;
                 font-size: 34px;
             }
 
-            .panel-row {
-                margin-left: -28px;
-                margin-right: -28px;
+            .product-total {
+                margin-left: 24px;
+                font-size: 38px;
             }
 
-            .panel-cell {
-                padding-left: 28px;
-                padding-right: 28px;
-                padding-bottom: 0;
+            .product-total-value {
+                font-size: 42px;
             }
 
-            .panel-cell.with-arrow:after {
-                right: -22px;
-                width: 46px;
-                height: 46px;
-                margin-top: -23px;
-                font-size: 30px;
-                line-height: 40px;
+            .dept-heading {
+                margin-bottom: 14px;
+                font-size: 34px;
+            }
+
+            .dept-arrow {
+                width: 96px;
+                padding-top: 142px;
+            }
+
+            .dept-arrow-icon {
+                width: 68px;
+                height: 68px;
+                font-size: 38px;
+                line-height: 56px;
+                border-width: 5px;
+            }
+
+            .dept-frame {
+                height: 320px;
+                padding: 34px 32px 28px;
                 border-width: 3px;
+                border-radius: 28px;
             }
 
-            .metric-card {
-                height: 100%;
-                border-width: 3px;
-                padding: 78px 24px 28px;
+            .dept-frame:before {
+                left: 30px;
+                right: 30px;
+                top: 116px;
+                height: 24px;
             }
 
-            .metric-header {
-                top: -28px;
-                left: 40px;
-                height: 48px;
+            .line-box {
+                height: 118px;
+                border-radius: 16px;
+                box-shadow: 6px 8px 0 #93afc4, 0 16px 24px rgba(108, 140, 165, 0.22);
             }
 
-            .metric-header-label,
-            .metric-header-value {
-                font-size: 30px;
+            .line-box-text {
+                padding-left: 10px;
+                padding-right: 10px;
+                font-size: 21px;
             }
 
-            .metric-header-label {
-                left: 0;
-                top: 0;
-                min-width: 245px;
-                padding: 16px 26px;
+            .line-box-text.compact {
+                padding-left: 7px;
+                padding-right: 7px;
+                font-size: 16px;
             }
 
-            .metric-header-value {
-                left: 270px;
-                top: -14px;
+            .line-box.compact-box {
+                height: 96px;
             }
 
-            .metric-box {
-                height: 146px;
-                box-shadow: 10px 0 0 #a7cadc, 10px 10px 0 #88adc1, 18px 22px 28px rgba(84, 131, 156, 0.2);
+            .line-box-text.dense {
+                padding-left: 5px;
+                padding-right: 5px;
+                font-size: 14px;
             }
 
-            .metric-box-text {
+            .line-emp.compact {
+                min-height: 58px;
+                padding-top: 28px;
+            }
+
+            .line-manpower.compact {
+                margin-top: 12px;
+                font-size: 22px;
+            }
+
+            .line-emp {
+                min-height: 76px;
+                padding-top: 22px;
+            }
+
+            .emp-icon {
+                width: 24px;
+                height: 24px;
+                margin-right: 3px;
+                margin-left: 3px;
+            }
+
+            .emp-icon:before {
+                left: 5px;
+                top: -10px;
+                width: 14px;
+                height: 14px;
+            }
+
+            .emp-icon:after {
+                left: 2px;
+                top: 10px;
+                width: 20px;
+                height: 11px;
+            }
+
+            .emp-plus {
+                min-width: 34px;
+                height: 28px;
+                margin-top: 6px;
+                font-size: 17px;
+                line-height: 26px;
+            }
+
+            .line-manpower {
                 font-size: 28px;
-                margin-top: -34px;
             }
 
-            .metric-accounts {
-                height: 82px;
-                padding-top: 18px;
-            }
-
-            .account-badge {
-                width: 46px;
-                height: 46px;
-                margin: 3px 4px;
-                line-height: 42px;
-                font-size: 17px;
-                border-width: 3px;
-            }
-
-            .account-badge.more {
-                line-height: 40px;
-                font-size: 17px;
-            }
-
-            .metric-value {
-                bottom: 10px;
-                font-size: 31px;
-            }
         }
     </style>
 </head>
 <body>
-    <div class="top-bar">
-        <div class="top-bar-title">Tracking</div>
-        <div class="top-bar-timer">Refresh In: <span id="countdown">120s</span></div>
+    <div id="viewport" class="viewport">
+        <div class="page">
+            <div class="top-header">
+                <div class="top-header-title">Direct Position</div>
+                <span class="top-header-separator"></span>
+                <div class="top-header-timer">Refresh In <span id="countdown" class="countdown-value">120s</span></div>
+            </div>
+            <div id="app" class="board"></div>
+        </div>
     </div>
-    <div id="app" class="page"></div>
 
     <script type="text/javascript">
         (function () {
-            var MAX_ACCOUNTS = 6;
+            var MAX_VISIBLE_EMP_ICONS = 3;
+            var DEPT_ORDER = ['CP/OLB', 'LAMI', 'ASSEMBLY', 'MANU', 'MANUFACTURING', 'QA'];
             var COUNTDOWN_START = 120;
             var countdownSeconds = COUNTDOWN_START;
             var countdownInterval = null;
-
-            var dashboardData = [
-                {
-                    title: 'Rigid',
-                    cards: [
-                        {
-                            label: 'Sample Text 1',
-                            score: '20.5',
-                            items: [
-                                { text: 'Sample Text', value: '0.5', accounts: [] },
-                                { text: 'Sample Text', value: '0.5', accounts: [] },
-                                { text: 'Sample Text', value: '1.5', accounts: [{ initials: 'A' }] },
-                                { text: 'Sample Text', value: '2.5', accounts: [{ initials: 'B' }, { initials: 'C' }, { initials: 'D' }] }
-                            ]
-                        },
-                        {
-                            label: 'Sample Text 1',
-                            score: '20.5',
-                            items: [
-                                { text: 'Sample Text', value: '0.5', accounts: [{ initials: 'E' }] },
-                                { text: 'Sample Text', value: '0.5', accounts: [] },
-                                { text: 'Sample Text', value: '1.5', accounts: [{ initials: 'F' }, { initials: 'G' }] },
-                                { text: 'Sample Text', value: '2.5', accounts: [] }
-                            ]
-                        },
-                        {
-                            label: 'Sample Text 1',
-                            score: '20.5',
-                            items: [
-                                { text: 'Sample Text', value: '0.5', accounts: [] },
-                                { text: 'Sample Text', value: '0.5', accounts: [{ initials: 'H' }] },
-                                { text: 'Sample Text', value: '1.5', accounts: [{ initials: 'I' }, { initials: 'J' }, { initials: 'K' }] },
-                                { text: 'Sample Text', value: '2.5', accounts: [] }
-                            ]
-                        }
-                    ]
-                },
-                {
-                    title: 'Youm',
-                    cards: [
-                        {
-                            label: 'Sample Text 1',
-                            score: '20.5',
-                            items: [
-                                { text: 'Sample Text', value: '0.5', accounts: [] },
-                                { text: 'Sample Text', value: '0.5', accounts: [{ initials: 'L' }, { initials: 'M' }, { initials: 'N' }] },
-                                { text: 'Sample Text', value: '1.5', accounts: [] },
-                                { text: 'Sample Text', value: '2.5', accounts: [] }
-                            ]
-                        },
-                        {
-                            label: 'Sample Text 1',
-                            score: '20.5',
-                            items: [
-                                { text: 'Sample Text', value: '0.5', accounts: [] },
-                                { text: 'Sample Text', value: '0.5', accounts: [{ initials: 'O' }, { initials: 'P' }] },
-                                { text: 'Sample Text', value: '1.5', accounts: [] },
-                                { text: 'Sample Text', value: '2.5', accounts: [{ initials: 'Q' }] }
-                            ]
-                        },
-                        {
-                            label: 'Sample Text 1',
-                            score: '20.5',
-                            items: [
-                                { text: 'Sample Text', value: '0.5', accounts: [] },
-                                {
-                                    text: 'Sample Text',
-                                    value: '0.5',
-                                    accounts: [
-                                        { initials: 'R' }, { initials: 'S' }, { initials: 'T' },
-                                        { initials: 'U' }, { initials: 'V' }, { initials: 'W' },
-                                        { initials: 'X' }, { initials: 'Y' }
-                                    ]
-                                },
-                                { text: 'Sample Text', value: '1.5', accounts: [] },
-                                { text: 'Sample Text', value: '2.5', accounts: [{ initials: 'Z' }] }
-                            ]
-                        }
-                    ]
-                }
+            var isPointerDown = false;
+            var startX = 0;
+            var startY = 0;
+            var startScrollLeft = 0;
+            var startScrollTop = 0;
+            var viewport = null;
+            var sampleResponse = [
+                { "DIR_POS_ID": 101, "EMP_COUNT": 0, "MANPOWER": 0, "PROD_TYPE": "RIGID", "LINE": "CP/OLB", "DEPT": "CP/OLB" },
+                { "DIR_POS_ID": 1, "EMP_COUNT": 1, "MANPOWER": 0.5, "PROD_TYPE": "RIGID", "LINE": "IOC", "DEPT": "CP/OLB" },
+                { "DIR_POS_ID": 2, "EMP_COUNT": 2, "MANPOWER": 0.67, "PROD_TYPE": "RIGID", "LINE": "Kitting", "DEPT": "CP/OLB" },
+                { "DIR_POS_ID": 3, "EMP_COUNT": 1, "MANPOWER": 1, "PROD_TYPE": "RIGID", "LINE": "C-Tape", "DEPT": "CP/OLB" },
+                { "DIR_POS_ID": 102, "EMP_COUNT": 0, "MANPOWER": 0, "PROD_TYPE": "RIGID", "LINE": "MMT & POL", "DEPT": "CP/OLB" },
+                { "DIR_POS_ID": 4, "EMP_COUNT": 0, "MANPOWER": 0.33, "PROD_TYPE": "RIGID", "LINE": "SA Tuffy", "DEPT": "CP/OLB" },
+                { "DIR_POS_ID": 103, "EMP_COUNT": 0, "MANPOWER": 0, "PROD_TYPE": "RIGID", "LINE": "CRD VI", "DEPT": "CP/OLB" },
+                { "DIR_POS_ID": 104, "EMP_COUNT": 0, "MANPOWER": 0, "PROD_TYPE": "RIGID", "LINE": "Lami", "DEPT": "LAMI" },
+                { "DIR_POS_ID": 5, "EMP_COUNT": 0, "MANPOWER": 0, "PROD_TYPE": "RIGID", "LINE": "Lami VI", "DEPT": "LAMI" },
+                { "DIR_POS_ID": 105, "EMP_COUNT": 0, "MANPOWER": 0, "PROD_TYPE": "RIGID", "LINE": "Lot Movement", "DEPT": "LAMI" },
+                { "DIR_POS_ID": 6, "EMP_COUNT": 1, "MANPOWER": 0.5, "PROD_TYPE": "RIGID", "LINE": "Kitting", "DEPT": "LAMI" },
+                { "DIR_POS_ID": 7, "EMP_COUNT": 1, "MANPOWER": 0.3, "PROD_TYPE": "RIGID", "LINE": "NG Logistics", "DEPT": "LAMI" },
+                { "DIR_POS_ID": 106, "EMP_COUNT": 0, "MANPOWER": 0, "PROD_TYPE": "RIGID", "LINE": "A/C", "DEPT": "LAMI" },
+                { "DIR_POS_ID": 8, "EMP_COUNT": 1, "MANPOWER": 0.59, "PROD_TYPE": "RIGID", "LINE": "UV", "DEPT": "LAMI" },
+                { "DIR_POS_ID": 9, "EMP_COUNT": 2, "MANPOWER": 0.99, "PROD_TYPE": "RIGID", "LINE": "MTP WFD", "DEPT": "ASSEMBLY" },
+                { "DIR_POS_ID": 107, "EMP_COUNT": 0, "MANPOWER": 0, "PROD_TYPE": "RIGID", "LINE": "ASSY", "DEPT": "ASSEMBLY" },
+                { "DIR_POS_ID": 10, "EMP_COUNT": 1, "MANPOWER": 1.86, "PROD_TYPE": "RIGID", "LINE": "BIN 2", "DEPT": "ASSEMBLY" },
+                { "DIR_POS_ID": 11, "EMP_COUNT": 2, "MANPOWER": 0.12, "PROD_TYPE": "RIGID", "LINE": "FVI I/P & HIAA", "DEPT": "ASSEMBLY" },
+                { "DIR_POS_ID": 12, "EMP_COUNT": 6, "MANPOWER": 6.5, "PROD_TYPE": "RIGID", "LINE": "FVI & ON/OFF", "DEPT": "ASSEMBLY" },
+                { "DIR_POS_ID": 13, "EMP_COUNT": 1, "MANPOWER": 0.5, "PROD_TYPE": "RIGID", "LINE": "CNF", "DEPT": "ASSEMBLY" },
+                { "DIR_POS_ID": 14, "EMP_COUNT": 1, "MANPOWER": 1, "PROD_TYPE": "RIGID", "LINE": "UL", "DEPT": "ASSEMBLY" },
+                { "DIR_POS_ID": 15, "EMP_COUNT": 0, "MANPOWER": 0, "PROD_TYPE": "YOUM", "LINE": "CP", "DEPT": "CP/OLB" },
+                { "DIR_POS_ID": 108, "EMP_COUNT": 0, "MANPOWER": 0, "PROD_TYPE": "YOUM", "LINE": "BPL", "DEPT": "CP/OLB" },
+                { "DIR_POS_ID": 109, "EMP_COUNT": 0, "MANPOWER": 0, "PROD_TYPE": "YOUM", "LINE": "OLB", "DEPT": "CP/OLB" },
+                { "DIR_POS_ID": 110, "EMP_COUNT": 1, "MANPOWER": 1, "PROD_TYPE": "YOUM", "LINE": "Lot Movement", "DEPT": "CP/OLB" },
+                { "DIR_POS_ID": 16, "EMP_COUNT": 1, "MANPOWER": 1, "PROD_TYPE": "YOUM", "LINE": "AMT", "DEPT": "CP/OLB" },
+                { "DIR_POS_ID": 17, "EMP_COUNT": 1, "MANPOWER": 1, "PROD_TYPE": "YOUM", "LINE": "NG Logistic", "DEPT": "CP/OLB" },
+                { "DIR_POS_ID": 111, "EMP_COUNT": 0, "MANPOWER": 0, "PROD_TYPE": "YOUM", "LINE": "LTC", "DEPT": "CP/OLB" },
+                { "DIR_POS_ID": 18, "EMP_COUNT": 0, "MANPOWER": 0, "PROD_TYPE": "YOUM", "LINE": "LAMI #1", "DEPT": "LAMI" },
+                { "DIR_POS_ID": 112, "EMP_COUNT": 0, "MANPOWER": 0, "PROD_TYPE": "YOUM", "LINE": "LAMI #2", "DEPT": "LAMI" },
+                { "DIR_POS_ID": 113, "EMP_COUNT": 0, "MANPOWER": 0, "PROD_TYPE": "YOUM", "LINE": "LAMI #3", "DEPT": "LAMI" },
+                { "DIR_POS_ID": 114, "EMP_COUNT": 0, "MANPOWER": 0, "PROD_TYPE": "YOUM", "LINE": "LAMI #4", "DEPT": "LAMI" },
+                { "DIR_POS_ID": 115, "EMP_COUNT": 0, "MANPOWER": 0, "PROD_TYPE": "YOUM", "LINE": "A/C", "DEPT": "LAMI" },
+                { "DIR_POS_ID": 116, "EMP_COUNT": 0, "MANPOWER": 0, "PROD_TYPE": "YOUM", "LINE": "UV", "DEPT": "LAMI" },
+                { "DIR_POS_ID": 117, "EMP_COUNT": 1, "MANPOWER": 1, "PROD_TYPE": "YOUM", "LINE": "NG Logistic", "DEPT": "LAMI" },
+                { "DIR_POS_ID": 118, "EMP_COUNT": 0, "MANPOWER": 0, "PROD_TYPE": "YOUM", "LINE": "C-Film Detach", "DEPT": "ASSEMBLY" },
+                { "DIR_POS_ID": 119, "EMP_COUNT": 0, "MANPOWER": 0, "PROD_TYPE": "YOUM", "LINE": "AAM", "DEPT": "ASSEMBLY" },
+                { "DIR_POS_ID": 120, "EMP_COUNT": 0, "MANPOWER": 0, "PROD_TYPE": "YOUM", "LINE": "BENDING", "DEPT": "ASSEMBLY" },
+                { "DIR_POS_ID": 19, "EMP_COUNT": 1, "MANPOWER": 0.5, "PROD_TYPE": "YOUM", "LINE": "NG Logistic", "DEPT": "ASSEMBLY" },
+                { "DIR_POS_ID": 121, "EMP_COUNT": 0, "MANPOWER": 0, "PROD_TYPE": "YOUM", "LINE": "CAP ATTACH", "DEPT": "ASSEMBLY" },
+                { "DIR_POS_ID": 20, "EMP_COUNT": 1, "MANPOWER": 1, "PROD_TYPE": "YOUM", "LINE": "AMTP", "DEPT": "ASSEMBLY" },
+                { "DIR_POS_ID": 122, "EMP_COUNT": 0, "MANPOWER": 0, "PROD_TYPE": "YOUM", "LINE": "WFD-Y", "DEPT": "ASSEMBLY" },
+                { "DIR_POS_ID": 123, "EMP_COUNT": 0, "MANPOWER": 0, "PROD_TYPE": "YOUM", "LINE": "MCA", "DEPT": "ASSEMBLY" },
+                { "DIR_POS_ID": 21, "EMP_COUNT": 1, "MANPOWER": 1, "PROD_TYPE": "YOUM", "LINE": "AFT", "DEPT": "ASSEMBLY" },
+                { "DIR_POS_ID": 124, "EMP_COUNT": 0, "MANPOWER": 0, "PROD_TYPE": "YOUM", "LINE": "WFA-Y", "DEPT": "ASSEMBLY" },
+                { "DIR_POS_ID": 22, "EMP_COUNT": 3, "MANPOWER": 2, "PROD_TYPE": "YOUM", "LINE": "AF Coating", "DEPT": "ASSEMBLY" },
+                { "DIR_POS_ID": 23, "EMP_COUNT": 6, "MANPOWER": 6, "PROD_TYPE": "YOUM", "LINE": "FVI", "DEPT": "ASSEMBLY" },
+                { "DIR_POS_ID": 24, "EMP_COUNT": 5, "MANPOWER": 5, "PROD_TYPE": "YOUM", "LINE": "ON_OFF", "DEPT": "ASSEMBLY" },
+                { "DIR_POS_ID": 25, "EMP_COUNT": 1, "MANPOWER": 1, "PROD_TYPE": "YOUM", "LINE": "UL", "DEPT": "ASSEMBLY" }
             ];
+
+            var rawData = window.manpowerData || sampleResponse;
 
             function escapeHtml(value) {
                 return String(value)
@@ -533,115 +678,372 @@
                     .replace(/'/g, '&#39;');
             }
 
-            function getInitials(account) {
-                if (!account) {
-                    return '?';
+            function toNumber(value) {
+                var numberValue = parseFloat(value);
+                if (isNaN(numberValue)) {
+                    return 0;
                 }
-
-                if (account.initials) {
-                    return String(account.initials).substr(0, 2).toUpperCase();
-                }
-
-                if (account.name) {
-                    return String(account.name).substr(0, 2).toUpperCase();
-                }
-
-                return '?';
+                return numberValue;
             }
 
-            function renderAccounts(accounts) {
-                var html = '';
-                var list = accounts || [];
-                var visibleCount = list.length;
-                var hiddenCount = 0;
+            function formatNumber(value) {
+                var numberValue = toNumber(value);
+                var rounded = Math.round(numberValue * 100) / 100;
+                if (Math.abs(rounded - Math.round(rounded)) < 0.0001) {
+                    return String(Math.round(rounded));
+                }
+                if (Math.abs((rounded * 10) - Math.round(rounded * 10)) < 0.0001) {
+                    return rounded.toFixed(1);
+                }
+                return rounded.toFixed(2);
+            }
+
+            function normalizeText(value) {
+                return String(value || '').replace(/^\s+|\s+$/g, '').toUpperCase();
+            }
+
+            function normalizeDept(value) {
+                var dept = normalizeText(value);
+                if (dept === 'ASSY') {
+                    return 'ASSEMBLY';
+                }
+                if (dept === 'MANUFACTURING') {
+                    return 'MANUFACTURING';
+                }
+                if (dept === 'MANU') {
+                    return 'MANU';
+                }
+                return dept;
+            }
+
+            function getDeptLabel(value) {
+                var dept = normalizeDept(value);
+                if (dept === 'CP/OLB') {
+                    return 'CP/OLB';
+                }
+                if (dept === 'LAMI') {
+                    return 'Lami';
+                }
+                if (dept === 'ASSEMBLY') {
+                    return 'Assembly';
+                }
+                if (dept === 'MANU' || dept === 'MANUFACTURING') {
+                    return 'Manufacturing';
+                }
+                if (dept === 'QA') {
+                    return 'QA';
+                }
+                return String(value || '');
+            }
+
+            function getDeptColorClass(value) {
+                var dept = normalizeDept(value);
+                if (dept === 'CP/OLB') {
+                    return 'dept-cp-olb';
+                }
+                if (dept === 'LAMI') {
+                    return 'dept-lami';
+                }
+                if (dept === 'ASSEMBLY') {
+                    return 'dept-assembly';
+                }
+                if (dept === 'MANU' || dept === 'MANUFACTURING') {
+                    return 'dept-manu';
+                }
+                if (dept === 'QA') {
+                    return 'dept-qa';
+                }
+                return 'dept-default';
+            }
+
+            function isHighlightedLine(item) {
+                var dept = normalizeDept(item.DEPT);
+                var line = normalizeText(item.LINE);
+                return dept === 'ASSEMBLY' && (line === 'MTP WFD' || line === 'UL');
+            }
+
+            function groupData(records) {
+                var grouped = {};
+                var productOrder = [];
                 var i;
 
-                if (visibleCount > MAX_ACCOUNTS) {
-                    visibleCount = MAX_ACCOUNTS - 1;
-                    hiddenCount = list.length - visibleCount;
+                for (i = 0; i < records.length; i++) {
+                    var record = records[i];
+                    var productKey = normalizeText(record.PROD_TYPE);
+                    var deptKey = normalizeDept(record.DEPT);
+
+                    if (!grouped[productKey]) {
+                        grouped[productKey] = {
+                            productType: productKey,
+                            totalManpower: 0,
+                            departments: {},
+                            deptOrder: []
+                        };
+                        productOrder.push(productKey);
+                    }
+
+                    grouped[productKey].totalManpower += toNumber(record.MANPOWER);
+
+                    if (!grouped[productKey].departments[deptKey]) {
+                        grouped[productKey].departments[deptKey] = {
+                            deptKey: deptKey,
+                            productType: productKey,
+                            deptLabel: getDeptLabel(record.DEPT),
+                            totalManpower: 0,
+                            items: []
+                        };
+                        grouped[productKey].deptOrder.push(deptKey);
+                    }
+
+                    grouped[productKey].departments[deptKey].totalManpower += toNumber(record.MANPOWER);
+                    grouped[productKey].departments[deptKey].items.push(record);
                 }
 
-                for (i = 0; i < visibleCount; i++) {
-                    html += renderAccountBadge(list[i]);
+                return {
+                    grouped: grouped,
+                    productOrder: productOrder
+                };
+            }
+
+            function sortDepartments(deptKeys) {
+                deptKeys.sort(function (a, b) {
+                    var indexA = getDeptSortIndex(a);
+                    var indexB = getDeptSortIndex(b);
+                    if (indexA === indexB) {
+                        if (a < b) {
+                            return -1;
+                        }
+                        if (a > b) {
+                            return 1;
+                        }
+                        return 0;
+                    }
+                    return indexA - indexB;
+                });
+                return deptKeys;
+            }
+
+            function getDeptSortIndex(deptKey) {
+                var i;
+                for (i = 0; i < DEPT_ORDER.length; i++) {
+                    if (DEPT_ORDER[i] === deptKey) {
+                        return i;
+                    }
+                }
+                return DEPT_ORDER.length + 1;
+            }
+
+            function renderEmpCount(empCount, deptClass) {
+                var count = parseInt(empCount, 10);
+                var html = '';
+                var visible = 0;
+                var i;
+
+                if (isNaN(count) || count <= 0) {
+                    return '&nbsp;';
                 }
 
-                if (hiddenCount > 0) {
-                    html += '<span class="account-badge more">+' + hiddenCount + '</span>';
+                visible = count;
+                if (visible > MAX_VISIBLE_EMP_ICONS) {
+                    visible = MAX_VISIBLE_EMP_ICONS;
+                }
+
+                for (i = 0; i < visible; i++) {
+                    html += '<span class="emp-icon ' + deptClass + '"></span>';
+                }
+
+                if (count > MAX_VISIBLE_EMP_ICONS) {
+                    html += '<span class="emp-plus">+' + (count - MAX_VISIBLE_EMP_ICONS) + '</span>';
                 }
 
                 return html;
             }
 
-            function renderAccountBadge(account) {
-                if (account && account.image) {
-                    return '<span class="account-badge"><img src="' + escapeHtml(account.image) + '" alt="' + escapeHtml(account.name || 'Account') + '"></span>';
+            function getLineCardStyle(itemCount) {
+                var width = 100;
+                if (itemCount > 0) {
+                    width = 100 / itemCount;
                 }
-
-                return '<span class="account-badge">' + escapeHtml(getInitials(account)) + '</span>';
+                return ' style="width:' + width.toFixed(4) + '%;"';
             }
 
-            function renderItem(item) {
+            function getDeptWidthStyle(itemCount) {
+                var width = 560;
+                if (itemCount <= 4) {
+                    width = 560;
+                } else if (itemCount === 5) {
+                    width = 650;
+                } else if (itemCount === 6) {
+                    width = 760;
+                } else if (itemCount === 7) {
+                    width = 860;
+                } else {
+                    width = 980;
+                }
+                return ' style="width:' + width + 'px;"';
+            }
+
+            function shouldUseWideDept(productType, deptKey) {
+                return normalizeText(productType) === 'YOUM' && normalizeDept(deptKey) === 'ASSEMBLY';
+            }
+
+            function renderLineCard(item, itemCount) {
+                var deptClass = getDeptColorClass(item.DEPT);
+                var lineBoxClass = 'line-box';
+                var textClass = 'line-box-text';
+                var cardClass = 'line-card';
+                var empClass = 'line-emp';
+                var manpowerClass = 'line-manpower';
+                var manpowerText = '&nbsp;';
+                if (isHighlightedLine(item)) {
+                    lineBoxClass += ' is-highlight';
+                }
+                if (itemCount >= 7) {
+                    textClass += ' compact';
+                    cardClass += ' compact';
+                    lineBoxClass += ' compact-box';
+                    empClass += ' compact';
+                    manpowerClass += ' compact';
+                }
+                if (itemCount >= 8) {
+                    textClass += ' dense';
+                    cardClass += ' dense';
+                }
+
+                if (toNumber(item.MANPOWER) > 0) {
+                    manpowerText = escapeHtml(formatNumber(item.MANPOWER));
+                }
+
                 return '' +
-                    '<div class="metric-item">' +
-                        '<div class="metric-box">' +
-                            '<div class="metric-box-text">' + escapeHtml(item.text) + '</div>' +
+                    '<div class="' + cardClass + '"' + getLineCardStyle(itemCount) + '>' +
+                        '<div class="' + lineBoxClass + '">' +
+                            '<div class="' + textClass + '">' + escapeHtml(item.LINE) + '</div>' +
                         '</div>' +
-                        '<div class="metric-accounts">' + renderAccounts(item.accounts) + '</div>' +
-                        '<div class="metric-value">' + escapeHtml(item.value) + '</div>' +
+                        '<div class="' + empClass + '">' + renderEmpCount(item.EMP_COUNT, deptClass) + '</div>' +
+                        '<div class="' + manpowerClass + '">' + manpowerText + '</div>' +
                     '</div>';
             }
 
-            function renderCard(card, cardIndex, totalCards) {
+            function renderDeptCard(deptData, isLast) {
                 var itemsHtml = '';
-                var items = card.items || [];
                 var i;
-                var cellClass = 'panel-cell';
-
-                if (cardIndex < totalCards - 1) {
-                    cellClass += ' with-arrow';
+                var cardClass = 'dept-card';
+                var itemCount = deptData.items.length;
+                if (isLast) {
+                    cardClass += ' last';
+                }
+                if (shouldUseWideDept(deptData.productType, deptData.deptKey)) {
+                    cardClass += ' is-wide';
                 }
 
-                for (i = 0; i < items.length; i++) {
-                    itemsHtml += renderItem(items[i]);
+                for (i = 0; i < deptData.items.length; i++) {
+                    itemsHtml += renderLineCard(deptData.items[i], itemCount);
                 }
 
                 return '' +
-                    '<div class="' + cellClass + '">' +
-                        '<div class="metric-card">' +
-                            '<div class="metric-header">' +
-                                '<span class="metric-header-label">' + escapeHtml(card.label) + '</span>' +
-                                '<span class="metric-header-value">' + escapeHtml(card.score) + '</span>' +
-                            '</div>' +
-                            '<div class="metric-items">' + itemsHtml + '</div>' +
+                    '<div class="' + cardClass + '"' + getDeptWidthStyle(itemCount) + '>' +
+                        '<div class="dept-heading">' + escapeHtml(deptData.deptLabel) + ' &rarr; <span class="dept-heading-total">' + escapeHtml(formatNumber(deptData.totalManpower)) + ' POS</span></div>' +
+                        '<div class="dept-frame">' +
+                            '<div class="line-list">' + itemsHtml + '</div>' +
                         '</div>' +
                     '</div>';
             }
 
-            function renderSection(section) {
-                var cardsHtml = '';
-                var cards = section.cards || [];
-                var i;
-
-                for (i = 0; i < cards.length; i++) {
-                    cardsHtml += renderCard(cards[i], i, cards.length);
-                }
-
-                return '' +
-                    '<div class="section">' +
-                        '<h2 class="section-title">' + escapeHtml(section.title) + '</h2>' +
-                        '<div class="panel-row">' + cardsHtml + '</div>' +
-                    '</div>';
-            }
-
-            function renderPage(data) {
+            function renderProductSection(sectionData) {
+                var deptKeys = sortDepartments(sectionData.deptOrder.slice(0));
                 var html = '';
                 var i;
 
-                for (i = 0; i < data.length; i++) {
-                    html += renderSection(data[i]);
+                html += '' +
+                    '<div class="product-section">' +
+                        '<div class="product-header">' +
+                            '<span class="product-pill">' + escapeHtml(sectionData.productType) + '</span>' +
+                            '<span class="product-total">&#9642; Total Direct Positions: <span class="product-total-value">' + escapeHtml(formatNumber(sectionData.totalManpower)) + ' Pos&rsquo;</span></span>' +
+                        '</div>' +
+                        '<div class="dept-track">';
+
+                for (i = 0; i < deptKeys.length; i++) {
+                    var deptKey = deptKeys[i];
+                    html += renderDeptCard(sectionData.departments[deptKey], i === deptKeys.length - 1);
+                    if (i < deptKeys.length - 1) {
+                        html += '<div class="dept-arrow"><span class="dept-arrow-icon">&rarr;</span></div>';
+                    }
+                }
+
+                html += '' +
+                        '</div>' +
+                    '</div>';
+
+                return html;
+            }
+
+            function renderDashboard(records) {
+                var groupedResult = groupData(records);
+                var grouped = groupedResult.grouped;
+                var productOrder = groupedResult.productOrder;
+                var html = '';
+                var i;
+
+                for (i = 0; i < productOrder.length; i++) {
+                    html += renderProductSection(grouped[productOrder[i]]);
                 }
 
                 return html;
+            }
+
+            function shouldIgnoreDrag(target) {
+                var tagName = '';
+                if (!target || !target.tagName) {
+                    return false;
+                }
+                tagName = String(target.tagName).toUpperCase();
+                return tagName === 'INPUT' || tagName === 'TEXTAREA' || tagName === 'SELECT' || tagName === 'BUTTON' || tagName === 'A';
+            }
+
+            function beginDrag(event) {
+                if (shouldIgnoreDrag(event.target)) {
+                    return;
+                }
+                if (event.which && event.which !== 1) {
+                    return;
+                }
+                if (!viewport) {
+                    return;
+                }
+                isPointerDown = true;
+                startX = event.clientX;
+                startY = event.clientY;
+                startScrollLeft = viewport.scrollLeft;
+                startScrollTop = viewport.scrollTop;
+                if (viewport.className.indexOf('is-dragging') === -1) {
+                    viewport.className += viewport.className ? ' is-dragging' : 'is-dragging';
+                }
+                if (event.preventDefault) {
+                    event.preventDefault();
+                }
+            }
+
+            function moveDrag(event) {
+                var deltaX = 0;
+                var deltaY = 0;
+                if (!isPointerDown) {
+                    return;
+                }
+                deltaX = event.clientX - startX;
+                deltaY = event.clientY - startY;
+                viewport.scrollLeft = startScrollLeft - deltaX;
+                viewport.scrollTop = startScrollTop - deltaY;
+                if (event.preventDefault) {
+                    event.preventDefault();
+                }
+            }
+
+            function endDrag() {
+                if (!isPointerDown) {
+                    return;
+                }
+                isPointerDown = false;
+                viewport.className = viewport.className.replace(/\bis-dragging\b/g, '').replace(/\s{2,}/g, ' ').replace(/^\s+|\s+$/g, '');
             }
 
             function updateCountdown() {
@@ -670,7 +1072,15 @@
                 countdownInterval = window.setInterval(updateCountdown, 1000);
             }
 
-            document.getElementById('app').innerHTML = renderPage(dashboardData);
+            document.getElementById('app').innerHTML = renderDashboard(rawData);
+            viewport = document.getElementById('viewport');
+            viewport.onmousedown = beginDrag;
+            viewport.onmousemove = moveDrag;
+            viewport.onmouseup = endDrag;
+            viewport.onmouseleave = endDrag;
+            document.ondragstart = function () {
+                return false;
+            };
             startCountdown();
         }());
     </script>
