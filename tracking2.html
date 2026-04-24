@@ -747,7 +747,6 @@
     <script type="text/javascript">
         (function () {
             var MAX_VISIBLE_EMP_ICONS = 3;
-            var DEPT_ORDER = ['CP/OLB', 'LAMI', 'ASSEMBLY', 'MANU', 'MANUFACTURING', 'QA'];
             var COUNTDOWN_START = 120;
             var countdownSeconds = COUNTDOWN_START;
             var countdownInterval = null;
@@ -805,15 +804,6 @@
 
             var rawData = window.manpowerData || sampleResponse;
 
-            function escapeHtml(value) {
-                return String(value)
-                    .replace(/&/g, '&amp;')
-                    .replace(/</g, '&lt;')
-                    .replace(/>/g, '&gt;')
-                    .replace(/"/g, '&quot;')
-                    .replace(/'/g, '&#39;');
-            }
-
             function toNumber(value) {
                 var numberValue = parseFloat(value);
                 if (isNaN(numberValue)) {
@@ -852,26 +842,6 @@
                 return dept;
             }
 
-            function getDeptLabel(value) {
-                var dept = normalizeDept(value);
-                if (dept === 'CP/OLB') {
-                    return 'CP/OLB';
-                }
-                if (dept === 'LAMI') {
-                    return 'Lami';
-                }
-                if (dept === 'ASSEMBLY') {
-                    return 'Assembly';
-                }
-                if (dept === 'MANU' || dept === 'MANUFACTURING') {
-                    return 'Manufacturing';
-                }
-                if (dept === 'QA') {
-                    return 'QA';
-                }
-                return String(value || '');
-            }
-
             function getDeptColorClass(value) {
                 var dept = normalizeDept(value);
                 if (dept === 'CP/OLB') {
@@ -898,77 +868,6 @@
                 return dept === 'ASSEMBLY' && (line === 'MTP WFD' || line === 'UL');
             }
 
-            function groupData(records) {
-                var grouped = {};
-                var productOrder = [];
-                var i;
-
-                for (i = 0; i < records.length; i++) {
-                    var record = records[i];
-                    var productKey = normalizeText(record.PROD_TYPE);
-                    var deptKey = normalizeDept(record.DEPT);
-
-                    if (!grouped[productKey]) {
-                        grouped[productKey] = {
-                            productType: productKey,
-                            totalManpower: 0,
-                            departments: {},
-                            deptOrder: []
-                        };
-                        productOrder.push(productKey);
-                    }
-
-                    grouped[productKey].totalManpower += toNumber(record.MANPOWER);
-
-                    if (!grouped[productKey].departments[deptKey]) {
-                        grouped[productKey].departments[deptKey] = {
-                            deptKey: deptKey,
-                            productType: productKey,
-                            deptLabel: getDeptLabel(record.DEPT),
-                            totalManpower: 0,
-                            items: []
-                        };
-                        grouped[productKey].deptOrder.push(deptKey);
-                    }
-
-                    grouped[productKey].departments[deptKey].totalManpower += toNumber(record.MANPOWER);
-                    grouped[productKey].departments[deptKey].items.push(record);
-                }
-
-                return {
-                    grouped: grouped,
-                    productOrder: productOrder
-                };
-            }
-
-            function sortDepartments(deptKeys) {
-                deptKeys.sort(function (a, b) {
-                    var indexA = getDeptSortIndex(a);
-                    var indexB = getDeptSortIndex(b);
-                    if (indexA === indexB) {
-                        if (a < b) {
-                            return -1;
-                        }
-                        if (a > b) {
-                            return 1;
-                        }
-                        return 0;
-                    }
-                    return indexA - indexB;
-                });
-                return deptKeys;
-            }
-
-            function getDeptSortIndex(deptKey) {
-                var i;
-                for (i = 0; i < DEPT_ORDER.length; i++) {
-                    if (DEPT_ORDER[i] === deptKey) {
-                        return i;
-                    }
-                }
-                return DEPT_ORDER.length + 1;
-            }
-
             function renderEmpCount(empCount, deptClass) {
                 var count = parseInt(empCount, 10);
                 var html = '';
@@ -990,143 +889,6 @@
 
                 if (count > MAX_VISIBLE_EMP_ICONS) {
                     html += '<span class="emp-plus">+' + (count - MAX_VISIBLE_EMP_ICONS) + '</span>';
-                }
-
-                return html;
-            }
-
-            function getLineCardStyle(itemCount) {
-                var width = 100;
-                if (itemCount > 0) {
-                    width = 100 / itemCount;
-                }
-                return ' style="width:' + width.toFixed(4) + '%;"';
-            }
-
-            function getVisualItemCount(productType, deptKey, itemCount) {
-                return itemCount;
-            }
-
-            function getDeptWidthStyle(itemCount) {
-                var width = 470;
-                if (itemCount <= 4) {
-                    width = 470;
-                } else if (itemCount === 5) {
-                    width = 560;
-                } else if (itemCount === 6) {
-                    width = 650;
-                } else if (itemCount === 7) {
-                    width = 730;
-                } else {
-                    width = 830;
-                }
-                return ' style="width:' + width + 'px;"';
-            }
-
-            function shouldUseWideDept(productType, deptKey) {
-                return normalizeText(productType) === 'YOUM' && normalizeDept(deptKey) === 'ASSEMBLY';
-            }
-
-            function renderLineCard(item, itemCount) {
-                var deptClass = getDeptColorClass(item.DEPT);
-                var lineBoxClass = 'line-box';
-                var textClass = 'line-box-text';
-                var cardClass = 'line-card';
-                var empClass = 'line-emp';
-                var manpowerClass = 'line-manpower';
-                var manpowerText = '&nbsp;';
-                if (isHighlightedLine(item)) {
-                    lineBoxClass += ' is-highlight';
-                }
-                if (itemCount >= 7) {
-                    textClass += ' compact';
-                    cardClass += ' compact';
-                    lineBoxClass += ' compact-box';
-                    empClass += ' compact';
-                    manpowerClass += ' compact';
-                }
-                if (itemCount >= 8) {
-                    textClass += ' dense';
-                    cardClass += ' dense';
-                }
-
-                if (toNumber(item.MANPOWER) > 0) {
-                    manpowerText = escapeHtml(formatNumber(item.MANPOWER));
-                }
-
-                return '' +
-                    '<div class="' + cardClass + '"' + getLineCardStyle(itemCount) + '>' +
-                        '<div class="' + lineBoxClass + '">' +
-                            '<div class="' + textClass + '">' + escapeHtml(item.LINE) + '</div>' +
-                        '</div>' +
-                        '<div class="' + empClass + '">' + renderEmpCount(item.EMP_COUNT, deptClass) + '</div>' +
-                        '<div class="' + manpowerClass + '">' + manpowerText + '</div>' +
-                    '</div>';
-            }
-
-            function renderDeptCard(deptData, isLast) {
-                var itemsHtml = '';
-                var i;
-                var cardClass = 'dept-card';
-                var itemCount = deptData.items.length;
-                var visualItemCount = getVisualItemCount(deptData.productType, deptData.deptKey, itemCount);
-                if (isLast) {
-                    cardClass += ' last';
-                }
-                if (shouldUseWideDept(deptData.productType, deptData.deptKey)) {
-                    cardClass += ' is-wide';
-                }
-
-                for (i = 0; i < deptData.items.length; i++) {
-                    itemsHtml += renderLineCard(deptData.items[i], visualItemCount);
-                }
-
-                return '' +
-                    '<div class="' + cardClass + '"' + getDeptWidthStyle(itemCount) + '>' +
-                        '<div class="dept-heading">' + escapeHtml(deptData.deptLabel) + ' &rarr; <span class="dept-heading-total">' + escapeHtml(formatNumber(deptData.totalManpower)) + ' POS</span></div>' +
-                        '<div class="dept-frame">' +
-                            '<div class="line-list">' + itemsHtml + '</div>' +
-                        '</div>' +
-                    '</div>';
-            }
-
-            function renderProductSection(sectionData) {
-                var deptKeys = sortDepartments(sectionData.deptOrder.slice(0));
-                var html = '';
-                var i;
-
-                html += '' +
-                    '<div class="product-section">' +
-                        '<div class="product-header">' +
-                            '<span class="product-pill">' + escapeHtml(sectionData.productType) + '</span>' +
-                            '<span class="product-total">&#9642; Total Direct Positions: <span class="product-total-value">' + escapeHtml(formatNumber(sectionData.totalManpower)) + ' Pos&rsquo;</span></span>' +
-                        '</div>' +
-                        '<div class="dept-track">';
-
-                for (i = 0; i < deptKeys.length; i++) {
-                    var deptKey = deptKeys[i];
-                    html += renderDeptCard(sectionData.departments[deptKey], i === deptKeys.length - 1);
-                    if (i < deptKeys.length - 1) {
-                        html += '<div class="dept-arrow"><span class="dept-arrow-icon">&rarr;</span></div>';
-                    }
-                }
-
-                html += '' +
-                        '</div>' +
-                    '</div>';
-
-                return html;
-            }
-
-            function renderDashboard(records) {
-                var groupedResult = groupData(records);
-                var grouped = groupedResult.grouped;
-                var productOrder = groupedResult.productOrder;
-                var html = '';
-                var i;
-
-                for (i = 0; i < productOrder.length; i++) {
-                    html += renderProductSection(grouped[productOrder[i]]);
                 }
 
                 return html;
