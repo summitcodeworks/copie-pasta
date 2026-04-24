@@ -1,0 +1,1384 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Direct Manpower Pos - Y26</title>
+    <style type="text/css">
+        html, body {
+            margin: 0;
+            padding: 0;
+            height: 100%;
+            background: #f4f9ff;
+            background: -webkit-linear-gradient(left, #d5ebff 0%, #edf6ff 52%, #ffffff 100%);
+            background: linear-gradient(to right, #d5ebff 0%, #edf6ff 52%, #ffffff 100%);
+            font-family: Georgia, "Times New Roman", serif;
+            color: #111111;
+            overflow: auto;
+        }
+
+        .viewport {
+            position: relative;
+            width: 100%;
+            height: 100%;
+            overflow: auto;
+        }
+
+        .page {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: max-content;
+            min-width: 2050px;
+            margin: 0;
+            padding: 18px 8px 24px;
+            box-sizing: border-box;
+            transform-origin: top left;
+        }
+
+        .top-header {
+            margin: 0 0 18px;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        .top-header:after {
+            content: '';
+            display: block;
+            clear: both;
+        }
+
+        .top-header-title,
+        .top-header-timer {
+            display: inline-block;
+            vertical-align: middle;
+            font-family: Arial, Helvetica, sans-serif;
+            color: #153b57;
+            font-weight: bold;
+            line-height: 1.2;
+        }
+
+        .top-header-title {
+            font-size: 30px;
+            letter-spacing: 0.2px;
+        }
+
+        .top-header-timer {
+            float: none;
+            margin-left: 10px;
+            font-size: 15px;
+            font-weight: normal;
+            padding-top: 0;
+        }
+
+        .top-header-separator {
+            display: inline-block;
+            width: 7px;
+            height: 7px;
+            margin-left: 12px;
+            margin-right: 2px;
+            border-radius: 50%;
+            background: #4c6480;
+            vertical-align: middle;
+        }
+
+        .countdown-value {
+            color: #2f4cff;
+            font-weight: bold;
+        }
+
+        .board {
+            font-size: 0;
+        }
+
+        .product-section {
+            margin-bottom: 28px;
+            font-size: 16px;
+        }
+
+        .product-header {
+            margin-bottom: 12px;
+            white-space: nowrap;
+        }
+
+        .product-pill,
+        .product-total {
+            display: inline-block;
+            vertical-align: middle;
+        }
+
+        .product-pill {
+            min-width: 150px;
+            padding: 9px 18px;
+            background: #1119f0;
+            background: -webkit-linear-gradient(top, #252bff 0%, #090cc9 100%);
+            background: linear-gradient(to bottom, #252bff 0%, #090cc9 100%);
+            color: #ffffff;
+            font-family: Arial, Helvetica, sans-serif;
+            font-size: 22px;
+            font-weight: bold;
+            text-align: center;
+            text-transform: uppercase;
+            box-shadow: 0 6px 14px rgba(14, 26, 140, 0.24);
+        }
+
+        .product-total {
+            margin-left: 14px;
+            color: #0a2f72;
+            font-family: Arial, Helvetica, sans-serif;
+            font-size: 22px;
+            font-weight: bold;
+        }
+
+        .product-total-value {
+            color: #3247ff;
+            font-size: 24px;
+        }
+
+        .dept-track {
+            font-size: 0;
+            white-space: nowrap;
+        }
+
+        .dept-card {
+            display: inline-block;
+            vertical-align: top;
+            box-sizing: border-box;
+            font-size: 16px;
+            margin: 0 8px 0 0;
+        }
+
+        .dept-card.last {
+            margin-right: 0;
+        }
+
+        .dept-card.is-wide {
+            width: 1080px;
+        }
+
+        .dept-arrow {
+            display: inline-block;
+            width: 34px;
+            vertical-align: top;
+            text-align: center;
+            font-size: 16px;
+            box-sizing: border-box;
+            padding-top: 90px;
+        }
+
+        .dept-arrow-icon {
+            display: inline-block;
+            width: 26px;
+            height: 26px;
+            border: 2px solid #6e8fb0;
+            border-radius: 50%;
+            background: #ffffff;
+            color: #5f7b9b;
+            font-family: Arial, Helvetica, sans-serif;
+            font-size: 15px;
+            line-height: 20px;
+            text-align: center;
+            box-sizing: border-box;
+            box-shadow: 0 2px 6px rgba(89, 124, 159, 0.12);
+        }
+
+        .dept-heading {
+            margin: 0 0 8px;
+            text-align: center;
+            font-family: Arial, Helvetica, sans-serif;
+            font-size: 18px;
+            font-weight: bold;
+            color: #111111;
+        }
+
+        .dept-heading-total {
+            color: #111111;
+        }
+
+        .dept-frame {
+            position: relative;
+            height: 200px;
+            padding: 18px 14px 16px;
+            border: 2px dashed #63a6de;
+            border-radius: 18px;
+            background: rgba(255, 255, 255, 0.92);
+            box-sizing: border-box;
+            overflow: hidden;
+        }
+
+        .dept-frame:before {
+            content: '';
+            position: absolute;
+            left: 18px;
+            right: 18px;
+            top: 66px;
+            height: 14px;
+            background: rgba(104, 114, 126, 0.15);
+            z-index: 0;
+        }
+
+        .line-list {
+            position: relative;
+            z-index: 1;
+            display: flex;
+            align-items: flex-start;
+            gap: 4px;
+            height: 100%;
+            overflow-x: auto;
+            overflow-y: hidden;
+        }
+
+        .line-card {
+            display: block;
+            vertical-align: top;
+            flex: 0 0 var(--tile-width, 96px);
+            width: var(--tile-width, 96px);
+            box-sizing: border-box;
+            height: 100%;
+            padding: 0 2px;
+            text-align: center;
+            font-family: Arial, Helvetica, sans-serif;
+            font-size: 12px;
+            position: relative;
+        }
+
+        .line-card.compact {
+            padding-left: 2px;
+            padding-right: 2px;
+        }
+
+        .line-card.dense {
+            padding-left: 1px;
+            padding-right: 1px;
+        }
+
+        .line-box {
+            display: table;
+            position: relative;
+            width: 100%;
+            height: 62px;
+            border-radius: 10px;
+            background: #eff8ff;
+            background: -webkit-linear-gradient(top, #f8fdff 0%, #edf8ff 20%, #dbefff 100%);
+            background: linear-gradient(to bottom, #f8fdff 0%, #edf8ff 20%, #dbefff 100%);
+            border: 1px solid #91aec6;
+            box-shadow: 2px 2px 0 #93afc4, 0 3px 8px rgba(108, 140, 165, 0.14);
+            box-sizing: border-box;
+            overflow: hidden;
+        }
+
+        .line-box.is-highlight {
+            background: #fff2e6;
+            background: -webkit-linear-gradient(top, #fff9f3 0%, #ffe7d4 18%, #ffd4b4 100%);
+            background: linear-gradient(to bottom, #fff9f3 0%, #ffe7d4 18%, #ffd4b4 100%);
+        }
+
+        .line-box-text {
+            display: table-cell;
+            width: 100%;
+            height: 100%;
+            padding: 0 6px;
+            vertical-align: middle;
+            text-align: center;
+            color: #1e2e3f;
+            font-size: 13px;
+            line-height: 1.1;
+            word-wrap: break-word;
+            word-break: break-word;
+            white-space: normal;
+            box-sizing: border-box;
+        }
+
+        .line-box-text.compact {
+            padding-left: 4px;
+            padding-right: 4px;
+            font-size: 11px;
+            line-height: 1.02;
+        }
+
+        .line-box.compact-box {
+            height: 64px;
+            border-radius: 8px;
+            box-shadow: 2px 4px 0 #93afc4, 0 6px 10px rgba(108, 140, 165, 0.16);
+        }
+
+        .line-box-text.dense {
+            padding-left: 3px;
+            padding-right: 3px;
+            font-size: 9px;
+            line-height: 1;
+        }
+
+        .line-emp {
+            min-height: 42px;
+            padding-top: 18px;
+            position: relative;
+        }
+
+        .line-emp.compact {
+            min-height: 36px;
+            padding-top: 16px;
+        }
+
+        .emp-icon,
+        .emp-plus {
+            display: inline-block;
+            vertical-align: top;
+        }
+
+        .emp-icon {
+            width: 14px;
+            height: 14px;
+            margin: 0 1px 3px;
+            border-radius: 50%;
+            position: relative;
+            box-shadow: 0 1px 0 rgba(0, 0, 0, 0.18);
+        }
+
+        .emp-icon:before,
+        .emp-icon:after {
+            content: '';
+            position: absolute;
+            display: block;
+            background: inherit;
+        }
+
+        .emp-icon:before {
+            left: 3px;
+            top: -6px;
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+        }
+
+        .emp-icon:after {
+            left: 1px;
+            top: 6px;
+            width: 12px;
+            height: 7px;
+            border-radius: 8px 8px 4px 4px;
+        }
+
+        .emp-plus {
+            display: block;
+            min-width: 24px;
+            height: 18px;
+            margin: 3px auto 0;
+            padding: 0 4px;
+            border-radius: 9px;
+            background: #ffffff;
+            border: 1px solid #7f97ad;
+            color: #39546b;
+            font-size: 11px;
+            font-weight: bold;
+            line-height: 16px;
+            box-sizing: border-box;
+        }
+
+        .line-manpower {
+            position: absolute;
+            left: 0;
+            bottom: 0;
+            width: 100%;
+            font-size: 14px;
+            font-weight: bold;
+            color: #111111;
+        }
+
+        .line-manpower.compact {
+            font-size: 12px;
+        }
+
+        .footer-note {
+            margin-top: 10px;
+            text-align: center;
+            font-family: Arial, Helvetica, sans-serif;
+            font-size: 16px;
+            color: #222222;
+        }
+
+        .dept-cp-olb {
+            background: #ff8d1a;
+        }
+
+        .dept-lami {
+            background: #7d54ff;
+        }
+
+        .dept-assembly {
+            background: #2378ff;
+        }
+
+        .dept-manu {
+            background: #ff4040;
+        }
+
+        .dept-qa {
+            background: #1fbf63;
+        }
+
+        .dept-default {
+            background: #607d8b;
+        }
+
+    </style>
+</head>
+<body>
+    <div id="viewport" class="viewport">
+        <div id="page" class="page">
+            <div class="top-header">
+                <div class="top-header-title">Direct Position</div>
+                <span class="top-header-separator"></span>
+                <div class="top-header-timer">Refresh In <span id="countdown" class="countdown-value">120s</span></div>
+            </div>
+            <div id="app" class="board">
+                <div class="product-section" data-product="RIGID">
+                    <div class="product-header">
+                        <span class="product-pill">RIGID</span>
+                        <span class="product-total">&#9642; Total Direct Positions: <span class="product-total-value" data-product-total>0</span> Pos&rsquo;</span>
+                    </div>
+                    <div class="dept-track">
+                        <div class="dept-card" data-dept="CP/OLB" style="width:724px;">
+                            <div class="dept-heading">CP/OLB &rarr; <span class="dept-heading-total"><span data-dept-total>0</span> POS</span></div>
+                            <div class="dept-frame">
+                                <div class="line-list" data-default-tile-width="96">
+                                    <div class="line-card" data-line="CP/OLB" style="--tile-width:96px;">
+                                        <div class="line-box"><div class="line-box-text">CP/OLB</div></div>
+                                        <div class="line-emp" data-role="emp">&nbsp;</div>
+                                        <div class="line-manpower" data-role="manpower">&nbsp;</div>
+                                    </div>
+                                    <div class="line-card" data-line="IOC" style="--tile-width:96px;">
+                                        <div class="line-box"><div class="line-box-text">IOC</div></div>
+                                        <div class="line-emp" data-role="emp">&nbsp;</div>
+                                        <div class="line-manpower" data-role="manpower">&nbsp;</div>
+                                    </div>
+                                    <div class="line-card" data-line="Kitting" style="--tile-width:96px;">
+                                        <div class="line-box"><div class="line-box-text">Kitting</div></div>
+                                        <div class="line-emp" data-role="emp">&nbsp;</div>
+                                        <div class="line-manpower" data-role="manpower">&nbsp;</div>
+                                    </div>
+                                    <div class="line-card" data-line="C-Tape" style="--tile-width:96px;">
+                                        <div class="line-box"><div class="line-box-text">C-Tape</div></div>
+                                        <div class="line-emp" data-role="emp">&nbsp;</div>
+                                        <div class="line-manpower" data-role="manpower">&nbsp;</div>
+                                    </div>
+                                    <div class="line-card" data-line="MMT &amp; POL" style="--tile-width:96px;">
+                                        <div class="line-box"><div class="line-box-text">MMT &amp; POL</div></div>
+                                        <div class="line-emp" data-role="emp">&nbsp;</div>
+                                        <div class="line-manpower" data-role="manpower">&nbsp;</div>
+                                    </div>
+                                    <div class="line-card" data-line="SA Tuffy" style="--tile-width:96px;">
+                                        <div class="line-box"><div class="line-box-text">SA Tuffy</div></div>
+                                        <div class="line-emp" data-role="emp">&nbsp;</div>
+                                        <div class="line-manpower" data-role="manpower">&nbsp;</div>
+                                    </div>
+                                    <div class="line-card" data-line="CRD VI" style="--tile-width:96px;">
+                                        <div class="line-box"><div class="line-box-text">CRD VI</div></div>
+                                        <div class="line-emp" data-role="emp">&nbsp;</div>
+                                        <div class="line-manpower" data-role="manpower">&nbsp;</div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="dept-arrow"><span class="dept-arrow-icon">&rarr;</span></div>
+                        <div class="dept-card" data-dept="LAMI" style="width:724px;">
+                            <div class="dept-heading">Lami &rarr; <span class="dept-heading-total"><span data-dept-total>0</span> POS</span></div>
+                            <div class="dept-frame">
+                                <div class="line-list" data-default-tile-width="96">
+                                    <div class="line-card" data-line="Lami" style="--tile-width:96px;">
+                                        <div class="line-box"><div class="line-box-text">Lami</div></div>
+                                        <div class="line-emp" data-role="emp">&nbsp;</div>
+                                        <div class="line-manpower" data-role="manpower">&nbsp;</div>
+                                    </div>
+                                    <div class="line-card" data-line="Lami VI" style="--tile-width:96px;">
+                                        <div class="line-box"><div class="line-box-text">Lami VI</div></div>
+                                        <div class="line-emp" data-role="emp">&nbsp;</div>
+                                        <div class="line-manpower" data-role="manpower">&nbsp;</div>
+                                    </div>
+                                    <div class="line-card" data-line="Lot Movement" style="--tile-width:96px;">
+                                        <div class="line-box"><div class="line-box-text">Lot Movement</div></div>
+                                        <div class="line-emp" data-role="emp">&nbsp;</div>
+                                        <div class="line-manpower" data-role="manpower">&nbsp;</div>
+                                    </div>
+                                    <div class="line-card" data-line="Kitting" style="--tile-width:96px;">
+                                        <div class="line-box"><div class="line-box-text">Kitting</div></div>
+                                        <div class="line-emp" data-role="emp">&nbsp;</div>
+                                        <div class="line-manpower" data-role="manpower">&nbsp;</div>
+                                    </div>
+                                    <div class="line-card" data-line="NG Logistics" style="--tile-width:96px;">
+                                        <div class="line-box"><div class="line-box-text">NG Logistics</div></div>
+                                        <div class="line-emp" data-role="emp">&nbsp;</div>
+                                        <div class="line-manpower" data-role="manpower">&nbsp;</div>
+                                    </div>
+                                    <div class="line-card" data-line="A/C" style="--tile-width:96px;">
+                                        <div class="line-box"><div class="line-box-text">A/C</div></div>
+                                        <div class="line-emp" data-role="emp">&nbsp;</div>
+                                        <div class="line-manpower" data-role="manpower">&nbsp;</div>
+                                    </div>
+                                    <div class="line-card" data-line="UV" style="--tile-width:96px;">
+                                        <div class="line-box"><div class="line-box-text">UV</div></div>
+                                        <div class="line-emp" data-role="emp">&nbsp;</div>
+                                        <div class="line-manpower" data-role="manpower">&nbsp;</div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="dept-arrow"><span class="dept-arrow-icon">&rarr;</span></div>
+                        <div class="dept-card last" data-dept="ASSEMBLY" style="width:724px;">
+                            <div class="dept-heading">Assembly &rarr; <span class="dept-heading-total"><span data-dept-total>0</span> POS</span></div>
+                            <div class="dept-frame">
+                                <div class="line-list" data-default-tile-width="96">
+                                    <div class="line-card" data-line="MTP WFD" style="--tile-width:96px;">
+                                        <div class="line-box"><div class="line-box-text">MTP WFD</div></div>
+                                        <div class="line-emp" data-role="emp">&nbsp;</div>
+                                        <div class="line-manpower" data-role="manpower">&nbsp;</div>
+                                    </div>
+                                    <div class="line-card" data-line="ASSY" style="--tile-width:96px;">
+                                        <div class="line-box"><div class="line-box-text">ASSY</div></div>
+                                        <div class="line-emp" data-role="emp">&nbsp;</div>
+                                        <div class="line-manpower" data-role="manpower">&nbsp;</div>
+                                    </div>
+                                    <div class="line-card" data-line="BIN 2" style="--tile-width:96px;">
+                                        <div class="line-box"><div class="line-box-text">BIN 2</div></div>
+                                        <div class="line-emp" data-role="emp">&nbsp;</div>
+                                        <div class="line-manpower" data-role="manpower">&nbsp;</div>
+                                    </div>
+                                    <div class="line-card" data-line="FVI I/P &amp; HIAA" style="--tile-width:96px;">
+                                        <div class="line-box"><div class="line-box-text">FVI I/P &amp; HIAA</div></div>
+                                        <div class="line-emp" data-role="emp">&nbsp;</div>
+                                        <div class="line-manpower" data-role="manpower">&nbsp;</div>
+                                    </div>
+                                    <div class="line-card" data-line="FVI &amp; ON/OFF" style="--tile-width:96px;">
+                                        <div class="line-box"><div class="line-box-text">FVI &amp; ON/OFF</div></div>
+                                        <div class="line-emp" data-role="emp">&nbsp;</div>
+                                        <div class="line-manpower" data-role="manpower">&nbsp;</div>
+                                    </div>
+                                    <div class="line-card" data-line="CNF" style="--tile-width:96px;">
+                                        <div class="line-box"><div class="line-box-text">CNF</div></div>
+                                        <div class="line-emp" data-role="emp">&nbsp;</div>
+                                        <div class="line-manpower" data-role="manpower">&nbsp;</div>
+                                    </div>
+                                    <div class="line-card" data-line="UL" style="--tile-width:96px;">
+                                        <div class="line-box"><div class="line-box-text">UL</div></div>
+                                        <div class="line-emp" data-role="emp">&nbsp;</div>
+                                        <div class="line-manpower" data-role="manpower">&nbsp;</div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="product-section" data-product="YOUM">
+                    <div class="product-header">
+                        <span class="product-pill">YOUM</span>
+                        <span class="product-total">&#9642; Total Direct Positions: <span class="product-total-value" data-product-total>0</span> Pos&rsquo;</span>
+                    </div>
+                    <div class="dept-track">
+                        <div class="dept-card" data-dept="CP/OLB" style="width:724px;">
+                            <div class="dept-heading">CP/OLB &rarr; <span class="dept-heading-total"><span data-dept-total>0</span> POS</span></div>
+                            <div class="dept-frame">
+                                <div class="line-list" data-default-tile-width="96">
+                                    <div class="line-card" data-line="CP" style="--tile-width:96px;">
+                                        <div class="line-box"><div class="line-box-text">CP</div></div>
+                                        <div class="line-emp" data-role="emp">&nbsp;</div>
+                                        <div class="line-manpower" data-role="manpower">&nbsp;</div>
+                                    </div>
+                                    <div class="line-card" data-line="BPL" style="--tile-width:96px;">
+                                        <div class="line-box"><div class="line-box-text">BPL</div></div>
+                                        <div class="line-emp" data-role="emp">&nbsp;</div>
+                                        <div class="line-manpower" data-role="manpower">&nbsp;</div>
+                                    </div>
+                                    <div class="line-card" data-line="OLB" style="--tile-width:96px;">
+                                        <div class="line-box"><div class="line-box-text">OLB</div></div>
+                                        <div class="line-emp" data-role="emp">&nbsp;</div>
+                                        <div class="line-manpower" data-role="manpower">&nbsp;</div>
+                                    </div>
+                                    <div class="line-card" data-line="Lot Movement" style="--tile-width:96px;">
+                                        <div class="line-box"><div class="line-box-text">Lot Movement</div></div>
+                                        <div class="line-emp" data-role="emp">&nbsp;</div>
+                                        <div class="line-manpower" data-role="manpower">&nbsp;</div>
+                                    </div>
+                                    <div class="line-card" data-line="AMT" style="--tile-width:96px;">
+                                        <div class="line-box"><div class="line-box-text">AMT</div></div>
+                                        <div class="line-emp" data-role="emp">&nbsp;</div>
+                                        <div class="line-manpower" data-role="manpower">&nbsp;</div>
+                                    </div>
+                                    <div class="line-card" data-line="NG Logistic" style="--tile-width:96px;">
+                                        <div class="line-box"><div class="line-box-text">NG Logistic</div></div>
+                                        <div class="line-emp" data-role="emp">&nbsp;</div>
+                                        <div class="line-manpower" data-role="manpower">&nbsp;</div>
+                                    </div>
+                                    <div class="line-card" data-line="LTC" style="--tile-width:96px;">
+                                        <div class="line-box"><div class="line-box-text">LTC</div></div>
+                                        <div class="line-emp" data-role="emp">&nbsp;</div>
+                                        <div class="line-manpower" data-role="manpower">&nbsp;</div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="dept-arrow"><span class="dept-arrow-icon">&rarr;</span></div>
+                        <div class="dept-card" data-dept="LAMI" style="width:724px;">
+                            <div class="dept-heading">Lami &rarr; <span class="dept-heading-total"><span data-dept-total>0</span> POS</span></div>
+                            <div class="dept-frame">
+                                <div class="line-list" data-default-tile-width="96">
+                                    <div class="line-card" data-line="LAMI #1" style="--tile-width:96px;">
+                                        <div class="line-box"><div class="line-box-text">LAMI #1</div></div>
+                                        <div class="line-emp" data-role="emp">&nbsp;</div>
+                                        <div class="line-manpower" data-role="manpower">&nbsp;</div>
+                                    </div>
+                                    <div class="line-card" data-line="LAMI #2" style="--tile-width:96px;">
+                                        <div class="line-box"><div class="line-box-text">LAMI #2</div></div>
+                                        <div class="line-emp" data-role="emp">&nbsp;</div>
+                                        <div class="line-manpower" data-role="manpower">&nbsp;</div>
+                                    </div>
+                                    <div class="line-card" data-line="LAMI #3" style="--tile-width:96px;">
+                                        <div class="line-box"><div class="line-box-text">LAMI #3</div></div>
+                                        <div class="line-emp" data-role="emp">&nbsp;</div>
+                                        <div class="line-manpower" data-role="manpower">&nbsp;</div>
+                                    </div>
+                                    <div class="line-card" data-line="LAMI #4" style="--tile-width:96px;">
+                                        <div class="line-box"><div class="line-box-text">LAMI #4</div></div>
+                                        <div class="line-emp" data-role="emp">&nbsp;</div>
+                                        <div class="line-manpower" data-role="manpower">&nbsp;</div>
+                                    </div>
+                                    <div class="line-card" data-line="A/C" style="--tile-width:96px;">
+                                        <div class="line-box"><div class="line-box-text">A/C</div></div>
+                                        <div class="line-emp" data-role="emp">&nbsp;</div>
+                                        <div class="line-manpower" data-role="manpower">&nbsp;</div>
+                                    </div>
+                                    <div class="line-card" data-line="UV" style="--tile-width:96px;">
+                                        <div class="line-box"><div class="line-box-text">UV</div></div>
+                                        <div class="line-emp" data-role="emp">&nbsp;</div>
+                                        <div class="line-manpower" data-role="manpower">&nbsp;</div>
+                                    </div>
+                                    <div class="line-card" data-line="NG Logistic" style="--tile-width:96px;">
+                                        <div class="line-box"><div class="line-box-text">NG Logistic</div></div>
+                                        <div class="line-emp" data-role="emp">&nbsp;</div>
+                                        <div class="line-manpower" data-role="manpower">&nbsp;</div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="dept-arrow"><span class="dept-arrow-icon">&rarr;</span></div>
+                        <div class="dept-card last" data-dept="ASSEMBLY" style="width:1256px;">
+                            <div class="dept-heading">Assembly &rarr; <span class="dept-heading-total"><span data-dept-total>0</span> POS</span></div>
+                            <div class="dept-frame">
+                                <div class="line-list" data-default-tile-width="84">
+                                    <div class="line-card" data-line="C-Film Detach" style="--tile-width:84px;">
+                                        <div class="line-box"><div class="line-box-text">C-Film Detach</div></div>
+                                        <div class="line-emp" data-role="emp">&nbsp;</div>
+                                        <div class="line-manpower" data-role="manpower">&nbsp;</div>
+                                    </div>
+                                    <div class="line-card" data-line="AAM" style="--tile-width:84px;">
+                                        <div class="line-box"><div class="line-box-text">AAM</div></div>
+                                        <div class="line-emp" data-role="emp">&nbsp;</div>
+                                        <div class="line-manpower" data-role="manpower">&nbsp;</div>
+                                    </div>
+                                    <div class="line-card" data-line="BENDING" style="--tile-width:84px;">
+                                        <div class="line-box"><div class="line-box-text">BENDING</div></div>
+                                        <div class="line-emp" data-role="emp">&nbsp;</div>
+                                        <div class="line-manpower" data-role="manpower">&nbsp;</div>
+                                    </div>
+                                    <div class="line-card" data-line="NG Logistic" style="--tile-width:84px;">
+                                        <div class="line-box"><div class="line-box-text">NG Logistic</div></div>
+                                        <div class="line-emp" data-role="emp">&nbsp;</div>
+                                        <div class="line-manpower" data-role="manpower">&nbsp;</div>
+                                    </div>
+                                    <div class="line-card" data-line="CAP ATTACH" style="--tile-width:84px;">
+                                        <div class="line-box"><div class="line-box-text">CAP ATTACH</div></div>
+                                        <div class="line-emp" data-role="emp">&nbsp;</div>
+                                        <div class="line-manpower" data-role="manpower">&nbsp;</div>
+                                    </div>
+                                    <div class="line-card" data-line="AMTP" style="--tile-width:84px;">
+                                        <div class="line-box"><div class="line-box-text">AMTP</div></div>
+                                        <div class="line-emp" data-role="emp">&nbsp;</div>
+                                        <div class="line-manpower" data-role="manpower">&nbsp;</div>
+                                    </div>
+                                    <div class="line-card" data-line="WFD-Y" style="--tile-width:84px;">
+                                        <div class="line-box"><div class="line-box-text">WFD-Y</div></div>
+                                        <div class="line-emp" data-role="emp">&nbsp;</div>
+                                        <div class="line-manpower" data-role="manpower">&nbsp;</div>
+                                    </div>
+                                    <div class="line-card" data-line="MCA" style="--tile-width:84px;">
+                                        <div class="line-box"><div class="line-box-text">MCA</div></div>
+                                        <div class="line-emp" data-role="emp">&nbsp;</div>
+                                        <div class="line-manpower" data-role="manpower">&nbsp;</div>
+                                    </div>
+                                    <div class="line-card" data-line="AFT" style="--tile-width:84px;">
+                                        <div class="line-box"><div class="line-box-text">AFT</div></div>
+                                        <div class="line-emp" data-role="emp">&nbsp;</div>
+                                        <div class="line-manpower" data-role="manpower">&nbsp;</div>
+                                    </div>
+                                    <div class="line-card" data-line="WFA-Y" style="--tile-width:84px;">
+                                        <div class="line-box"><div class="line-box-text">WFA-Y</div></div>
+                                        <div class="line-emp" data-role="emp">&nbsp;</div>
+                                        <div class="line-manpower" data-role="manpower">&nbsp;</div>
+                                    </div>
+                                    <div class="line-card" data-line="AF Coating" style="--tile-width:84px;">
+                                        <div class="line-box"><div class="line-box-text">AF Coating</div></div>
+                                        <div class="line-emp" data-role="emp">&nbsp;</div>
+                                        <div class="line-manpower" data-role="manpower">&nbsp;</div>
+                                    </div>
+                                    <div class="line-card" data-line="FVI" style="--tile-width:84px;">
+                                        <div class="line-box"><div class="line-box-text">FVI</div></div>
+                                        <div class="line-emp" data-role="emp">&nbsp;</div>
+                                        <div class="line-manpower" data-role="manpower">&nbsp;</div>
+                                    </div>
+                                    <div class="line-card" data-line="ON_OFF" style="--tile-width:84px;">
+                                        <div class="line-box"><div class="line-box-text">ON_OFF</div></div>
+                                        <div class="line-emp" data-role="emp">&nbsp;</div>
+                                        <div class="line-manpower" data-role="manpower">&nbsp;</div>
+                                    </div>
+                                    <div class="line-card" data-line="UL" style="--tile-width:84px;">
+                                        <div class="line-box"><div class="line-box-text">UL</div></div>
+                                        <div class="line-emp" data-role="emp">&nbsp;</div>
+                                        <div class="line-manpower" data-role="manpower">&nbsp;</div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script type="text/javascript">
+        (function () {
+            var MAX_VISIBLE_EMP_ICONS = 3;
+            var DEPT_ORDER = ['CP/OLB', 'LAMI', 'ASSEMBLY', 'MANU', 'MANUFACTURING', 'QA'];
+            var COUNTDOWN_START = 120;
+            var countdownSeconds = COUNTDOWN_START;
+            var countdownInterval = null;
+            var sampleResponse = [
+                { "DIR_POS_ID": 101, "EMP_COUNT": 0, "MANPOWER": 0, "PROD_TYPE": "RIGID", "LINE": "CP/OLB", "DEPT": "CP/OLB" },
+                { "DIR_POS_ID": 1, "EMP_COUNT": 1, "MANPOWER": 0.5, "PROD_TYPE": "RIGID", "LINE": "IOC", "DEPT": "CP/OLB" },
+                { "DIR_POS_ID": 2, "EMP_COUNT": 2, "MANPOWER": 0.67, "PROD_TYPE": "RIGID", "LINE": "Kitting", "DEPT": "CP/OLB" },
+                { "DIR_POS_ID": 3, "EMP_COUNT": 1, "MANPOWER": 1, "PROD_TYPE": "RIGID", "LINE": "C-Tape", "DEPT": "CP/OLB" },
+                { "DIR_POS_ID": 102, "EMP_COUNT": 0, "MANPOWER": 0, "PROD_TYPE": "RIGID", "LINE": "MMT & POL", "DEPT": "CP/OLB" },
+                { "DIR_POS_ID": 4, "EMP_COUNT": 0, "MANPOWER": 0.33, "PROD_TYPE": "RIGID", "LINE": "SA Tuffy", "DEPT": "CP/OLB" },
+                { "DIR_POS_ID": 103, "EMP_COUNT": 0, "MANPOWER": 0, "PROD_TYPE": "RIGID", "LINE": "CRD VI", "DEPT": "CP/OLB" },
+                { "DIR_POS_ID": 104, "EMP_COUNT": 0, "MANPOWER": 0, "PROD_TYPE": "RIGID", "LINE": "Lami", "DEPT": "LAMI" },
+                { "DIR_POS_ID": 5, "EMP_COUNT": 0, "MANPOWER": 0, "PROD_TYPE": "RIGID", "LINE": "Lami VI", "DEPT": "LAMI" },
+                { "DIR_POS_ID": 105, "EMP_COUNT": 0, "MANPOWER": 0, "PROD_TYPE": "RIGID", "LINE": "Lot Movement", "DEPT": "LAMI" },
+                { "DIR_POS_ID": 6, "EMP_COUNT": 1, "MANPOWER": 0.5, "PROD_TYPE": "RIGID", "LINE": "Kitting", "DEPT": "LAMI" },
+                { "DIR_POS_ID": 7, "EMP_COUNT": 1, "MANPOWER": 0.3, "PROD_TYPE": "RIGID", "LINE": "NG Logistics", "DEPT": "LAMI" },
+                { "DIR_POS_ID": 106, "EMP_COUNT": 0, "MANPOWER": 0, "PROD_TYPE": "RIGID", "LINE": "A/C", "DEPT": "LAMI" },
+                { "DIR_POS_ID": 8, "EMP_COUNT": 1, "MANPOWER": 0.59, "PROD_TYPE": "RIGID", "LINE": "UV", "DEPT": "LAMI" },
+                { "DIR_POS_ID": 9, "EMP_COUNT": 2, "MANPOWER": 0.99, "PROD_TYPE": "RIGID", "LINE": "MTP WFD", "DEPT": "ASSEMBLY" },
+                { "DIR_POS_ID": 107, "EMP_COUNT": 0, "MANPOWER": 0, "PROD_TYPE": "RIGID", "LINE": "ASSY", "DEPT": "ASSEMBLY" },
+                { "DIR_POS_ID": 10, "EMP_COUNT": 1, "MANPOWER": 1.86, "PROD_TYPE": "RIGID", "LINE": "BIN 2", "DEPT": "ASSEMBLY" },
+                { "DIR_POS_ID": 11, "EMP_COUNT": 2, "MANPOWER": 0.12, "PROD_TYPE": "RIGID", "LINE": "FVI I/P & HIAA", "DEPT": "ASSEMBLY" },
+                { "DIR_POS_ID": 12, "EMP_COUNT": 6, "MANPOWER": 6.5, "PROD_TYPE": "RIGID", "LINE": "FVI & ON/OFF", "DEPT": "ASSEMBLY" },
+                { "DIR_POS_ID": 13, "EMP_COUNT": 1, "MANPOWER": 0.5, "PROD_TYPE": "RIGID", "LINE": "CNF", "DEPT": "ASSEMBLY" },
+                { "DIR_POS_ID": 14, "EMP_COUNT": 1, "MANPOWER": 1, "PROD_TYPE": "RIGID", "LINE": "UL", "DEPT": "ASSEMBLY" },
+                { "DIR_POS_ID": 15, "EMP_COUNT": 0, "MANPOWER": 0, "PROD_TYPE": "YOUM", "LINE": "CP", "DEPT": "CP/OLB" },
+                { "DIR_POS_ID": 108, "EMP_COUNT": 0, "MANPOWER": 0, "PROD_TYPE": "YOUM", "LINE": "BPL", "DEPT": "CP/OLB" },
+                { "DIR_POS_ID": 109, "EMP_COUNT": 0, "MANPOWER": 0, "PROD_TYPE": "YOUM", "LINE": "OLB", "DEPT": "CP/OLB" },
+                { "DIR_POS_ID": 110, "EMP_COUNT": 1, "MANPOWER": 1, "PROD_TYPE": "YOUM", "LINE": "Lot Movement", "DEPT": "CP/OLB" },
+                { "DIR_POS_ID": 16, "EMP_COUNT": 1, "MANPOWER": 1, "PROD_TYPE": "YOUM", "LINE": "AMT", "DEPT": "CP/OLB" },
+                { "DIR_POS_ID": 17, "EMP_COUNT": 1, "MANPOWER": 1, "PROD_TYPE": "YOUM", "LINE": "NG Logistic", "DEPT": "CP/OLB" },
+                { "DIR_POS_ID": 111, "EMP_COUNT": 0, "MANPOWER": 0, "PROD_TYPE": "YOUM", "LINE": "LTC", "DEPT": "CP/OLB" },
+                { "DIR_POS_ID": 18, "EMP_COUNT": 0, "MANPOWER": 0, "PROD_TYPE": "YOUM", "LINE": "LAMI #1", "DEPT": "LAMI" },
+                { "DIR_POS_ID": 112, "EMP_COUNT": 0, "MANPOWER": 0, "PROD_TYPE": "YOUM", "LINE": "LAMI #2", "DEPT": "LAMI" },
+                { "DIR_POS_ID": 113, "EMP_COUNT": 0, "MANPOWER": 0, "PROD_TYPE": "YOUM", "LINE": "LAMI #3", "DEPT": "LAMI" },
+                { "DIR_POS_ID": 114, "EMP_COUNT": 0, "MANPOWER": 0, "PROD_TYPE": "YOUM", "LINE": "LAMI #4", "DEPT": "LAMI" },
+                { "DIR_POS_ID": 115, "EMP_COUNT": 0, "MANPOWER": 0, "PROD_TYPE": "YOUM", "LINE": "A/C", "DEPT": "LAMI" },
+                { "DIR_POS_ID": 116, "EMP_COUNT": 0, "MANPOWER": 0, "PROD_TYPE": "YOUM", "LINE": "UV", "DEPT": "LAMI" },
+                { "DIR_POS_ID": 117, "EMP_COUNT": 1, "MANPOWER": 1, "PROD_TYPE": "YOUM", "LINE": "NG Logistic", "DEPT": "LAMI" },
+                { "DIR_POS_ID": 118, "EMP_COUNT": 0, "MANPOWER": 0, "PROD_TYPE": "YOUM", "LINE": "C-Film Detach", "DEPT": "ASSEMBLY" },
+                { "DIR_POS_ID": 119, "EMP_COUNT": 0, "MANPOWER": 0, "PROD_TYPE": "YOUM", "LINE": "AAM", "DEPT": "ASSEMBLY" },
+                { "DIR_POS_ID": 120, "EMP_COUNT": 0, "MANPOWER": 0, "PROD_TYPE": "YOUM", "LINE": "BENDING", "DEPT": "ASSEMBLY" },
+                { "DIR_POS_ID": 19, "EMP_COUNT": 1, "MANPOWER": 0.5, "PROD_TYPE": "YOUM", "LINE": "NG Logistic", "DEPT": "ASSEMBLY" },
+                { "DIR_POS_ID": 121, "EMP_COUNT": 0, "MANPOWER": 0, "PROD_TYPE": "YOUM", "LINE": "CAP ATTACH", "DEPT": "ASSEMBLY" },
+                { "DIR_POS_ID": 20, "EMP_COUNT": 1, "MANPOWER": 1, "PROD_TYPE": "YOUM", "LINE": "AMTP", "DEPT": "ASSEMBLY" },
+                { "DIR_POS_ID": 122, "EMP_COUNT": 0, "MANPOWER": 0, "PROD_TYPE": "YOUM", "LINE": "WFD-Y", "DEPT": "ASSEMBLY" },
+                { "DIR_POS_ID": 123, "EMP_COUNT": 0, "MANPOWER": 0, "PROD_TYPE": "YOUM", "LINE": "MCA", "DEPT": "ASSEMBLY" },
+                { "DIR_POS_ID": 21, "EMP_COUNT": 1, "MANPOWER": 1, "PROD_TYPE": "YOUM", "LINE": "AFT", "DEPT": "ASSEMBLY" },
+                { "DIR_POS_ID": 124, "EMP_COUNT": 0, "MANPOWER": 0, "PROD_TYPE": "YOUM", "LINE": "WFA-Y", "DEPT": "ASSEMBLY" },
+                { "DIR_POS_ID": 22, "EMP_COUNT": 3, "MANPOWER": 2, "PROD_TYPE": "YOUM", "LINE": "AF Coating", "DEPT": "ASSEMBLY" },
+                { "DIR_POS_ID": 23, "EMP_COUNT": 6, "MANPOWER": 6, "PROD_TYPE": "YOUM", "LINE": "FVI", "DEPT": "ASSEMBLY" },
+                { "DIR_POS_ID": 24, "EMP_COUNT": 5, "MANPOWER": 5, "PROD_TYPE": "YOUM", "LINE": "ON_OFF", "DEPT": "ASSEMBLY" },
+                { "DIR_POS_ID": 25, "EMP_COUNT": 1, "MANPOWER": 1, "PROD_TYPE": "YOUM", "LINE": "UL", "DEPT": "ASSEMBLY" }
+            ];
+
+            var rawData = window.manpowerData || sampleResponse;
+
+            function escapeHtml(value) {
+                return String(value)
+                    .replace(/&/g, '&amp;')
+                    .replace(/</g, '&lt;')
+                    .replace(/>/g, '&gt;')
+                    .replace(/"/g, '&quot;')
+                    .replace(/'/g, '&#39;');
+            }
+
+            function toNumber(value) {
+                var numberValue = parseFloat(value);
+                if (isNaN(numberValue)) {
+                    return 0;
+                }
+                return numberValue;
+            }
+
+            function formatNumber(value) {
+                var numberValue = toNumber(value);
+                var rounded = Math.round(numberValue * 100) / 100;
+                if (Math.abs(rounded - Math.round(rounded)) < 0.0001) {
+                    return String(Math.round(rounded));
+                }
+                if (Math.abs((rounded * 10) - Math.round(rounded * 10)) < 0.0001) {
+                    return rounded.toFixed(1);
+                }
+                return rounded.toFixed(2);
+            }
+
+            function normalizeText(value) {
+                return String(value || '').replace(/^\s+|\s+$/g, '').toUpperCase();
+            }
+
+            function normalizeDept(value) {
+                var dept = normalizeText(value);
+                if (dept === 'ASSY') {
+                    return 'ASSEMBLY';
+                }
+                if (dept === 'MANUFACTURING') {
+                    return 'MANUFACTURING';
+                }
+                if (dept === 'MANU') {
+                    return 'MANU';
+                }
+                return dept;
+            }
+
+            function getDeptLabel(value) {
+                var dept = normalizeDept(value);
+                if (dept === 'CP/OLB') {
+                    return 'CP/OLB';
+                }
+                if (dept === 'LAMI') {
+                    return 'Lami';
+                }
+                if (dept === 'ASSEMBLY') {
+                    return 'Assembly';
+                }
+                if (dept === 'MANU' || dept === 'MANUFACTURING') {
+                    return 'Manufacturing';
+                }
+                if (dept === 'QA') {
+                    return 'QA';
+                }
+                return String(value || '');
+            }
+
+            function getDeptColorClass(value) {
+                var dept = normalizeDept(value);
+                if (dept === 'CP/OLB') {
+                    return 'dept-cp-olb';
+                }
+                if (dept === 'LAMI') {
+                    return 'dept-lami';
+                }
+                if (dept === 'ASSEMBLY') {
+                    return 'dept-assembly';
+                }
+                if (dept === 'MANU' || dept === 'MANUFACTURING') {
+                    return 'dept-manu';
+                }
+                if (dept === 'QA') {
+                    return 'dept-qa';
+                }
+                return 'dept-default';
+            }
+
+            function isHighlightedLine(item) {
+                var dept = normalizeDept(item.DEPT);
+                var line = normalizeText(item.LINE);
+                return dept === 'ASSEMBLY' && (line === 'MTP WFD' || line === 'UL');
+            }
+
+            function groupData(records) {
+                var grouped = {};
+                var productOrder = [];
+                var i;
+
+                for (i = 0; i < records.length; i++) {
+                    var record = records[i];
+                    var productKey = normalizeText(record.PROD_TYPE);
+                    var deptKey = normalizeDept(record.DEPT);
+
+                    if (!grouped[productKey]) {
+                        grouped[productKey] = {
+                            productType: productKey,
+                            totalManpower: 0,
+                            departments: {},
+                            deptOrder: []
+                        };
+                        productOrder.push(productKey);
+                    }
+
+                    grouped[productKey].totalManpower += toNumber(record.MANPOWER);
+
+                    if (!grouped[productKey].departments[deptKey]) {
+                        grouped[productKey].departments[deptKey] = {
+                            deptKey: deptKey,
+                            productType: productKey,
+                            deptLabel: getDeptLabel(record.DEPT),
+                            totalManpower: 0,
+                            items: []
+                        };
+                        grouped[productKey].deptOrder.push(deptKey);
+                    }
+
+                    grouped[productKey].departments[deptKey].totalManpower += toNumber(record.MANPOWER);
+                    grouped[productKey].departments[deptKey].items.push(record);
+                }
+
+                return {
+                    grouped: grouped,
+                    productOrder: productOrder
+                };
+            }
+
+            function sortDepartments(deptKeys) {
+                deptKeys.sort(function (a, b) {
+                    var indexA = getDeptSortIndex(a);
+                    var indexB = getDeptSortIndex(b);
+                    if (indexA === indexB) {
+                        if (a < b) {
+                            return -1;
+                        }
+                        if (a > b) {
+                            return 1;
+                        }
+                        return 0;
+                    }
+                    return indexA - indexB;
+                });
+                return deptKeys;
+            }
+
+            function getDeptSortIndex(deptKey) {
+                var i;
+                for (i = 0; i < DEPT_ORDER.length; i++) {
+                    if (DEPT_ORDER[i] === deptKey) {
+                        return i;
+                    }
+                }
+                return DEPT_ORDER.length + 1;
+            }
+
+            function renderEmpCount(empCount, deptClass) {
+                var count = parseInt(empCount, 10);
+                var html = '';
+                var visible = 0;
+                var i;
+
+                if (isNaN(count) || count <= 0) {
+                    return '&nbsp;';
+                }
+
+                visible = count;
+                if (visible > MAX_VISIBLE_EMP_ICONS) {
+                    visible = MAX_VISIBLE_EMP_ICONS;
+                }
+
+                for (i = 0; i < visible; i++) {
+                    html += '<span class="emp-icon ' + deptClass + '"></span>';
+                }
+
+                if (count > MAX_VISIBLE_EMP_ICONS) {
+                    html += '<span class="emp-plus">+' + (count - MAX_VISIBLE_EMP_ICONS) + '</span>';
+                }
+
+                return html;
+            }
+
+            function getLineCardStyle(itemCount) {
+                var width = 100;
+                if (itemCount > 0) {
+                    width = 100 / itemCount;
+                }
+                return ' style="width:' + width.toFixed(4) + '%;"';
+            }
+
+            function getVisualItemCount(productType, deptKey, itemCount) {
+                return itemCount;
+            }
+
+            function getDeptWidthStyle(itemCount) {
+                var width = 470;
+                if (itemCount <= 4) {
+                    width = 470;
+                } else if (itemCount === 5) {
+                    width = 560;
+                } else if (itemCount === 6) {
+                    width = 650;
+                } else if (itemCount === 7) {
+                    width = 730;
+                } else {
+                    width = 830;
+                }
+                return ' style="width:' + width + 'px;"';
+            }
+
+            function shouldUseWideDept(productType, deptKey) {
+                return normalizeText(productType) === 'YOUM' && normalizeDept(deptKey) === 'ASSEMBLY';
+            }
+
+            function renderLineCard(item, itemCount) {
+                var deptClass = getDeptColorClass(item.DEPT);
+                var lineBoxClass = 'line-box';
+                var textClass = 'line-box-text';
+                var cardClass = 'line-card';
+                var empClass = 'line-emp';
+                var manpowerClass = 'line-manpower';
+                var manpowerText = '&nbsp;';
+                if (isHighlightedLine(item)) {
+                    lineBoxClass += ' is-highlight';
+                }
+                if (itemCount >= 7) {
+                    textClass += ' compact';
+                    cardClass += ' compact';
+                    lineBoxClass += ' compact-box';
+                    empClass += ' compact';
+                    manpowerClass += ' compact';
+                }
+                if (itemCount >= 8) {
+                    textClass += ' dense';
+                    cardClass += ' dense';
+                }
+
+                if (toNumber(item.MANPOWER) > 0) {
+                    manpowerText = escapeHtml(formatNumber(item.MANPOWER));
+                }
+
+                return '' +
+                    '<div class="' + cardClass + '"' + getLineCardStyle(itemCount) + '>' +
+                        '<div class="' + lineBoxClass + '">' +
+                            '<div class="' + textClass + '">' + escapeHtml(item.LINE) + '</div>' +
+                        '</div>' +
+                        '<div class="' + empClass + '">' + renderEmpCount(item.EMP_COUNT, deptClass) + '</div>' +
+                        '<div class="' + manpowerClass + '">' + manpowerText + '</div>' +
+                    '</div>';
+            }
+
+            function renderDeptCard(deptData, isLast) {
+                var itemsHtml = '';
+                var i;
+                var cardClass = 'dept-card';
+                var itemCount = deptData.items.length;
+                var visualItemCount = getVisualItemCount(deptData.productType, deptData.deptKey, itemCount);
+                if (isLast) {
+                    cardClass += ' last';
+                }
+                if (shouldUseWideDept(deptData.productType, deptData.deptKey)) {
+                    cardClass += ' is-wide';
+                }
+
+                for (i = 0; i < deptData.items.length; i++) {
+                    itemsHtml += renderLineCard(deptData.items[i], visualItemCount);
+                }
+
+                return '' +
+                    '<div class="' + cardClass + '"' + getDeptWidthStyle(itemCount) + '>' +
+                        '<div class="dept-heading">' + escapeHtml(deptData.deptLabel) + ' &rarr; <span class="dept-heading-total">' + escapeHtml(formatNumber(deptData.totalManpower)) + ' POS</span></div>' +
+                        '<div class="dept-frame">' +
+                            '<div class="line-list">' + itemsHtml + '</div>' +
+                        '</div>' +
+                    '</div>';
+            }
+
+            function renderProductSection(sectionData) {
+                var deptKeys = sortDepartments(sectionData.deptOrder.slice(0));
+                var html = '';
+                var i;
+
+                html += '' +
+                    '<div class="product-section">' +
+                        '<div class="product-header">' +
+                            '<span class="product-pill">' + escapeHtml(sectionData.productType) + '</span>' +
+                            '<span class="product-total">&#9642; Total Direct Positions: <span class="product-total-value">' + escapeHtml(formatNumber(sectionData.totalManpower)) + ' Pos&rsquo;</span></span>' +
+                        '</div>' +
+                        '<div class="dept-track">';
+
+                for (i = 0; i < deptKeys.length; i++) {
+                    var deptKey = deptKeys[i];
+                    html += renderDeptCard(sectionData.departments[deptKey], i === deptKeys.length - 1);
+                    if (i < deptKeys.length - 1) {
+                        html += '<div class="dept-arrow"><span class="dept-arrow-icon">&rarr;</span></div>';
+                    }
+                }
+
+                html += '' +
+                        '</div>' +
+                    '</div>';
+
+                return html;
+            }
+
+            function renderDashboard(records) {
+                var groupedResult = groupData(records);
+                var grouped = groupedResult.grouped;
+                var productOrder = groupedResult.productOrder;
+                var html = '';
+                var i;
+
+                for (i = 0; i < productOrder.length; i++) {
+                    html += renderProductSection(grouped[productOrder[i]]);
+                }
+
+                return html;
+            }
+
+            function getRecordKey(productType, deptKey, lineName) {
+                return normalizeText(productType) + '|' + normalizeDept(deptKey) + '|' + normalizeText(lineName);
+            }
+
+            function collectDashboardData(records) {
+                var summary = {
+                    productTotals: {},
+                    deptTotals: {},
+                    lineMap: {},
+                    deptLineOrder: {}
+                };
+                var i;
+
+                for (i = 0; i < records.length; i++) {
+                    var record = records[i];
+                    var productKey = normalizeText(record.PROD_TYPE);
+                    var deptKey = normalizeDept(record.DEPT);
+                    var lineKey = normalizeText(record.LINE);
+                    var deptSummaryKey = productKey + '|' + deptKey;
+                    var recordKey = getRecordKey(productKey, deptKey, lineKey);
+                    var empCount = parseInt(record.EMP_COUNT, 10);
+                    var manpower = toNumber(record.MANPOWER);
+
+                    if (!productKey || !deptKey || !lineKey) {
+                        continue;
+                    }
+
+                    if (!summary.productTotals[productKey]) {
+                        summary.productTotals[productKey] = 0;
+                    }
+                    summary.productTotals[productKey] += manpower;
+
+                    if (!summary.deptTotals[deptSummaryKey]) {
+                        summary.deptTotals[deptSummaryKey] = 0;
+                    }
+                    summary.deptTotals[deptSummaryKey] += manpower;
+
+                    if (!summary.deptLineOrder[deptSummaryKey]) {
+                        summary.deptLineOrder[deptSummaryKey] = [];
+                    }
+                    if (summary.deptLineOrder[deptSummaryKey].indexOf(lineKey) === -1) {
+                        summary.deptLineOrder[deptSummaryKey].push(lineKey);
+                    }
+
+                    if (!summary.lineMap[recordKey]) {
+                        summary.lineMap[recordKey] = {
+                            PROD_TYPE: productKey,
+                            DEPT: deptKey,
+                            LINE: String(record.LINE || ''),
+                            EMP_COUNT: 0,
+                            MANPOWER: 0
+                        };
+                    }
+
+                    if (!isNaN(empCount)) {
+                        summary.lineMap[recordKey].EMP_COUNT += empCount;
+                    }
+                    summary.lineMap[recordKey].MANPOWER += manpower;
+                }
+
+                return summary;
+            }
+
+            function setBlankHtml(node) {
+                if (node) {
+                    node.innerHTML = '&nbsp;';
+                }
+            }
+
+            function resetLineCardNode(card) {
+                var lineBox = card.querySelector('.line-box');
+                var empNode = card.querySelector('[data-role="emp"]');
+                var manpowerNode = card.querySelector('[data-role="manpower"]');
+
+                if (lineBox) {
+                    lineBox.className = 'line-box';
+                }
+                setBlankHtml(empNode);
+                setBlankHtml(manpowerNode);
+            }
+
+            function bindLineCardNode(card, item) {
+                var deptClass = getDeptColorClass(item.DEPT);
+                var lineBox = card.querySelector('.line-box');
+                var textNode = card.querySelector('.line-box-text');
+                var empNode = card.querySelector('[data-role="emp"]');
+                var manpowerNode = card.querySelector('[data-role="manpower"]');
+
+                if (lineBox) {
+                    lineBox.className = isHighlightedLine(item) ? 'line-box is-highlight' : 'line-box';
+                }
+                if (textNode && item.LINE) {
+                    textNode.textContent = item.LINE;
+                }
+                if (empNode) {
+                    empNode.innerHTML = renderEmpCount(item.EMP_COUNT, deptClass);
+                }
+                if (manpowerNode) {
+                    if (toNumber(item.MANPOWER) > 0) {
+                        manpowerNode.textContent = formatNumber(item.MANPOWER);
+                    } else {
+                        manpowerNode.innerHTML = '&nbsp;';
+                    }
+                }
+            }
+
+            function createLineCardNode(lineName, tileWidth) {
+                var card = document.createElement('div');
+                var lineBox = document.createElement('div');
+                var lineText = document.createElement('div');
+                var empNode = document.createElement('div');
+                var manpowerNode = document.createElement('div');
+
+                card.className = 'line-card';
+                card.setAttribute('data-line', lineName);
+                card.style.setProperty('--tile-width', tileWidth + 'px');
+
+                lineBox.className = 'line-box';
+                lineText.className = 'line-box-text';
+                lineText.textContent = lineName;
+                lineBox.appendChild(lineText);
+
+                empNode.className = 'line-emp';
+                empNode.setAttribute('data-role', 'emp');
+                empNode.innerHTML = '&nbsp;';
+
+                manpowerNode.className = 'line-manpower';
+                manpowerNode.setAttribute('data-role', 'manpower');
+                manpowerNode.innerHTML = '&nbsp;';
+
+                card.appendChild(lineBox);
+                card.appendChild(empNode);
+                card.appendChild(manpowerNode);
+
+                return card;
+            }
+
+            function applyDashboardData(records) {
+                var summary = collectDashboardData(records);
+                var productSections = document.querySelectorAll('#app [data-product]');
+                var i;
+
+                for (i = 0; i < productSections.length; i++) {
+                    var productSection = productSections[i];
+                    var productKey = normalizeText(productSection.getAttribute('data-product'));
+                    var productTotalNode = productSection.querySelector('[data-product-total]');
+                    var deptCards = productSection.querySelectorAll('[data-dept]');
+                    var j;
+
+                    if (productTotalNode) {
+                        productTotalNode.textContent = formatNumber(summary.productTotals[productKey] || 0);
+                    }
+
+                    for (j = 0; j < deptCards.length; j++) {
+                        var deptCard = deptCards[j];
+                        var deptKey = normalizeDept(deptCard.getAttribute('data-dept'));
+                        var deptSummaryKey = productKey + '|' + deptKey;
+                        var deptTotalNode = deptCard.querySelector('[data-dept-total]');
+                        var lineList = deptCard.querySelector('.line-list');
+                        var existingLineCards;
+                        var lineSeen = {};
+                        var k;
+                        var defaultTileWidth = 96;
+                        var deptLineOrder = summary.deptLineOrder[deptSummaryKey] || [];
+
+                        if (deptTotalNode) {
+                            deptTotalNode.textContent = formatNumber(summary.deptTotals[deptSummaryKey] || 0);
+                        }
+
+                        if (!lineList) {
+                            continue;
+                        }
+
+                        defaultTileWidth = parseInt(lineList.getAttribute('data-default-tile-width'), 10);
+                        if (isNaN(defaultTileWidth) || defaultTileWidth <= 0) {
+                            defaultTileWidth = 96;
+                        }
+
+                        existingLineCards = lineList.querySelectorAll('.line-card');
+                        for (k = 0; k < existingLineCards.length; k++) {
+                            var lineCard = existingLineCards[k];
+                            var lineKey = normalizeText(lineCard.getAttribute('data-line'));
+                            var itemKey = getRecordKey(productKey, deptKey, lineKey);
+                            var item = summary.lineMap[itemKey];
+
+                            lineSeen[lineKey] = true;
+
+                            if (item) {
+                                bindLineCardNode(lineCard, item);
+                            } else {
+                                resetLineCardNode(lineCard);
+                            }
+                        }
+
+                        for (k = 0; k < deptLineOrder.length; k++) {
+                            var missingLineKey = deptLineOrder[k];
+                            var missingItemKey;
+                            var missingItem;
+                            var addedCard;
+
+                            if (lineSeen[missingLineKey]) {
+                                continue;
+                            }
+
+                            missingItemKey = getRecordKey(productKey, deptKey, missingLineKey);
+                            missingItem = summary.lineMap[missingItemKey];
+                            if (!missingItem) {
+                                continue;
+                            }
+
+                            addedCard = createLineCardNode(missingItem.LINE, defaultTileWidth);
+                            lineList.appendChild(addedCard);
+                            bindLineCardNode(addedCard, missingItem);
+                        }
+                    }
+                }
+            }
+
+            function updateCountdown() {
+                var countdownNode = document.getElementById('countdown');
+
+                if (countdownNode) {
+                    countdownNode.innerHTML = countdownSeconds + 's';
+                }
+
+                if (countdownSeconds <= 0) {
+                    window.location.reload();
+                    return;
+                }
+
+                countdownSeconds -= 1;
+            }
+
+            function startCountdown() {
+                countdownSeconds = COUNTDOWN_START;
+                updateCountdown();
+
+                if (countdownInterval) {
+                    window.clearInterval(countdownInterval);
+                }
+
+                countdownInterval = window.setInterval(updateCountdown, 1000);
+            }
+
+            applyDashboardData(rawData);
+            startCountdown();
+        }());
+    </script>
+</body>
+</html>
