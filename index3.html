@@ -1,0 +1,750 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta http-equiv="X-UA-Compatible" content="IE=edge">
+<title>Parameter Change Report</title>
+<style>
+  body {
+    font-family: Arial, sans-serif;
+    margin: 0;
+    padding: 0;
+    font-size: 12px;
+  }
+  .header {
+    background-color: #003366;
+    color: #ffffff;
+    padding: 15px;
+    font-size: 16px;
+    font-weight: bold;
+  }
+  .filters {
+    background-color: #f5f5f5;
+    padding: 10px;
+    border-bottom: 1px solid #cccccc;
+  }
+  .filter-group {
+    display: inline-block;
+    vertical-align: top;
+    margin-right: 15px;
+    margin-bottom: 5px;
+  }
+  .filter-label {
+    font-weight: bold;
+    display: block;
+    margin-bottom: 3px;
+  }
+  .custom-select {
+    position: relative;
+    width: 150px;
+    display: inline-block;
+  }
+  .select-toggle {
+    width: 150px;
+    padding: 4px;
+    background-color: #ffffff;
+    border: 1px solid #cccccc;
+    cursor: pointer;
+    text-align: left;
+    overflow: hidden;
+    white-space: nowrap;
+  }
+  .dropdown-menu {
+    display: none;
+    position: absolute;
+    background-color: #ffffff;
+    border: 1px solid #cccccc;
+    width: 148px;
+    max-height: 200px;
+    overflow-y: auto;
+    z-index: 1000;
+    padding: 5px;
+    box-sizing: border-box;
+  }
+  .dropdown-search {
+    width: 100%;
+    padding: 3px;
+    margin-bottom: 5px;
+    border: 1px solid #cccccc;
+    box-sizing: border-box;
+  }
+  .dropdown-menu label {
+    display: block;
+    padding: 2px 0;
+    cursor: pointer;
+  }
+  .dropdown-menu label.hidden {
+    display: none;
+  }
+  .date-input {
+    width: 90px;
+    padding: 3px;
+    border: 1px solid #cccccc;
+  }
+  .summary {
+    padding: 10px;
+    font-weight: bold;
+    color: #003366;
+  }
+  .table-wrapper {
+    overflow-x: auto;
+    margin: 0 10px 20px 10px;
+    border: 1px solid #cccccc;
+  }
+  table {
+    border-collapse: collapse;
+    width: 100%;
+    min-width: 1300px;
+    background-color: #ffffff;
+  }
+  th, td {
+    border: 1px solid #cccccc;
+    padding: 5px 7px;
+    text-align: left;
+    white-space: nowrap;
+  }
+  th {
+    background-color: #e0e0e0;
+    font-weight: bold;
+  }
+  .highlight {
+    background-color: #ffff99;
+  }
+  tr:nth-child(even) {
+    background-color: #f9f9f9;
+  }
+  .date-picker-wrap {
+    position: relative;
+    display: inline-block;
+  }
+  .date-picker-popup {
+    display: none;
+    position: absolute;
+    top: 22px;
+    left: 0;
+    width: 185px;
+    background-color: #ffffff;
+    border: 1px solid #cccccc;
+    z-index: 2000;
+    padding: 2px;
+    box-shadow: 2px 2px 5px rgba(0,0,0,0.2);
+    font-size: 10px;
+    box-sizing: border-box;
+  }
+  .date-picker-header {
+    text-align: center;
+    padding: 2px 0;
+    font-weight: bold;
+    background-color: #f0f0f0;
+    margin-bottom: 2px;
+    font-size: 10px;
+  }
+  .date-picker-nav {
+    text-align: center;
+    margin-bottom: 2px;
+  }
+  .date-picker-nav button {
+    padding: 1px 3px;
+    cursor: pointer;
+    margin: 0 1px;
+    font-size: 10px;
+  }
+  .date-picker-nav select {
+    padding: 1px;
+    margin: 0 1px;
+    vertical-align: middle;
+    font-size: 10px;
+    max-width: 55px;
+  }
+  .date-picker-days {
+    width: 100%;
+    border-collapse: collapse;
+    table-layout: fixed;
+  }
+  .date-picker-days th {
+    background-color: #e0e0e0;
+    padding: 1px 0;
+    text-align: center;
+    font-size: 9px;
+    border: 1px solid #cccccc;
+    width: 20px;
+    height: 14px;
+  }
+  .date-picker-days td {
+    text-align: center;
+    padding: 1px 0;
+    cursor: pointer;
+    border: 1px solid #eeeeee;
+    font-size: 10px;
+    width: 20px;
+    height: 16px;
+  }
+  .date-picker-days td:hover {
+    background-color: #e6f2ff;
+  }
+  .date-picker-days td.range-start,
+  .date-picker-days td.range-end {
+    background-color: #003366;
+    color: #ffffff;
+  }
+  .date-picker-days td.in-range {
+    background-color: #c2d8f2;
+  }
+  .date-picker-days td.other-month {
+    color: #aaaaaa;
+  }
+  .date-picker-days td.disabled {
+    color: #cccccc;
+    cursor: not-allowed;
+    background-color: #f5f5f5;
+  }
+</style>
+</head>
+<body>
+<div class="header">Parameter Change Report</div>
+
+<div class="filters">
+  <div class="filter-group">
+    <span class="filter-label">SITE</span>
+    <div class="custom-select">
+      <button type="button" class="select-toggle" id="siteBtn" onclick="toggleDropdown('siteDd')">All</button>
+      <div id="siteDd" class="dropdown-menu"></div>
+    </div>
+  </div>
+
+  <div class="filter-group">
+    <span class="filter-label">LINE</span>
+    <div class="custom-select">
+      <button type="button" class="select-toggle" id="lineBtn" onclick="toggleDropdown('lineDd')">All</button>
+      <div id="lineDd" class="dropdown-menu"></div>
+    </div>
+  </div>
+
+  <div class="filter-group">
+    <span class="filter-label">Module ID</span>
+    <div class="custom-select">
+      <button type="button" class="select-toggle" id="moduleBtn" onclick="toggleDropdown('moduleDd')">All</button>
+      <div id="moduleDd" class="dropdown-menu"></div>
+    </div>
+  </div>
+
+  <div class="filter-group">
+    <span class="filter-label">Product ID</span>
+    <div class="custom-select">
+      <button type="button" class="select-toggle" id="productBtn" onclick="toggleDropdown('productDd')">All</button>
+      <div id="productDd" class="dropdown-menu"></div>
+    </div>
+  </div>
+
+  <div class="filter-group">
+    <span class="filter-label">Date Range</span>
+    <div class="date-picker-wrap">
+      <input type="text" class="date-input" id="dateRange" placeholder="DD/MM/YYYY - DD/MM/YYYY" readonly onclick="openDatePickerFromInput()" style="width:150px;">
+      <div id="datePickerPopup" class="date-picker-popup"></div>
+    </div>
+  </div>
+</div>
+
+<div class="summary">
+  No. of change parameters: <span id="changeCount">0</span>
+</div>
+
+<div class="table-wrapper">
+  <table id="table1">
+    <thead>
+      <tr>
+        <th>Source</th>
+        <th>Module</th>
+        <th>RCP ID</th>
+        <th>Parameters</th>
+        <th>Value</th>
+        <th>LSL</th>
+        <th>USL</th>
+        <th>Create DTTD</th>
+        <th>Previous Value</th>
+        <th>Previous LSL</th>
+        <th>Previous USL</th>
+      </tr>
+    </thead>
+    <tbody id="tbody1"></tbody>
+  </table>
+</div>
+
+<div class="table-wrapper">
+  <table id="table2">
+    <thead>
+      <tr>
+        <th>Source</th>
+        <th>Module</th>
+        <th>RCP ID</th>
+        <th>Parameters</th>
+        <th>Value</th>
+        <th>LSL</th>
+        <th>USL</th>
+        <th>Create DTTD</th>
+        <th>Previous Value</th>
+        <th>Previous LSL</th>
+        <th>Previous USL</th>
+      </tr>
+    </thead>
+    <tbody id="tbody2"></tbody>
+  </table>
+</div>
+
+<script>
+  var data1 = [
+    { site: "Site A", line: "Line 1", moduleId: "M101", productId: "P001", source: "ERP", module: "ModA", rcpId: "RCP-01", parameters: "Temp", value: "100", lsl: "90", usl: "110",     createDttd: "01/06/2026", previousValue: "95", previousLsl: "90", previousUsl: "110", value_changed: "VALUE_CHANGED" },
+    { site: "Site A", line: "Line 2", moduleId: "M102", productId: "P002", source: "MES", module: "ModB", rcpId: "RCP-02", parameters: "Pressure", value: "50", lsl: "40", usl: "60", createDttd: "02/06/2026", previousValue: "50", previousLsl: "35", previousUsl: "60", value_changed: "LSL_CHANGED" },
+    { site: "Site B", line: "Line 1", moduleId: "M103", productId: "P001", source: "ERP", module: "ModC", rcpId: "RCP-03", parameters: "Speed", value: "1200", lsl: "1000", usl: "1400", createDttd: "03/06/2026", previousValue: "1150", previousLsl: "1000", previousUsl: "1450", value_changed: "VALUE_CHANGED|USL_CHANGED" },
+    { site: "Site B", line: "Line 3", moduleId: "M101", productId: "P003", source: "MES", module: "ModA", rcpId: "RCP-04", parameters: "Voltage", value: "220", lsl: "210", usl: "240", createDttd: "04/06/2026", previousValue: "220", previousLsl: "210", previousUsl: "240", value_changed: "" },
+    { site: "Site C", line: "Line 2", moduleId: "M102", productId: "P002", source: "ERP", module: "ModD", rcpId: "RCP-05", parameters: "Flow", value: "80", lsl: "70", usl: "90", createDttd: "05/06/2026", previousValue: "85", previousLsl: "70", previousUsl: "90", value_changed: "VALUE_CHANGED" }
+  ];
+
+  var data2 = [
+    { site: "Site A", line: "Line 1", moduleId: "M101", productId: "P001", source: "MES", module: "ModX", rcpId: "RCP-11", parameters: "Temp", value: "105", lsl: "90", usl: "110",     createDttd: "01/06/2026", previousValue: "100", previousLsl: "90", previousUsl: "110", value_changed: "VALUE_CHANGED" },
+    { site: "Site C", line: "Line 2", moduleId: "M103", productId: "P003", source: "ERP", module: "ModY", rcpId: "RCP-12", parameters: "Pressure", value: "55", lsl: "40", usl: "60", createDttd: "02/06/2026", previousValue: "55", previousLsl: "40", previousUsl: "65", value_changed: "USL_CHANGED" },
+    { site: "Site B", line: "Line 3", moduleId: "M102", productId: "P002", source: "MES", module: "ModZ", rcpId: "RCP-13", parameters: "Speed", value: "1250", lsl: "1000", usl: "1400", createDttd: "03/06/2026", previousValue: "1200", previousLsl: "950", previousUsl: "1400", value_changed: "VALUE_CHANGED|LSL_CHANGED" }
+  ];
+
+  function getUniqueValues(arr1, arr2, field) {
+    var combined = [];
+    var i;
+    for (i = 0; i < arr1.length; i++) {
+      combined.push(arr1[i][field]);
+    }
+    for (i = 0; i < arr2.length; i++) {
+      combined.push(arr2[i][field]);
+    }
+    var unique = [];
+    for (i = 0; i < combined.length; i++) {
+      if (unique.indexOf(combined[i]) === -1) {
+        unique.push(combined[i]);
+      }
+    }
+    return unique.sort();
+  }
+
+  function buildDropdown(ddId, btnId, options) {
+    var dd = document.getElementById(ddId);
+    var html = '<input type="text" class="dropdown-search" placeholder="Search..." oninput="filterDropdown(this, \'' + ddId + '\')" onclick="stopPickerEvent()">';
+    for (var i = 0; i < options.length; i++) {
+      html += '<label class="dd-item"><input type="checkbox" value="' + options[i] + '" onchange="updateButtonLabel(\'' + btnId + '\', \'' + ddId + '\')"> ' + options[i] + '</label>';
+    }
+    dd.innerHTML = html;
+  }
+
+  function filterDropdown(input, ddId) {
+    var dd = document.getElementById(ddId);
+    var labels = dd.getElementsByClassName("dd-item");
+    var search = input.value.toLowerCase();
+    for (var i = 0; i < labels.length; i++) {
+      var text = labels[i].innerText.toLowerCase();
+      if (text.indexOf(search) !== -1) {
+        labels[i].style.display = "block";
+      } else {
+        labels[i].style.display = "none";
+      }
+    }
+  }
+
+  function getSelectedValues(ddId) {
+    var dd = document.getElementById(ddId);
+    var inputs = dd.getElementsByTagName("input");
+    var vals = [];
+    for (var i = 0; i < inputs.length; i++) {
+      if (inputs[i].checked) {
+        vals.push(inputs[i].value);
+      }
+    }
+    return vals;
+  }
+
+  function updateButtonLabel(btnId, ddId) {
+    var vals = getSelectedValues(ddId);
+    var btn = document.getElementById(btnId);
+    if (vals.length === 0) {
+      btn.innerText = "All";
+    } else if (vals.length === 1) {
+      btn.innerText = vals[0];
+    } else {
+      btn.innerText = vals.length + " selected";
+    }
+    applyFilters();
+  }
+
+  function toggleDropdown(ddId) {
+    var target = document.getElementById(ddId);
+    var currentlyHidden = target.style.display === "none" || target.style.display === "";
+    var allMenus = document.getElementsByClassName("dropdown-menu");
+    for (var i = 0; i < allMenus.length; i++) {
+      allMenus[i].style.display = "none";
+    }
+    hideDatePicker();
+    if (currentlyHidden) {
+      target.style.display = "block";
+    }
+  }
+
+  document.addEventListener("click", function(e) {
+    var menus = document.getElementsByClassName("dropdown-menu");
+    for (var i = 0; i < menus.length; i++) {
+      var menu = menus[i];
+      var parent = menu.parentNode;
+      if (!parent.contains(e.target)) {
+        menu.style.display = "none";
+      }
+    }
+    var dateWrap = document.getElementById('dateRange').parentNode;
+    if (!dateWrap.contains(e.target)) {
+      hideDatePicker();
+    }
+  });
+
+  function parseDate(str) {
+    if (!str) return null;
+    var parts = str.split("/");
+    if (parts.length === 3) {
+      return new Date(parseInt(parts[2], 10), parseInt(parts[1], 10) - 1, parseInt(parts[0], 10));
+    }
+    return new Date(str);
+  }
+
+  // Date Picker State
+  var pickerCurrentDate = null;
+  var pickerStartDate = null;
+  var pickerEndDate = null;
+  var pickerSelecting = false;
+
+  function stopPickerEvent() {
+    var e = window.event;
+    if (e) {
+      e.cancelBubble = true;
+      if (e.stopPropagation) e.stopPropagation();
+    }
+  }
+
+  var monthNames = ["January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December"];
+  var dayNames = ["Su", "Mo", "Tu", "We", "Th", "Fr", "Sa"];
+
+  function formatDate(date) {
+    if (!date) return "";
+    var m = date.getMonth() + 1;
+    var d = date.getDate();
+    var y = date.getFullYear();
+    return (d < 10 ? "0" + d : d) + "/" + (m < 10 ? "0" + m : m) + "/" + y;
+  }
+
+  function isSameDate(d1, d2) {
+    if (!d1 || !d2) return false;
+    return d1.getFullYear() === d2.getFullYear() && d1.getMonth() === d2.getMonth() && d1.getDate() === d2.getDate();
+  }
+
+  function isDateBetween(target, start, end) {
+    if (!target || !start || !end) return false;
+    var t = new Date(target.getFullYear(), target.getMonth(), target.getDate()).getTime();
+    var s = new Date(start.getFullYear(), start.getMonth(), start.getDate()).getTime();
+    var e = new Date(end.getFullYear(), end.getMonth(), end.getDate()).getTime();
+    return t > s && t < e;
+  }
+
+  function getToday() {
+    var now = new Date();
+    return new Date(now.getFullYear(), now.getMonth(), now.getDate());
+  }
+
+  function isFutureDate(target) {
+    if (!target) return false;
+    var t = new Date(target.getFullYear(), target.getMonth(), target.getDate()).getTime();
+    var today = getToday().getTime();
+    return t > today;
+  }
+
+  function getDaysInMonth(year, month) {
+    return new Date(year, month + 1, 0).getDate();
+  }
+
+  function getFirstDayOfMonth(year, month) {
+    return new Date(year, month, 1).getDay();
+  }
+
+  function buildDatePickerHTML() {
+    if (!pickerCurrentDate) {
+      pickerCurrentDate = new Date();
+    }
+
+    var year = pickerCurrentDate.getFullYear();
+    var month = pickerCurrentDate.getMonth();
+    var daysInMonth = getDaysInMonth(year, month);
+    var firstDay = getFirstDayOfMonth(year, month);
+
+    var html = '<div class="date-picker-header">' + monthNames[month] + ' ' + year + '</div>';
+    html += '<div class="date-picker-nav">';
+    html += '<button onclick="stopPickerEvent(); changePickerMonth(-1)">&lt;</button>';
+    html += '<select onchange="stopPickerEvent(); changePickerYear(this.value)">';
+    for (var y = year - 10; y <= year + 10; y++) {
+      html += '<option value="' + y + '"' + (y === year ? ' selected' : '') + '>' + y + '</option>';
+    }
+    html += '</select>';
+    html += '<select onchange="stopPickerEvent(); changePickerMonthDirect(this.value)">';
+    for (var m = 0; m < 12; m++) {
+      html += '<option value="' + m + '"' + (m === month ? ' selected' : '') + '>' + monthNames[m] + '</option>';
+    }
+    html += '</select>';
+    html += '<button onclick="stopPickerEvent(); changePickerMonth(1)">&gt;</button>';
+    html += '</div>';
+
+    html += '<table class="date-picker-days">';
+    html += '<tr>';
+    for (var i = 0; i < dayNames.length; i++) {
+      html += '<th>' + dayNames[i] + '</th>';
+    }
+    html += '</tr>';
+
+    var day = 1;
+    var rowCount = 0;
+    while (day <= daysInMonth || rowCount === 0) {
+      html += '<tr>';
+      for (var col = 0; col < 7; col++) {
+        if (rowCount === 0 && col < firstDay) {
+          var prevMonthDays = getDaysInMonth(year, month - 1);
+          var prevDay = prevMonthDays - firstDay + col + 1;
+          html += '<td class="other-month">' + prevDay + '</td>';
+        } else if (day > daysInMonth) {
+          var nextDay = day - daysInMonth;
+          html += '<td class="other-month">' + nextDay + '</td>';
+          day++;
+        } else {
+          var cellDate = new Date(year, month, day);
+          var isDisabled = isFutureDate(cellDate);
+          var cssClass = '';
+          if (isDisabled) {
+            cssClass = 'disabled';
+          } else if (isSameDate(cellDate, pickerStartDate)) {
+            cssClass = 'range-start';
+          } else if (isSameDate(cellDate, pickerEndDate)) {
+            cssClass = 'range-end';
+          } else if (pickerStartDate && pickerEndDate && isDateBetween(cellDate, pickerStartDate, pickerEndDate)) {
+            cssClass = 'in-range';
+          }
+          if (isDisabled) {
+            html += '<td class="' + cssClass + '">' + day + '</td>';
+          } else {
+            html += '<td class="' + cssClass + '" onclick="stopPickerEvent(); selectPickerDate(' + year + ', ' + month + ', ' + day + ')">' + day + '</td>';
+          }
+          day++;
+        }
+      }
+      html += '</tr>';
+      rowCount++;
+      if (day > daysInMonth && rowCount >= 6) break;
+    }
+    html += '</table>';
+    return html;
+  }
+
+  function openDatePicker() {
+    document.getElementById('datePickerPopup').innerHTML = buildDatePickerHTML();
+    document.getElementById('datePickerPopup').style.display = 'block';
+  }
+
+  function parseDateRange(rangeStr) {
+    var result = { from: null, to: null };
+    if (!rangeStr) return result;
+    var parts = rangeStr.split(" - ");
+    if (parts.length === 2) {
+      result.from = parseDate(parts[0]);
+      result.to = parseDate(parts[1]);
+    } else {
+      result.from = parseDate(rangeStr);
+    }
+    return result;
+  }
+
+  function openDatePickerFromInput() {
+    var val = document.getElementById('dateRange').value;
+    var parsed = parseDateRange(val);
+    if (parsed.from) {
+      pickerStartDate = parsed.from;
+      pickerCurrentDate = new Date(parsed.from.getFullYear(), parsed.from.getMonth(), 1);
+    } else {
+      pickerStartDate = null;
+      pickerCurrentDate = new Date();
+    }
+    if (parsed.to) {
+      pickerEndDate = parsed.to;
+      pickerSelecting = false;
+    } else {
+      pickerEndDate = null;
+      pickerSelecting = true;
+    }
+    openDatePicker();
+  }
+
+  function hideDatePicker() {
+    document.getElementById('datePickerPopup').style.display = 'none';
+  }
+
+  function changePickerMonth(delta) {
+    var newMonth = pickerCurrentDate.getMonth() + delta;
+    var newYear = pickerCurrentDate.getFullYear();
+    if (newMonth < 0) {
+      newMonth = 11;
+      newYear--;
+    } else if (newMonth > 11) {
+      newMonth = 0;
+      newYear++;
+    }
+    pickerCurrentDate = new Date(newYear, newMonth, 1);
+    openDatePicker();
+  }
+
+  function changePickerYear(year) {
+    pickerCurrentDate = new Date(parseInt(year, 10), pickerCurrentDate.getMonth(), 1);
+    openDatePicker();
+  }
+
+  function changePickerMonthDirect(month) {
+    pickerCurrentDate = new Date(pickerCurrentDate.getFullYear(), parseInt(month, 10), 1);
+    openDatePicker();
+  }
+
+  function selectPickerDate(year, month, day) {
+    var clicked = new Date(year, month, day);
+    if (isFutureDate(clicked)) {
+      return;
+    }
+    if (!pickerSelecting || !pickerStartDate) {
+      pickerStartDate = clicked;
+      pickerEndDate = null;
+      pickerSelecting = true;
+      document.getElementById('dateRange').value = formatDate(pickerStartDate);
+      openDatePicker();
+    } else {
+      if (clicked < pickerStartDate) {
+        pickerEndDate = pickerStartDate;
+        pickerStartDate = clicked;
+      } else {
+        pickerEndDate = clicked;
+      }
+      pickerSelecting = false;
+      document.getElementById('dateRange').value = formatDate(pickerStartDate) + ' - ' + formatDate(pickerEndDate);
+      hideDatePicker();
+      applyFilters();
+    }
+  }
+
+  function renderTableBody(tbodyId, rows) {
+    var html = "";
+    var totalChanges = 0;
+    for (var i = 0; i < rows.length; i++) {
+      var r = rows[i];
+      var vc = r.value_changed || "";
+      var cValue = "";
+      var cLsl = "";
+      var cUsl = "";
+      var cPrevValue = "";
+      var cPrevLsl = "";
+      var cPrevUsl = "";
+
+      if (vc.indexOf("VALUE_CHANGED") !== -1) {
+        cValue = "highlight";
+        cPrevValue = "highlight";
+      }
+      if (vc.indexOf("LSL_CHANGED") !== -1) {
+        cLsl = "highlight";
+        cPrevLsl = "highlight";
+      }
+      if (vc.indexOf("USL_CHANGED") !== -1) {
+        cUsl = "highlight";
+        cPrevUsl = "highlight";
+      }
+
+      if (vc) {
+        var parts = vc.split("|");
+        for (var p = 0; p < parts.length; p++) {
+          if (parts[p]) {
+            totalChanges++;
+          }
+        }
+      }
+
+      html += '<tr>' +
+        '<td>' + (r.source || "") + '</td>' +
+        '<td>' + (r.module || "") + '</td>' +
+        '<td>' + (r.rcpId || "") + '</td>' +
+        '<td>' + (r.parameters || "") + '</td>' +
+        '<td class="' + cValue + '">' + (r.value || "") + '</td>' +
+        '<td class="' + cLsl + '">' + (r.lsl || "") + '</td>' +
+        '<td class="' + cUsl + '">' + (r.usl || "") + '</td>' +
+        '<td>' + (r.createDttd || "") + '</td>' +
+        '<td class="' + cPrevValue + '">' + (r.previousValue || "") + '</td>' +
+        '<td class="' + cPrevLsl + '">' + (r.previousLsl || "") + '</td>' +
+        '<td class="' + cPrevUsl + '">' + (r.previousUsl || "") + '</td>' +
+        '</tr>';
+    }
+    document.getElementById(tbodyId).innerHTML = html;
+    return totalChanges;
+  }
+
+  function applyFilters() {
+    var sites = getSelectedValues("siteDd");
+    var lines = getSelectedValues("lineDd");
+    var mods = getSelectedValues("moduleDd");
+    var prods = getSelectedValues("productDd");
+    var dateRange = parseDateRange(document.getElementById("dateRange").value);
+    var fromDate = dateRange.from;
+    var toDate = dateRange.to;
+
+    var filtered1 = [];
+    for (var i = 0; i < data1.length; i++) {
+      var r = data1[i];
+      if (sites.length > 0 && sites.indexOf(r.site) === -1) continue;
+      if (lines.length > 0 && lines.indexOf(r.line) === -1) continue;
+      if (mods.length > 0 && mods.indexOf(r.moduleId) === -1) continue;
+      if (prods.length > 0 && prods.indexOf(r.productId) === -1) continue;
+      var d = parseDate(r.createDttd);
+      if (fromDate && d && d < fromDate) continue;
+      if (toDate && d && d > toDate) continue;
+      filtered1.push(r);
+    }
+
+    var filtered2 = [];
+    for (var i = 0; i < data2.length; i++) {
+      var r = data2[i];
+      if (sites.length > 0 && sites.indexOf(r.site) === -1) continue;
+      if (lines.length > 0 && lines.indexOf(r.line) === -1) continue;
+      if (mods.length > 0 && mods.indexOf(r.moduleId) === -1) continue;
+      if (prods.length > 0 && prods.indexOf(r.productId) === -1) continue;
+      var d = parseDate(r.createDttd);
+      if (fromDate && d && d < fromDate) continue;
+      if (toDate && d && d > toDate) continue;
+      filtered2.push(r);
+    }
+
+    var count1 = renderTableBody("tbody1", filtered1);
+    var count2 = renderTableBody("tbody2", filtered2);
+    document.getElementById("changeCount").innerText = count1 + count2;
+  }
+
+  window.onload = function() {
+    var siteOpts = getUniqueValues(data1, data2, "site");
+    var lineOpts = getUniqueValues(data1, data2, "line");
+    var modOpts = getUniqueValues(data1, data2, "moduleId");
+    var prodOpts = getUniqueValues(data1, data2, "productId");
+
+    buildDropdown("siteDd", "siteBtn", siteOpts);
+    buildDropdown("lineDd", "lineBtn", lineOpts);
+    buildDropdown("moduleDd", "moduleBtn", modOpts);
+    buildDropdown("productDd", "productBtn", prodOpts);
+
+    var today = new Date();
+    var sevenDaysAgo = new Date(today.getFullYear(), today.getMonth(), today.getDate() - 6);
+    pickerStartDate = sevenDaysAgo;
+    pickerEndDate = today;
+    document.getElementById("dateRange").value = formatDate(pickerStartDate) + ' - ' + formatDate(pickerEndDate);
+
+    applyFilters();
+  };
+</script>
+</body>
+</html>
