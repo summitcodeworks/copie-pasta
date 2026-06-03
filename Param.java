@@ -1,6 +1,13 @@
-import java.sql.*;
+import com.fasterxml.jackson.databind.ObjectMapper;
 
-public class ParameterChangeReport {
+import javax.servlet.annotation.WebServlet;
+import javax.servlet.http.*;
+import java.io.IOException;
+import java.sql.*;
+import java.util.*;
+
+@WebServlet("/parameter-changes")
+public class ParameterChangeServlet extends HttpServlet {
 
     private static final String URL =
             "jdbc:oracle:thin:@//hostname:1521/service_name";
@@ -8,7 +15,7 @@ public class ParameterChangeReport {
     private static final String USERNAME = "username";
     private static final String PASSWORD = "password";
 
-    private static final String QUERY = """
+    private static final String SQL = """
         WITH data AS (
             SELECT
                 product_id,
@@ -67,7 +74,7 @@ public class ParameterChangeReport {
             module_id,
             parameter_name,
             last_changed_date,
-            create_dtts AS current_changed_date,
+            create_dtts current_changed_date,
             prev_value,
             value,
             prev_lsl,
@@ -77,61 +84,90 @@ public class ParameterChangeReport {
             change_type
         FROM changes
         WHERE rn = 1
-        ORDER BY product_id,
-                 module_id,
-                 parameter_name
+        ORDER BY product_id,module_id,parameter_name
         """;
 
-    public static void main(String[] args) {
+    @Override
+    protected void doGet(
+            HttpServletRequest request,
+            HttpServletResponse response)
+            throws IOException {
 
-        try (Connection conn =
-                     DriverManager.getConnection(URL, USERNAME, PASSWORD);
-             PreparedStatement ps =
-                     conn.prepareStatement(QUERY);
-             ResultSet rs = ps.executeQuery()) {
+        response.setContentType("application/json");
+
+        List<Map<String, Object>> result = new ArrayList<>();
+
+        try (
+                Connection conn =
+                        DriverManager.getConnection(
+                                URL,
+                                USERNAME,
+                                PASSWORD);
+
+                PreparedStatement ps =
+                        conn.prepareStatement(SQL);
+
+                ResultSet rs =
+                        ps.executeQuery()
+        ) {
 
             while (rs.next()) {
 
-                String productId = rs.getString("PRODUCT_ID");
-                String moduleId = rs.getString("MODULE_ID");
-                String parameterName = rs.getString("PARAMETER_NAME");
+                Map<String, Object> row = new LinkedHashMap<>();
 
-                Timestamp lastChangedDate =
-                        rs.getTimestamp("LAST_CHANGED_DATE");
+                row.put("productId",
+                        rs.getString("PRODUCT_ID"));
 
-                Timestamp currentChangedDate =
-                        rs.getTimestamp("CURRENT_CHANGED_DATE");
+                row.put("moduleId",
+                        rs.getString("MODULE_ID"));
 
-                String prevValue = rs.getString("PREV_VALUE");
-                String currentValue = rs.getString("VALUE");
+                row.put("parameterName",
+                        rs.getString("PARAMETER_NAME"));
 
-                String prevLsl = rs.getString("PREV_LSL");
-                String currentLsl = rs.getString("LSL");
+                row.put("lastChangedDate",
+                        rs.getTimestamp("LAST_CHANGED_DATE"));
 
-                String prevUsl = rs.getString("PREV_USL");
-                String currentUsl = rs.getString("USL");
+                row.put("currentChangedDate",
+                        rs.getTimestamp("CURRENT_CHANGED_DATE"));
 
-                String changeType =
-                        rs.getString("CHANGE_TYPE");
+                row.put("previousValue",
+                        rs.getString("PREV_VALUE"));
 
-                System.out.println(
-                        productId + "," +
-                        moduleId + "," +
-                        parameterName + "," +
-                        lastChangedDate + "," +
-                        currentChangedDate + "," +
-                        prevValue + "," +
-                        currentValue + "," +
-                        prevLsl + "," +
-                        currentLsl + "," +
-                        prevUsl + "," +
-                        currentUsl + "," +
-                        changeType
-                );
+                row.put("currentValue",
+                        rs.getString("VALUE"));
+
+                row.put("previousLsl",
+                        rs.getString("PREV_LSL"));
+
+                row.put("currentLsl",
+                        rs.getString("LSL"));
+
+                row.put("previousUsl",
+                        rs.getString("PREV_USL"));
+
+                row.put("currentUsl",
+                        rs.getString("USL"));
+
+                row.put("changeType",
+                        rs.getString("CHANGE_TYPE"));
+
+                result.add(row);
             }
 
+            new ObjectMapper()
+                    .writeValue(response.getWriter(), result);
+
         } catch (Exception e) {
-            e.printStackTrace();
+
+            response.setStatus(500);
+
+            Map<String, String> error =
+                    new HashMap<>();
+
+            error.put("error", e.getMessage());
+
+            new ObjectMapper()
+                    .writeValue(response.getWriter(), error);
         }
     }
 }
