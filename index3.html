@@ -4,6 +4,7 @@
 <meta charset="UTF-8">
 <meta http-equiv="X-UA-Compatible" content="IE=edge">
 <title>Parameter Change Report</title>
+<script src="https://cdn.jsdelivr.net/npm/echarts@4.9.0/dist/echarts.min.js"></script>
 <style>
   body {
     font-family: Arial, sans-serif;
@@ -70,11 +71,88 @@
   }
   .dropdown-menu label {
     display: block;
-    padding: 2px 0;
+    padding: 3px 0;
     cursor: pointer;
+    font-size: 11px;
   }
   .dropdown-menu label.hidden {
     display: none;
+  }
+  .dropdown-menu input[type="radio"] {
+    margin-right: 5px;
+  }
+  .search-btn {
+    padding: 4px 15px;
+    background-color: #003366;
+    color: #ffffff;
+    border: none;
+    cursor: pointer;
+    font-size: 12px;
+    margin-left: 10px;
+  }
+  .search-btn:hover {
+    background-color: #004080;
+  }
+  .reset-btn {
+    padding: 4px 15px;
+    background-color: #ffffff;
+    color: #003366;
+    border: 1px solid #003366;
+    cursor: pointer;
+    font-size: 12px;
+    margin-left: 5px;
+  }
+  .reset-btn:hover {
+    background-color: #e6f2ff;
+  }
+  .loader-overlay {
+    display: none;
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background-color: rgba(255,255,255,0.7);
+    z-index: 4000;
+  }
+  .loader-spinner {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    width: 50px;
+    height: 50px;
+    margin-top: -25px;
+    margin-left: -25px;
+    border: 5px solid #e0e0e0;
+    border-top: 5px solid #003366;
+    border-radius: 50%;
+    -webkit-animation: spin 1s linear infinite;
+    -ms-animation: spin 1s linear infinite;
+    animation: spin 1s linear infinite;
+  }
+  @-webkit-keyframes spin {
+    0% { -webkit-transform: rotate(0deg); }
+    100% { -webkit-transform: rotate(360deg); }
+  }
+  @-ms-keyframes spin {
+    0% { -ms-transform: rotate(0deg); }
+    100% { -ms-transform: rotate(360deg); }
+  }
+  @keyframes spin {
+    0% { transform: rotate(0deg); }
+    100% { transform: rotate(360deg); }
+  }
+  .loader-text {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    margin-top: 45px;
+    transform: translateX(-50%);
+    -ms-transform: translateX(-50%);
+    font-size: 13px;
+    color: #003366;
+    font-weight: bold;
+    white-space: nowrap;
   }
   .date-input {
     width: 90px;
@@ -107,6 +185,17 @@
     background-color: #e0e0e0;
     font-weight: bold;
   }
+  .col-source { width: 80px; }
+  .col-module { width: 100px; }
+  .col-rcp { width: 100px; }
+  .col-param { width: 220px; }
+  .col-value { width: 80px; }
+  .col-lsl { width: 80px; }
+  .col-usl { width: 80px; }
+  .col-date { width: 110px; }
+  .col-prev-value { width: 110px; }
+  .col-prev-lsl { width: 100px; }
+  .col-prev-usl { width: 100px; }
   .highlight {
     background-color: #ffff99;
   }
@@ -205,6 +294,119 @@
     cursor: not-allowed;
     background-color: #f5f5f5;
   }
+  .param-link {
+    color: #003366;
+    text-decoration: underline;
+    cursor: pointer;
+  }
+  .param-link:hover {
+    color: #0066cc;
+  }
+  .sortable-header {
+    cursor: pointer;
+    -webkit-user-select: none;
+    -ms-user-select: none;
+    user-select: none;
+  }
+  .sortable-header:hover {
+    background-color: #d0d0d0;
+  }
+  .no-data-row td {
+    text-align: center;
+    padding: 30px 0;
+    font-size: 13px;
+    color: #777777;
+    font-style: italic;
+  }
+  .modal-overlay {
+    display: none;
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background-color: rgba(0,0,0,0.5);
+    z-index: 3000;
+  }
+  .modal-box {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    -ms-transform: translate(-50%, -50%);
+    background-color: #ffffff;
+    border: none;
+    border-radius: 6px;
+    width: 1000px;
+    max-height: 90%;
+    overflow-y: auto;
+    padding: 30px;
+    box-shadow: 0 8px 40px rgba(0,0,0,0.4);
+  }
+  .modal-header {
+    font-size: 16px;
+    font-weight: bold;
+    margin-bottom: 20px;
+    padding-bottom: 12px;
+    border-bottom: 2px solid #003366;
+    color: #003366;
+  }
+  .modal-close {
+    float: right;
+    cursor: pointer;
+    font-size: 22px;
+    color: #666666;
+    line-height: 16px;
+    padding: 2px 6px;
+    border-radius: 3px;
+  }
+  .modal-close:hover {
+    color: #000000;
+    background-color: #f0f0f0;
+  }
+  .chart-container {
+    width: 100%;
+    height: 420px;
+    margin-bottom: 25px;
+    padding: 10px;
+    border: 1px solid #e0e0e0;
+    border-radius: 4px;
+    background-color: #fafafa;
+    box-sizing: border-box;
+  }
+  .modal-table-wrapper {
+    overflow-x: auto;
+    border: 1px solid #e0e0e0;
+    border-radius: 4px;
+    max-height: 250px;
+    overflow-y: auto;
+    margin-top: 10px;
+  }
+  .modal-table-wrapper table {
+    border-collapse: collapse;
+    width: 100%;
+    background-color: #ffffff;
+  }
+  .modal-table-wrapper th, .modal-table-wrapper td {
+    border: 1px solid #e0e0e0;
+    padding: 8px 12px;
+    text-align: left;
+    font-size: 12px;
+    white-space: nowrap;
+  }
+  .modal-table-wrapper th {
+    background-color: #003366;
+    color: #ffffff;
+    font-weight: bold;
+    position: sticky;
+    top: 0;
+  }
+  .modal-table-wrapper tr:nth-child(even) {
+    background-color: #f5f8fc;
+  }
+  .modal-table-wrapper tr:hover {
+    background-color: #e6f2ff;
+  }
 </style>
 </head>
 <body>
@@ -250,27 +452,38 @@
       <div id="datePickerPopup" class="date-picker-popup"></div>
     </div>
   </div>
+
+  <div class="filter-group">
+    <span class="filter-label">Parameter Search</span>
+    <input type="text" class="date-input" id="paramSearch" placeholder="Search parameter..." style="width:150px;">
+  </div>
+
+  <div class="filter-group">
+    <span class="filter-label">&nbsp;</span>
+    <button type="button" class="search-btn" onclick="searchWithFilters()">Search</button>
+    <button type="button" class="reset-btn" onclick="resetFilters()">Reset</button>
+  </div>
 </div>
 
 <div class="summary">
   No. of change parameters: <span id="changeCount">0</span>
 </div>
 
-<div class="table-wrapper">
+  <div class="table-wrapper">
   <table id="table1">
     <thead>
       <tr>
-        <th>Source</th>
-        <th>Module</th>
-        <th>RCP ID</th>
-        <th>Parameters</th>
-        <th>Value</th>
-        <th>LSL</th>
-        <th>USL</th>
-        <th>Create DTTD</th>
-        <th>Previous Value</th>
-        <th>Previous LSL</th>
-        <th>Previous USL</th>
+        <th class="col-source sortable-header" onclick="sortTable('table1', 0)">Source</th>
+        <th class="col-module sortable-header" onclick="sortTable('table1', 1)">Module</th>
+        <th class="col-rcp sortable-header" onclick="sortTable('table1', 2)">RCP ID</th>
+        <th class="col-param sortable-header" onclick="sortTable('table1', 3)">Parameters</th>
+        <th class="col-value sortable-header" onclick="sortTable('table1', 4)">Value</th>
+        <th class="col-lsl sortable-header" onclick="sortTable('table1', 5)">LSL</th>
+        <th class="col-usl sortable-header" onclick="sortTable('table1', 6)">USL</th>
+        <th class="col-date sortable-header" onclick="sortTable('table1', 7)">Create DTTD</th>
+        <th class="col-prev-value sortable-header" onclick="sortTable('table1', 8)">Previous Value</th>
+        <th class="col-prev-lsl sortable-header" onclick="sortTable('table1', 9)">Previous LSL</th>
+        <th class="col-prev-usl sortable-header" onclick="sortTable('table1', 10)">Previous USL</th>
       </tr>
     </thead>
     <tbody id="tbody1"></tbody>
@@ -281,17 +494,17 @@
   <table id="table2">
     <thead>
       <tr>
-        <th>Source</th>
-        <th>Module</th>
-        <th>RCP ID</th>
-        <th>Parameters</th>
-        <th>Value</th>
-        <th>LSL</th>
-        <th>USL</th>
-        <th>Create DTTD</th>
-        <th>Previous Value</th>
-        <th>Previous LSL</th>
-        <th>Previous USL</th>
+        <th class="col-source sortable-header" onclick="sortTable('table2', 0)">Source</th>
+        <th class="col-module sortable-header" onclick="sortTable('table2', 1)">Module</th>
+        <th class="col-rcp sortable-header" onclick="sortTable('table2', 2)">RCP ID</th>
+        <th class="col-param sortable-header" onclick="sortTable('table2', 3)">Parameters</th>
+        <th class="col-value sortable-header" onclick="sortTable('table2', 4)">Value</th>
+        <th class="col-lsl sortable-header" onclick="sortTable('table2', 5)">LSL</th>
+        <th class="col-usl sortable-header" onclick="sortTable('table2', 6)">USL</th>
+        <th class="col-date sortable-header" onclick="sortTable('table2', 7)">Create DTTD</th>
+        <th class="col-prev-value sortable-header" onclick="sortTable('table2', 8)">Previous Value</th>
+        <th class="col-prev-lsl sortable-header" onclick="sortTable('table2', 9)">Previous LSL</th>
+        <th class="col-prev-usl sortable-header" onclick="sortTable('table2', 10)">Previous USL</th>
       </tr>
     </thead>
     <tbody id="tbody2"></tbody>
@@ -299,19 +512,48 @@
 </div>
 
 <script>
-  var data1 = [
-    { site: "Site A", line: "Line 1", moduleId: "M101", productId: "P001", source: "ERP", module: "ModA", rcpId: "RCP-01", parameters: "Temp", value: "100", lsl: "90", usl: "110",     createDttd: "01/06/2026", previousValue: "95", previousLsl: "90", previousUsl: "110", value_changed: "VALUE_CHANGED" },
-    { site: "Site A", line: "Line 2", moduleId: "M102", productId: "P002", source: "MES", module: "ModB", rcpId: "RCP-02", parameters: "Pressure", value: "50", lsl: "40", usl: "60", createDttd: "02/06/2026", previousValue: "50", previousLsl: "35", previousUsl: "60", value_changed: "LSL_CHANGED" },
-    { site: "Site B", line: "Line 1", moduleId: "M103", productId: "P001", source: "ERP", module: "ModC", rcpId: "RCP-03", parameters: "Speed", value: "1200", lsl: "1000", usl: "1400", createDttd: "03/06/2026", previousValue: "1150", previousLsl: "1000", previousUsl: "1450", value_changed: "VALUE_CHANGED|USL_CHANGED" },
-    { site: "Site B", line: "Line 3", moduleId: "M101", productId: "P003", source: "MES", module: "ModA", rcpId: "RCP-04", parameters: "Voltage", value: "220", lsl: "210", usl: "240", createDttd: "04/06/2026", previousValue: "220", previousLsl: "210", previousUsl: "240", value_changed: "" },
-    { site: "Site C", line: "Line 2", moduleId: "M102", productId: "P002", source: "ERP", module: "ModD", rcpId: "RCP-05", parameters: "Flow", value: "80", lsl: "70", usl: "90", createDttd: "05/06/2026", previousValue: "85", previousLsl: "70", previousUsl: "90", value_changed: "VALUE_CHANGED" }
-  ];
+  var data1 = [];
+  var data2 = [];
 
-  var data2 = [
-    { site: "Site A", line: "Line 1", moduleId: "M101", productId: "P001", source: "MES", module: "ModX", rcpId: "RCP-11", parameters: "Temp", value: "105", lsl: "90", usl: "110",     createDttd: "01/06/2026", previousValue: "100", previousLsl: "90", previousUsl: "110", value_changed: "VALUE_CHANGED" },
-    { site: "Site C", line: "Line 2", moduleId: "M103", productId: "P003", source: "ERP", module: "ModY", rcpId: "RCP-12", parameters: "Pressure", value: "55", lsl: "40", usl: "60", createDttd: "02/06/2026", previousValue: "55", previousLsl: "40", previousUsl: "65", value_changed: "USL_CHANGED" },
-    { site: "Site B", line: "Line 3", moduleId: "M102", productId: "P002", source: "MES", module: "ModZ", rcpId: "RCP-13", parameters: "Speed", value: "1250", lsl: "1000", usl: "1400", createDttd: "03/06/2026", previousValue: "1200", previousLsl: "950", previousUsl: "1400", value_changed: "VALUE_CHANGED|LSL_CHANGED" }
-  ];
+  function getData() {
+    showLoader();
+    var xhr = new XMLHttpRequest();
+    xhr.open("GET", "/api/parameter-changes", true);
+    xhr.onreadystatechange = function() {
+      if (xhr.readyState === 4) {
+        if (xhr.status === 200) {
+          var response = JSON.parse(xhr.responseText);
+          if (response.data1) {
+            data1 = response.data1;
+          }
+          if (response.data2) {
+            data2 = response.data2;
+          }
+          initPage();
+          hideLoader();
+        } else {
+          // Fallback sample data if API fails
+          data1 = [
+            { site: "Site A", line: "Line 1", productId: "AMB674", moduleId: "N1DLE32", parameterName: "M_CHB3_ESC_ROLLER", createDate: 175244452455, createDttd: "01/06/2026", previousValue: "0", currentValue: "1", previousLsl: "0", currentLsl: "895.000", previousUsl: "0", currentUsl: "895.000", changeType: "VALUE_CHANGED|USL_CHANGED|LSL_CHANGED" },
+            { site: "Site A", line: "Line 2", productId: "AMB675", moduleId: "N1DLE33", parameterName: "M_CHB4_PRESSURE", createDate: 175253092455, createDttd: "02/06/2026", previousValue: "120", currentValue: "125", previousLsl: "100", currentLsl: "100", previousUsl: "150", currentUsl: "150", changeType: "VALUE_CHANGED" },
+            { site: "Site B", line: "Line 1", productId: "AMB676", moduleId: "N1DLE34", parameterName: "M_CHB5_TEMP_CTRL", createDate: 175261732455, createDttd: "03/06/2026", previousValue: "80", currentValue: "80", previousLsl: "70", currentLsl: "75", previousUsl: "90", currentUsl: "90", changeType: "LSL_CHANGED" },
+            { site: "Site B", line: "Line 3", productId: "AMB677", moduleId: "N1DLE35", parameterName: "M_CHB6_SPEED", createDate: 175270372455, createDttd: "04/06/2026", previousValue: "1000", currentValue: "1100", previousLsl: "900", currentLsl: "900", previousUsl: "1200", currentUsl: "1300", changeType: "VALUE_CHANGED|USL_CHANGED" },
+            { site: "Site C", line: "Line 2", productId: "AMB678", moduleId: "N1DLE36", parameterName: "M_CHB7_VOLTAGE", createDate: 175279012455, createDttd: "05/06/2026", previousValue: "220", currentValue: "220", previousLsl: "210", currentLsl: "210", previousUsl: "240", currentUsl: "240", changeType: "" },
+            { site: "Site A", line: "Line 3", productId: "AMB679", moduleId: "N1DLE37", parameterName: "M_CHB8_FLOW_RATE", createDate: 175287652455, createDttd: "06/06/2026", previousValue: "50", currentValue: "55", previousLsl: "40", currentLsl: "45", previousUsl: "60", currentUsl: "60", changeType: "VALUE_CHANGED|LSL_CHANGED" }
+          ];
+          data2 = [
+            { site: "Site A", line: "Line 1", productId: "AMB680", moduleId: "N1DLE38", parameterName: "M_CHB9_ROLLER_POS", createDate: 175244452455, createDttd: "01/06/2026", previousValue: "10", currentValue: "12", previousLsl: "8", currentLsl: "8", previousUsl: "15", currentUsl: "15", changeType: "VALUE_CHANGED" },
+            { site: "Site C", line: "Line 2", productId: "AMB681", moduleId: "N1DLE39", parameterName: "M_CHB10_TENSION", createDate: 175253092455, createDttd: "02/06/2026", previousValue: "200", currentValue: "200", previousLsl: "180", currentLsl: "180", previousUsl: "220", currentUsl: "230", changeType: "USL_CHANGED" },
+            { site: "Site B", line: "Line 3", productId: "AMB682", moduleId: "N1DLE40", parameterName: "M_CHB11_GAP_CTRL", createDate: 175261732455, createDttd: "03/06/2026", previousValue: "5", currentValue: "6", previousLsl: "4", currentLsl: "4", previousUsl: "8", currentUsl: "8", changeType: "VALUE_CHANGED" },
+            { site: "Site A", line: "Line 2", productId: "AMB683", moduleId: "N1DLE41", parameterName: "M_CHB12_FORCE", createDate: 175270372455, createDttd: "04/06/2026", previousValue: "500", currentValue: "500", previousLsl: "450", currentLsl: "460", previousUsl: "550", currentUsl: "550", changeType: "LSL_CHANGED" }
+          ];
+          initPage();
+          hideLoader();
+        }
+      }
+    };
+    xhr.send();
+  }
 
   function getUniqueValues(arr1, arr2, field) {
     var combined = [];
@@ -331,11 +573,19 @@
     return unique.sort();
   }
 
-  function buildDropdown(ddId, btnId, options) {
+  var selectedFilters = {
+    site: "",
+    line: "",
+    moduleId: "",
+    productId: ""
+  };
+
+  function buildDropdown(ddId, btnId, options, groupName) {
     var dd = document.getElementById(ddId);
     var html = '<input type="text" class="dropdown-search" placeholder="Search..." oninput="filterDropdown(this, \'' + ddId + '\')" onclick="stopPickerEvent()">';
+    html += '<label class="dd-item"><input type="radio" name="' + groupName + '" value="" onclick="selectFilter(\'' + ddId + '\', \'' + btnId + '\', this.value)"> All</label>';
     for (var i = 0; i < options.length; i++) {
-      html += '<label class="dd-item"><input type="checkbox" value="' + options[i] + '" onchange="updateButtonLabel(\'' + btnId + '\', \'' + ddId + '\')"> ' + options[i] + '</label>';
+      html += '<label class="dd-item"><input type="radio" name="' + groupName + '" value="' + options[i] + '" onclick="selectFilter(\'' + ddId + '\', \'' + btnId + '\', this.value)"> ' + options[i] + '</label>';
     }
     dd.innerHTML = html;
   }
@@ -354,29 +604,157 @@
     }
   }
 
-  function getSelectedValues(ddId) {
+  function getSelectedRadioValue(ddId) {
     var dd = document.getElementById(ddId);
     var inputs = dd.getElementsByTagName("input");
-    var vals = [];
     for (var i = 0; i < inputs.length; i++) {
-      if (inputs[i].checked) {
-        vals.push(inputs[i].value);
+      if (inputs[i].type === "radio" && inputs[i].checked) {
+        return inputs[i].value;
       }
     }
-    return vals;
+    return "";
   }
 
-  function updateButtonLabel(btnId, ddId) {
-    var vals = getSelectedValues(ddId);
+  function selectFilter(ddId, btnId, value) {
     var btn = document.getElementById(btnId);
-    if (vals.length === 0) {
-      btn.innerText = "All";
-    } else if (vals.length === 1) {
-      btn.innerText = vals[0];
-    } else {
-      btn.innerText = vals.length + " selected";
+    btn.innerText = value || "All";
+    var key = ddId.replace("Dd", "");
+    if (key === "module") key = "moduleId";
+    if (key === "product") key = "productId";
+    selectedFilters[key] = value;
+    document.getElementById(ddId).style.display = "none";
+    hideDatePicker();
+    updateCascadingDropdowns();
+  }
+
+  function getFilteredUniqueValues(arr1, arr2, field, filters) {
+    var combined = [];
+    var i;
+    for (i = 0; i < arr1.length; i++) {
+      if (matchesFilters(arr1[i], filters)) {
+        combined.push(arr1[i][field]);
+      }
     }
-    applyFilters();
+    for (i = 0; i < arr2.length; i++) {
+      if (matchesFilters(arr2[i], filters)) {
+        combined.push(arr2[i][field]);
+      }
+    }
+    var unique = [];
+    for (i = 0; i < combined.length; i++) {
+      if (unique.indexOf(combined[i]) === -1) {
+        unique.push(combined[i]);
+      }
+    }
+    return unique.sort();
+  }
+
+  function matchesFilters(record, filters) {
+    if (filters.site && record.site !== filters.site) return false;
+    if (filters.line && record.line !== filters.line) return false;
+    if (filters.moduleId && record.moduleId !== filters.moduleId) return false;
+    if (filters.productId && record.productId !== filters.productId) return false;
+    return true;
+  }
+
+  function updateCascadingDropdowns() {
+    var siteFilters = { site: selectedFilters.site, line: "", moduleId: "", productId: "" };
+    var lineFilters = { site: selectedFilters.site, line: "", moduleId: "", productId: "" };
+    var modFilters = { site: selectedFilters.site, line: selectedFilters.line, moduleId: "", productId: "" };
+
+    var lineOpts = getFilteredUniqueValues(data1, data2, "line", siteFilters);
+    var modOpts = getFilteredUniqueValues(data1, data2, "moduleId", lineFilters);
+    var prodOpts = getFilteredUniqueValues(data1, data2, "productId", modFilters);
+
+    rebuildDropdownIfChanged("lineDd", "lineBtn", lineOpts, "lineGroup");
+    rebuildDropdownIfChanged("moduleDd", "moduleBtn", modOpts, "moduleGroup");
+    rebuildDropdownIfChanged("productDd", "productBtn", prodOpts, "productGroup");
+  }
+
+  function rebuildDropdownIfChanged(ddId, btnId, newOptions, groupName) {
+    var dd = document.getElementById(ddId);
+    var currentVal = getSelectedRadioValue(ddId);
+    var exists = currentVal === "" || newOptions.indexOf(currentVal) !== -1;
+
+    buildDropdown(ddId, btnId, newOptions, groupName);
+
+    if (exists && currentVal !== "") {
+      var inputs = dd.getElementsByTagName("input");
+      for (var i = 0; i < inputs.length; i++) {
+        if (inputs[i].type === "radio" && inputs[i].value === currentVal) {
+          inputs[i].checked = true;
+          break;
+        }
+      }
+    } else {
+      document.getElementById(btnId).innerText = "All";
+      var key = ddId.replace("Dd", "");
+      if (key === "module") key = "moduleId";
+      if (key === "product") key = "productId";
+      selectedFilters[key] = "";
+    }
+  }
+
+  function showLoader() {
+    document.getElementById('loaderOverlay').style.display = 'block';
+  }
+
+  function hideLoader() {
+    document.getElementById('loaderOverlay').style.display = 'none';
+  }
+
+  function searchWithFilters() {
+    showLoader();
+    setTimeout(function() {
+      applyFilters();
+      hideLoader();
+    }, 2000);
+  }
+
+  function resetFilters() {
+    selectedFilters = { site: "", line: "", moduleId: "", productId: "" };
+    sortState = { table1: { col: -1, dir: "asc" }, table2: { col: -1, dir: "asc" } };
+
+    document.getElementById("siteBtn").innerText = "All";
+    document.getElementById("lineBtn").innerText = "All";
+    document.getElementById("moduleBtn").innerText = "All";
+    document.getElementById("productBtn").innerText = "All";
+    document.getElementById("paramSearch").value = "";
+
+    var siteOpts = getUniqueValues(data1, data2, "site");
+    var lineOpts = getUniqueValues(data1, data2, "line");
+    var modOpts = getUniqueValues(data1, data2, "moduleId");
+    var prodOpts = getUniqueValues(data1, data2, "productId");
+
+    buildDropdown("siteDd", "siteBtn", siteOpts, "siteGroup");
+    buildDropdown("lineDd", "lineBtn", lineOpts, "lineGroup");
+    buildDropdown("moduleDd", "moduleBtn", modOpts, "moduleGroup");
+    buildDropdown("productDd", "productBtn", prodOpts, "productGroup");
+
+    var today = new Date();
+    var sevenDaysAgo = new Date(today.getFullYear(), today.getMonth(), today.getDate() - 6);
+    pickerStartDate = sevenDaysAgo;
+    pickerEndDate = today;
+    document.getElementById("dateRange").value = formatDate(pickerStartDate) + ' - ' + formatDate(pickerEndDate);
+
+    searchWithFilters();
+  }
+
+  function fetchCascadingOptions(callback) {
+    var xhr = new XMLHttpRequest();
+    var params = [];
+    if (selectedFilters.site) params.push("site=" + encodeURIComponent(selectedFilters.site));
+    if (selectedFilters.line) params.push("line=" + encodeURIComponent(selectedFilters.line));
+    if (selectedFilters.moduleId) params.push("moduleId=" + encodeURIComponent(selectedFilters.moduleId));
+    var url = "/api/cascading-options" + (params.length ? "?" + params.join("&") : "");
+    xhr.open("GET", url, true);
+    xhr.onreadystatechange = function() {
+      if (xhr.readyState === 4 && xhr.status === 200) {
+        var response = JSON.parse(xhr.responseText);
+        if (callback) callback(response);
+      }
+    };
+    xhr.send();
   }
 
   function toggleDropdown(ddId) {
@@ -636,16 +1014,20 @@
       pickerSelecting = false;
       document.getElementById('dateRange').value = formatDate(pickerStartDate) + ' - ' + formatDate(pickerEndDate);
       hideDatePicker();
-      applyFilters();
     }
   }
 
   function renderTableBody(tbodyId, rows) {
     var html = "";
     var totalChanges = 0;
+    if (rows.length === 0) {
+      html = '<tr class="no-data-row"><td colspan="11">No data found matching the selected criteria.</td></tr>';
+      document.getElementById(tbodyId).innerHTML = html;
+      return 0;
+    }
     for (var i = 0; i < rows.length; i++) {
       var r = rows[i];
-      var vc = r.value_changed || "";
+      var vc = r.changeType || "";
       var cValue = "";
       var cLsl = "";
       var cUsl = "";
@@ -677,12 +1059,12 @@
 
       html += '<tr>' +
         '<td>' + (r.source || "") + '</td>' +
-        '<td>' + (r.module || "") + '</td>' +
-        '<td>' + (r.rcpId || "") + '</td>' +
-        '<td>' + (r.parameters || "") + '</td>' +
-        '<td class="' + cValue + '">' + (r.value || "") + '</td>' +
-        '<td class="' + cLsl + '">' + (r.lsl || "") + '</td>' +
-        '<td class="' + cUsl + '">' + (r.usl || "") + '</td>' +
+        '<td>' + (r.moduleId || "") + '</td>' +
+        '<td>' + (r.productId || "") + '</td>' +
+        '<td><span class="param-link" onclick="openTrendModal(\'' + (r.parameterName || "").replace(/'/g, "\\'") + '\')">' + (r.parameterName || "") + '</span></td>' +
+        '<td class="' + cValue + '">' + (r.currentValue || "") + '</td>' +
+        '<td class="' + cLsl + '">' + (r.currentLsl || "") + '</td>' +
+        '<td class="' + cUsl + '">' + (r.currentUsl || "") + '</td>' +
         '<td>' + (r.createDttd || "") + '</td>' +
         '<td class="' + cPrevValue + '">' + (r.previousValue || "") + '</td>' +
         '<td class="' + cPrevLsl + '">' + (r.previousLsl || "") + '</td>' +
@@ -693,14 +1075,78 @@
     return totalChanges;
   }
 
+  var sortState = {
+    table1: { col: -1, dir: "asc" },
+    table2: { col: -1, dir: "asc" }
+  };
+
+  var colToField = [
+    "source", "moduleId", "productId", "parameterName",
+    "currentValue", "currentLsl", "currentUsl", "createDttd",
+    "previousValue", "previousLsl", "previousUsl"
+  ];
+
+  function sortTable(tableId, colIndex) {
+    var state = sortState[tableId];
+    if (state.col === colIndex) {
+      state.dir = state.dir === "asc" ? "desc" : "asc";
+    } else {
+      state.col = colIndex;
+      state.dir = "asc";
+    }
+    applyFilters();
+  }
+
+  function sortData(arr, colIndex, direction) {
+    if (colIndex < 0) return arr;
+    var field = colToField[colIndex];
+    var sorted = arr.slice();
+    sorted.sort(function(a, b) {
+      var av = a[field] || "";
+      var bv = b[field] || "";
+      var an = parseFloat(av);
+      var bn = parseFloat(bv);
+      var isNum = !isNaN(an) && !isNaN(bn) && av !== "" && bv !== "";
+      if (isNum) {
+        return direction === "asc" ? an - bn : bn - an;
+      }
+      av = String(av).toLowerCase();
+      bv = String(bv).toLowerCase();
+      if (av < bv) return direction === "asc" ? -1 : 1;
+      if (av > bv) return direction === "asc" ? 1 : -1;
+      return 0;
+    });
+    return sorted;
+  }
+
+  function updateSortHeaders() {
+    var tables = ["table1", "table2"];
+    var arrowMap = { "asc": " ▲", "desc": " ▼" };
+    for (var t = 0; t < tables.length; t++) {
+      var tbl = document.getElementById(tables[t]);
+      if (!tbl) continue;
+      var headers = tbl.getElementsByTagName("th");
+      var state = sortState[tables[t]];
+      for (var h = 0; h < headers.length; h++) {
+        var baseText = headers[h].innerText.replace(" ▲", "").replace(" ▼", "");
+        if (state.col === h) {
+          headers[h].innerText = baseText + arrowMap[state.dir];
+        } else {
+          headers[h].innerText = baseText;
+        }
+      }
+    }
+  }
+
   function applyFilters() {
-    var sites = getSelectedValues("siteDd");
-    var lines = getSelectedValues("lineDd");
-    var mods = getSelectedValues("moduleDd");
-    var prods = getSelectedValues("productDd");
+    var sites = selectedFilters.site ? [selectedFilters.site] : [];
+    var lines = selectedFilters.line ? [selectedFilters.line] : [];
+    var mods = selectedFilters.moduleId ? [selectedFilters.moduleId] : [];
+    var prods = selectedFilters.productId ? [selectedFilters.productId] : [];
     var dateRange = parseDateRange(document.getElementById("dateRange").value);
     var fromDate = dateRange.from;
     var toDate = dateRange.to;
+    var paramSearch = document.getElementById("paramSearch").value.toLowerCase();
 
     var filtered1 = [];
     for (var i = 0; i < data1.length; i++) {
@@ -709,6 +1155,7 @@
       if (lines.length > 0 && lines.indexOf(r.line) === -1) continue;
       if (mods.length > 0 && mods.indexOf(r.moduleId) === -1) continue;
       if (prods.length > 0 && prods.indexOf(r.productId) === -1) continue;
+      if (paramSearch && String(r.parameterName || "").toLowerCase().indexOf(paramSearch) === -1) continue;
       var d = parseDate(r.createDttd);
       if (fromDate && d && d < fromDate) continue;
       if (toDate && d && d > toDate) continue;
@@ -722,27 +1169,171 @@
       if (lines.length > 0 && lines.indexOf(r.line) === -1) continue;
       if (mods.length > 0 && mods.indexOf(r.moduleId) === -1) continue;
       if (prods.length > 0 && prods.indexOf(r.productId) === -1) continue;
+      if (paramSearch && String(r.parameterName || "").toLowerCase().indexOf(paramSearch) === -1) continue;
       var d = parseDate(r.createDttd);
       if (fromDate && d && d < fromDate) continue;
       if (toDate && d && d > toDate) continue;
       filtered2.push(r);
     }
 
+    filtered1 = sortData(filtered1, sortState.table1.col, sortState.table1.dir);
+    filtered2 = sortData(filtered2, sortState.table2.col, sortState.table2.dir);
+
     var count1 = renderTableBody("tbody1", filtered1);
     var count2 = renderTableBody("tbody2", filtered2);
     document.getElementById("changeCount").innerText = count1 + count2;
+    updateSortHeaders();
   }
 
-  window.onload = function() {
+  var trendData = [
+    { dateTime: "01/06/2026 08:00", value: 0.2, lsl: 0, usl: 895, prevValue: 0.5, prevLsl: 0, prevUsl: 900 },
+    { dateTime: "01/06/2026 09:00", value: 0.4, lsl: 0, usl: 895, prevValue: 0.6, prevLsl: 0, prevUsl: 900 },
+    { dateTime: "01/06/2026 10:00", value: 0.6, lsl: 0, usl: 895, prevValue: 0.7, prevLsl: 0, prevUsl: 900 },
+    { dateTime: "01/06/2026 11:00", value: 0.8, lsl: 0, usl: 895, prevValue: 0.8, prevLsl: 0, prevUsl: 900 },
+    { dateTime: "01/06/2026 12:00", value: 1.0, lsl: 0, usl: 895, prevValue: 0.9, prevLsl: 0, prevUsl: 900 },
+    { dateTime: "01/06/2026 13:00", value: 1.2, lsl: 0, usl: 895, prevValue: 1.0, prevLsl: 0, prevUsl: 900 },
+    { dateTime: "01/06/2026 14:00", value: 1.0, lsl: 0, usl: 895, prevValue: 1.1, prevLsl: 0, prevUsl: 900 },
+    { dateTime: "01/06/2026 15:00", value: 0.9, lsl: 0, usl: 895, prevValue: 1.0, prevLsl: 0, prevUsl: 900 },
+    { dateTime: "01/06/2026 16:00", value: 1.1, lsl: 0, usl: 895, prevValue: 1.1, prevLsl: 0, prevUsl: 900 },
+    { dateTime: "01/06/2026 17:00", value: 1.0, lsl: 0, usl: 895, prevValue: 1.2, prevLsl: 0, prevUsl: 900 }
+  ];
+
+  var trendChart = null;
+
+  function openTrendModal(parameterName) {
+    document.getElementById('modalTitle').innerText = 'Trend: ' + parameterName;
+    document.getElementById('trendModal').style.display = 'block';
+    renderTrendTable();
+    initTrendChart();
+  }
+
+  function closeModal(event) {
+    if (event.target.id === 'trendModal') {
+      document.getElementById('trendModal').style.display = 'none';
+      if (trendChart) {
+        trendChart.dispose();
+        trendChart = null;
+      }
+    }
+  }
+
+  function closeModalDirect() {
+    document.getElementById('trendModal').style.display = 'none';
+    if (trendChart) {
+      trendChart.dispose();
+      trendChart = null;
+    }
+  }
+
+  function renderTrendTable() {
+    var html = '';
+    for (var i = 0; i < trendData.length; i++) {
+      var d = trendData[i];
+      html += '<tr>' +
+        '<td>' + d.dateTime + '</td>' +
+        '<td>' + d.value + '</td>' +
+        '<td>' + d.lsl + '</td>' +
+        '<td>' + d.usl + '</td>' +
+        '<td>' + d.prevValue + '</td>' +
+        '<td>' + d.prevLsl + '</td>' +
+        '<td>' + d.prevUsl + '</td>' +
+        '</tr>';
+    }
+    document.getElementById('trendTableBody').innerHTML = html;
+  }
+
+  function initTrendChart() {
+    var chartDom = document.getElementById('trendChart');
+    if (trendChart) {
+      trendChart.dispose();
+    }
+    trendChart = echarts.init(chartDom);
+
+    var xData = [];
+    var valueData = [];
+    var lslData = [];
+    var uslData = [];
+    var prevValueData = [];
+    var prevLslData = [];
+    var prevUslData = [];
+
+    for (var i = 0; i < trendData.length; i++) {
+      xData.push(trendData[i].dateTime);
+      valueData.push(trendData[i].value);
+      lslData.push(trendData[i].lsl);
+      uslData.push(trendData[i].usl);
+      prevValueData.push(trendData[i].prevValue);
+      prevLslData.push(trendData[i].prevLsl);
+      prevUslData.push(trendData[i].prevUsl);
+    }
+
+    var option = {
+      tooltip: {
+        trigger: 'axis',
+        textStyle: { fontSize: 12 }
+      },
+      legend: {
+        data: ['Value', 'LSL', 'USL', 'Prev Value', 'Prev LSL', 'Prev USL'],
+        bottom: 5,
+        itemGap: 20,
+        itemWidth: 22,
+        itemHeight: 10,
+        textStyle: { fontSize: 11, color: '#333333' }
+      },
+      grid: {
+        left: '6%',
+        right: '5%',
+        top: '8%',
+        bottom: '22%'
+      },
+      xAxis: {
+        type: 'category',
+        data: xData,
+        boundaryGap: false,
+        axisLabel: {
+          fontSize: 10,
+          rotate: 35,
+          color: '#555555',
+          interval: 0
+        },
+        axisLine: { lineStyle: { color: '#cccccc' } },
+        axisTick: { alignWithLabel: true }
+      },
+      yAxis: {
+        type: 'value',
+        axisLabel: {
+          fontSize: 11,
+          color: '#555555'
+        },
+        axisLine: { lineStyle: { color: '#cccccc' } },
+        splitLine: { lineStyle: { color: '#eeeeee' } }
+      },
+      color: ['#003366', '#e74c3c', '#27ae60', '#f39c12', '#8e44ad', '#3498db'],
+      series: [
+        { name: 'Value', type: 'line', data: valueData, smooth: true, symbol: 'circle', symbolSize: 7, lineStyle: { width: 2.5 } },
+        { name: 'LSL', type: 'line', data: lslData, smooth: true, symbol: 'diamond', symbolSize: 6, lineStyle: { width: 2, type: 'dashed' } },
+        { name: 'USL', type: 'line', data: uslData, smooth: true, symbol: 'triangle', symbolSize: 6, lineStyle: { width: 2, type: 'dashed' } },
+        { name: 'Prev Value', type: 'line', data: prevValueData, smooth: true, symbol: 'circle', symbolSize: 6, lineStyle: { width: 2 } },
+        { name: 'Prev LSL', type: 'line', data: prevLslData, smooth: true, symbol: 'diamond', symbolSize: 5, lineStyle: { width: 1.5, type: 'dotted' } },
+        { name: 'Prev USL', type: 'line', data: prevUslData, smooth: true, symbol: 'triangle', symbolSize: 5, lineStyle: { width: 1.5, type: 'dotted' } }
+      ]
+    };
+
+    trendChart.setOption(option);
+  }
+
+  function initPage() {
     var siteOpts = getUniqueValues(data1, data2, "site");
     var lineOpts = getUniqueValues(data1, data2, "line");
     var modOpts = getUniqueValues(data1, data2, "moduleId");
     var prodOpts = getUniqueValues(data1, data2, "productId");
 
-    buildDropdown("siteDd", "siteBtn", siteOpts);
-    buildDropdown("lineDd", "lineBtn", lineOpts);
-    buildDropdown("moduleDd", "moduleBtn", modOpts);
-    buildDropdown("productDd", "productBtn", prodOpts);
+    selectedFilters = { site: "", line: "", moduleId: "", productId: "" };
+
+    buildDropdown("siteDd", "siteBtn", siteOpts, "siteGroup");
+    buildDropdown("lineDd", "lineBtn", lineOpts, "lineGroup");
+    buildDropdown("moduleDd", "moduleBtn", modOpts, "moduleGroup");
+    buildDropdown("productDd", "productBtn", prodOpts, "productGroup");
 
     var today = new Date();
     var sevenDaysAgo = new Date(today.getFullYear(), today.getMonth(), today.getDate() - 6);
@@ -751,7 +1342,41 @@
     document.getElementById("dateRange").value = formatDate(pickerStartDate) + ' - ' + formatDate(pickerEndDate);
 
     applyFilters();
+  }
+
+  window.onload = function() {
+    getData();
   };
 </script>
+<div id="loaderOverlay" class="loader-overlay">
+  <div class="loader-spinner"></div>
+  <div class="loader-text">Loading...</div>
+</div>
+
+<div id="trendModal" class="modal-overlay" onclick="closeModal(event)">
+  <div class="modal-box">
+    <div class="modal-header">
+      <span id="modalTitle">Parameter Trend</span>
+      <span class="modal-close" onclick="closeModalDirect()">&times;</span>
+    </div>
+    <div id="trendChart" class="chart-container"></div>
+    <div class="modal-table-wrapper">
+      <table id="trendTable">
+        <thead>
+          <tr>
+            <th>Date Time</th>
+            <th>Value</th>
+            <th>LSL</th>
+            <th>USL</th>
+            <th>Prev Value</th>
+            <th>Prev LSL</th>
+            <th>Prev USL</th>
+          </tr>
+        </thead>
+        <tbody id="trendTableBody"></tbody>
+      </table>
+    </div>
+  </div>
+</div>
 </body>
 </html>
