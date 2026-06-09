@@ -10,6 +10,7 @@
     font-family: Arial, sans-serif;
     margin: 0;
     padding: 0;
+    padding-top: 47px;
     font-size: 12px;
   }
   .header {
@@ -18,11 +19,29 @@
     padding: 15px;
     font-size: 16px;
     font-weight: bold;
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    z-index: 1000;
+    box-sizing: border-box;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.3);
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+  }
+  .header-timer {
+    font-size: 12px;
+    font-weight: normal;
   }
   .filters {
     background-color: #f5f5f5;
     padding: 10px;
     border-bottom: 1px solid #cccccc;
+    position: sticky;
+    top: 47px;
+    z-index: 999;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.08);
   }
   .filter-group {
     display: inline-block;
@@ -42,6 +61,7 @@
   }
   .select-toggle {
     width: 150px;
+    min-height: 24px;
     padding: 4px;
     background-color: #ffffff;
     border: 1px solid #cccccc;
@@ -104,6 +124,19 @@
   }
   .reset-btn:hover {
     background-color: #e6f2ff;
+  }
+  .filter-required {
+    color: #cc0000;
+    margin-left: 2px;
+  }
+  .filter-error {
+    color: #cc0000;
+    font-size: 11px;
+    display: none;
+    margin-top: 2px;
+  }
+  .select-toggle.error-border {
+    border-color: #cc0000;
   }
   .loader-overlay {
     display: none;
@@ -410,7 +443,10 @@
 </style>
 </head>
 <body>
-<div class="header">Parameter Change Report</div>
+<div class="header">
+  <span>Parameter Change Report</span>
+  <span class="header-timer" id="headerTimer">00:00:00</span>
+</div>
 
 <div class="filters">
   <div class="filter-group">
@@ -427,22 +463,16 @@
       <button type="button" class="select-toggle" id="lineBtn" onclick="toggleDropdown('lineDd')">All</button>
       <div id="lineDd" class="dropdown-menu"></div>
     </div>
+    <div class="filter-error" id="lineError">Line is required</div>
   </div>
 
   <div class="filter-group">
-    <span class="filter-label">Module ID</span>
+    <span class="filter-label">Module ID<span class="filter-required">*</span></span>
     <div class="custom-select">
       <button type="button" class="select-toggle" id="moduleBtn" onclick="toggleDropdown('moduleDd')">All</button>
       <div id="moduleDd" class="dropdown-menu"></div>
     </div>
-  </div>
-
-  <div class="filter-group">
-    <span class="filter-label">Product ID</span>
-    <div class="custom-select">
-      <button type="button" class="select-toggle" id="productBtn" onclick="toggleDropdown('productDd')">All</button>
-      <div id="productDd" class="dropdown-menu"></div>
-    </div>
+    <div class="filter-error" id="moduleError">Module ID is required</div>
   </div>
 
   <div class="filter-group">
@@ -515,10 +545,15 @@
   var data1 = [];
   var data2 = [];
 
-  function getData() {
+  function getData(useFilters) {
     showLoader();
     var xhr = new XMLHttpRequest();
-    xhr.open("GET", "/api/parameter-changes", true);
+    var url = "/api/parameter-changes";
+    var params = useFilters ? buildApiFilterParams() : [];
+    if (params.length) {
+      url += "?" + params.join("&");
+    }
+    xhr.open("GET", url, true);
     xhr.onreadystatechange = function() {
       if (xhr.readyState === 4) {
         if (xhr.status === 200) {
@@ -529,7 +564,11 @@
           if (response.data2) {
             data2 = response.data2;
           }
-          initPage();
+          if (useFilters) {
+            applyFilters();
+          } else {
+            initPage();
+          }
           hideLoader();
         } else {
           // Fallback sample data if API fails
@@ -547,12 +586,31 @@
             { site: "Site B", line: "Line 3", productId: "AMB682", moduleId: "N1DLE40", parameterName: "M_CHB11_GAP_CTRL", createDate: 175261732455, createDttd: "03/06/2026", previousValue: "5", currentValue: "6", previousLsl: "4", currentLsl: "4", previousUsl: "8", currentUsl: "8", changeType: "VALUE_CHANGED" },
             { site: "Site A", line: "Line 2", productId: "AMB683", moduleId: "N1DLE41", parameterName: "M_CHB12_FORCE", createDate: 175270372455, createDttd: "04/06/2026", previousValue: "500", currentValue: "500", previousLsl: "450", currentLsl: "460", previousUsl: "550", currentUsl: "550", changeType: "LSL_CHANGED" }
           ];
-          initPage();
+          if (useFilters) {
+            applyFilters();
+          } else {
+            initPage();
+          }
           hideLoader();
         }
       }
     };
     xhr.send();
+  }
+
+  function buildApiFilterParams() {
+    var params = [];
+    var dateRange = parseDateRange(document.getElementById("dateRange").value);
+    var paramSearch = document.getElementById("paramSearch").value;
+
+    if (selectedFilters.site) params.push("site=" + encodeURIComponent(selectedFilters.site));
+    if (selectedFilters.line) params.push("line=" + encodeURIComponent(selectedFilters.line));
+    if (selectedFilters.moduleId) params.push("moduleId=" + encodeURIComponent(selectedFilters.moduleId));
+    if (paramSearch) params.push("parameterName=" + encodeURIComponent(paramSearch));
+    if (dateRange.from) params.push("startDate=" + encodeURIComponent(formatDate(dateRange.from)));
+    if (dateRange.to) params.push("endDate=" + encodeURIComponent(formatDate(dateRange.to)));
+
+    return params;
   }
 
   function getUniqueValues(arr1, arr2, field) {
@@ -576,14 +634,16 @@
   var selectedFilters = {
     site: "",
     line: "",
-    moduleId: "",
-    productId: ""
+    moduleId: ""
   };
 
-  function buildDropdown(ddId, btnId, options, groupName) {
+  function buildDropdown(ddId, btnId, options, groupName, includeAll) {
     var dd = document.getElementById(ddId);
+    if (includeAll !== false) includeAll = true;
     var html = '<input type="text" class="dropdown-search" placeholder="Search..." oninput="filterDropdown(this, \'' + ddId + '\')" onclick="stopPickerEvent()">';
-    html += '<label class="dd-item"><input type="radio" name="' + groupName + '" value="" onclick="selectFilter(\'' + ddId + '\', \'' + btnId + '\', this.value)"> All</label>';
+    if (includeAll) {
+      html += '<label class="dd-item"><input type="radio" name="' + groupName + '" value="" onclick="selectFilter(\'' + ddId + '\', \'' + btnId + '\', this.value)"> All</label>';
+    }
     for (var i = 0; i < options.length; i++) {
       html += '<label class="dd-item"><input type="radio" name="' + groupName + '" value="' + options[i] + '" onclick="selectFilter(\'' + ddId + '\', \'' + btnId + '\', this.value)"> ' + options[i] + '</label>';
     }
@@ -620,8 +680,27 @@
     btn.innerText = value || "All";
     var key = ddId.replace("Dd", "");
     if (key === "module") key = "moduleId";
-    if (key === "product") key = "productId";
     selectedFilters[key] = value;
+
+    // Cascading reset: selecting SITE resets LINE + MODULE
+    if (key === "site") {
+      selectedFilters.line = "";
+      selectedFilters.moduleId = "";
+      document.getElementById("lineBtn").innerText = "";
+      document.getElementById("moduleBtn").innerText = "";
+    }
+    // Selecting LINE resets MODULE
+    if (key === "line") {
+      selectedFilters.moduleId = "";
+      document.getElementById("moduleBtn").innerText = "";
+    }
+
+    // Clear validation errors on any selection change
+    document.getElementById("lineError").style.display = "none";
+    document.getElementById("lineBtn").classList.remove("error-border");
+    document.getElementById("moduleError").style.display = "none";
+    document.getElementById("moduleBtn").classList.remove("error-border");
+
     document.getElementById(ddId).style.display = "none";
     hideDatePicker();
     updateCascadingDropdowns();
@@ -653,32 +732,32 @@
     if (filters.site && record.site !== filters.site) return false;
     if (filters.line && record.line !== filters.line) return false;
     if (filters.moduleId && record.moduleId !== filters.moduleId) return false;
-    if (filters.productId && record.productId !== filters.productId) return false;
     return true;
   }
 
   function updateCascadingDropdowns() {
-    var siteFilters = { site: selectedFilters.site, line: "", moduleId: "", productId: "" };
-    var lineFilters = { site: selectedFilters.site, line: "", moduleId: "", productId: "" };
-    var modFilters = { site: selectedFilters.site, line: selectedFilters.line, moduleId: "", productId: "" };
+    var siteFilters = { site: selectedFilters.site, line: "", moduleId: "" };
+    var modFilters  = { site: selectedFilters.site, line: selectedFilters.line, moduleId: "" };
 
     var lineOpts = getFilteredUniqueValues(data1, data2, "line", siteFilters);
-    var modOpts = getFilteredUniqueValues(data1, data2, "moduleId", lineFilters);
-    var prodOpts = getFilteredUniqueValues(data1, data2, "productId", modFilters);
+    var modOpts  = getFilteredUniqueValues(data1, data2, "moduleId", modFilters);
 
-    rebuildDropdownIfChanged("lineDd", "lineBtn", lineOpts, "lineGroup");
-    rebuildDropdownIfChanged("moduleDd", "moduleBtn", modOpts, "moduleGroup");
-    rebuildDropdownIfChanged("productDd", "productBtn", prodOpts, "productGroup");
+    rebuildDropdownKeepValue("lineDd",   "lineBtn",   lineOpts, "lineGroup", !selectedFilters.site);
+    rebuildDropdownKeepValue("moduleDd", "moduleBtn", modOpts,  "moduleGroup", !(selectedFilters.site || selectedFilters.line));
   }
 
-  function rebuildDropdownIfChanged(ddId, btnId, newOptions, groupName) {
+  // Rebuild a downstream dropdown but only force-reset its value if the
+  // parent already cleared it via selectFilter (selectedFilters already updated).
+  function rebuildDropdownKeepValue(ddId, btnId, newOptions, groupName, includeAll) {
     var dd = document.getElementById(ddId);
-    var currentVal = getSelectedRadioValue(ddId);
-    var exists = currentVal === "" || newOptions.indexOf(currentVal) !== -1;
+    var key = ddId.replace("Dd", "");
+    if (key === "module") key = "moduleId";
+    var currentVal = selectedFilters[key]; // use authoritative state, not DOM
 
-    buildDropdown(ddId, btnId, newOptions, groupName);
+    buildDropdown(ddId, btnId, newOptions, groupName, includeAll);
 
-    if (exists && currentVal !== "") {
+    if (currentVal && newOptions.indexOf(currentVal) !== -1) {
+      // Restore radio selection
       var inputs = dd.getElementsByTagName("input");
       for (var i = 0; i < inputs.length; i++) {
         if (inputs[i].type === "radio" && inputs[i].value === currentVal) {
@@ -686,11 +765,10 @@
           break;
         }
       }
+      document.getElementById(btnId).innerText = currentVal;
     } else {
-      document.getElementById(btnId).innerText = "All";
-      var key = ddId.replace("Dd", "");
-      if (key === "module") key = "moduleId";
-      if (key === "product") key = "productId";
+      // Value no longer valid — reset
+      document.getElementById(btnId).innerText = includeAll === false ? "" : "All";
       selectedFilters[key] = "";
     }
   }
@@ -704,32 +782,55 @@
   }
 
   function searchWithFilters() {
+    var hasError = false;
+    if (selectedFilters.site && !selectedFilters.line) {
+      document.getElementById("lineError").style.display = "block";
+      document.getElementById("lineBtn").classList.add("error-border");
+      hasError = true;
+    } else {
+      document.getElementById("lineError").style.display = "none";
+      document.getElementById("lineBtn").classList.remove("error-border");
+    }
+
+    // Validate: Module ID is required only after narrowing by Site or Line.
+    if ((selectedFilters.site || selectedFilters.line) && !selectedFilters.moduleId) {
+      document.getElementById("moduleError").style.display = "block";
+      document.getElementById("moduleBtn").classList.add("error-border");
+      hasError = true;
+    } else {
+      document.getElementById("moduleError").style.display = "none";
+      document.getElementById("moduleBtn").classList.remove("error-border");
+    }
+
+    if (hasError) {
+      return;
+    }
     showLoader();
     setTimeout(function() {
-      applyFilters();
-      hideLoader();
+      getData(true);
     }, 2000);
   }
 
   function resetFilters() {
-    selectedFilters = { site: "", line: "", moduleId: "", productId: "" };
+    selectedFilters = { site: "", line: "", moduleId: "" };
     sortState = { table1: { col: -1, dir: "asc" }, table2: { col: -1, dir: "asc" } };
 
     document.getElementById("siteBtn").innerText = "All";
     document.getElementById("lineBtn").innerText = "All";
     document.getElementById("moduleBtn").innerText = "All";
-    document.getElementById("productBtn").innerText = "All";
+    document.getElementById("lineError").style.display = "none";
+    document.getElementById("lineBtn").classList.remove("error-border");
+    document.getElementById("moduleError").style.display = "none";
+    document.getElementById("moduleBtn").classList.remove("error-border");
     document.getElementById("paramSearch").value = "";
 
     var siteOpts = getUniqueValues(data1, data2, "site");
     var lineOpts = getUniqueValues(data1, data2, "line");
-    var modOpts = getUniqueValues(data1, data2, "moduleId");
-    var prodOpts = getUniqueValues(data1, data2, "productId");
+    var modOpts  = getUniqueValues(data1, data2, "moduleId");
 
-    buildDropdown("siteDd", "siteBtn", siteOpts, "siteGroup");
-    buildDropdown("lineDd", "lineBtn", lineOpts, "lineGroup");
-    buildDropdown("moduleDd", "moduleBtn", modOpts, "moduleGroup");
-    buildDropdown("productDd", "productBtn", prodOpts, "productGroup");
+    buildDropdown("siteDd",   "siteBtn",   siteOpts, "siteGroup");
+    buildDropdown("lineDd",   "lineBtn",   lineOpts, "lineGroup");
+    buildDropdown("moduleDd", "moduleBtn", modOpts,  "moduleGroup");
 
     var today = new Date();
     var sevenDaysAgo = new Date(today.getFullYear(), today.getMonth(), today.getDate() - 6);
@@ -737,7 +838,10 @@
     pickerEndDate = today;
     document.getElementById("dateRange").value = formatDate(pickerStartDate) + ' - ' + formatDate(pickerEndDate);
 
-    searchWithFilters();
+    // Don't auto-search on reset since Module ID is now required
+    renderTableBody("tbody1", []);
+    renderTableBody("tbody2", []);
+    document.getElementById("changeCount").innerText = 0;
   }
 
   function fetchCascadingOptions(callback) {
@@ -1199,16 +1303,31 @@
   ];
 
   var trendChart = null;
+  var trendModalTimer = null;
 
   function openTrendModal(parameterName) {
-    document.getElementById('modalTitle').innerText = 'Trend: ' + parameterName;
-    document.getElementById('trendModal').style.display = 'block';
-    renderTrendTable();
-    initTrendChart();
+    document.getElementById('trendModal').style.display = 'none';
+    showLoader();
+    if (trendModalTimer) {
+      clearTimeout(trendModalTimer);
+    }
+    trendModalTimer = setTimeout(function() {
+      document.getElementById('modalTitle').innerText = 'Trend: ' + parameterName;
+      renderTrendTable();
+      document.getElementById('trendModal').style.display = 'block';
+      initTrendChart();
+      hideLoader();
+      trendModalTimer = null;
+    }, 1000);
   }
 
   function closeModal(event) {
     if (event.target.id === 'trendModal') {
+      if (trendModalTimer) {
+        clearTimeout(trendModalTimer);
+        trendModalTimer = null;
+        hideLoader();
+      }
       document.getElementById('trendModal').style.display = 'none';
       if (trendChart) {
         trendChart.dispose();
@@ -1218,6 +1337,11 @@
   }
 
   function closeModalDirect() {
+    if (trendModalTimer) {
+      clearTimeout(trendModalTimer);
+      trendModalTimer = null;
+      hideLoader();
+    }
     document.getElementById('trendModal').style.display = 'none';
     if (trendChart) {
       trendChart.dispose();
@@ -1325,15 +1449,13 @@
   function initPage() {
     var siteOpts = getUniqueValues(data1, data2, "site");
     var lineOpts = getUniqueValues(data1, data2, "line");
-    var modOpts = getUniqueValues(data1, data2, "moduleId");
-    var prodOpts = getUniqueValues(data1, data2, "productId");
+    var modOpts  = getUniqueValues(data1, data2, "moduleId");
 
-    selectedFilters = { site: "", line: "", moduleId: "", productId: "" };
+    selectedFilters = { site: "", line: "", moduleId: "" };
 
-    buildDropdown("siteDd", "siteBtn", siteOpts, "siteGroup");
-    buildDropdown("lineDd", "lineBtn", lineOpts, "lineGroup");
-    buildDropdown("moduleDd", "moduleBtn", modOpts, "moduleGroup");
-    buildDropdown("productDd", "productBtn", prodOpts, "productGroup");
+    buildDropdown("siteDd",   "siteBtn",   siteOpts, "siteGroup");
+    buildDropdown("lineDd",   "lineBtn",   lineOpts, "lineGroup");
+    buildDropdown("moduleDd", "moduleBtn", modOpts,  "moduleGroup");
 
     var today = new Date();
     var sevenDaysAgo = new Date(today.getFullYear(), today.getMonth(), today.getDate() - 6);
@@ -1341,11 +1463,56 @@
     pickerEndDate = today;
     document.getElementById("dateRange").value = formatDate(pickerStartDate) + ' - ' + formatDate(pickerEndDate);
 
-    applyFilters();
+    // Don't auto-search on init; Module ID is required first
+    renderTableBody("tbody1", []);
+    renderTableBody("tbody2", []);
+    document.getElementById("changeCount").innerText = 0;
+  }
+
+  // Auto-refresh interval (5 minutes = 300000ms)
+  var autoRefreshInterval = null;
+
+  function startAutoRefresh() {
+    if (autoRefreshInterval) {
+      clearInterval(autoRefreshInterval);
+    }
+    autoRefreshInterval = setInterval(function() {
+      getData();
+      resetHeaderTimer();
+    }, 300000); // 5 minutes
+  }
+
+  var headerTimerSeconds = 300;
+  var headerTimerInterval = null;
+
+  function updateHeaderTimer() {
+    var minutes = Math.floor(headerTimerSeconds / 60);
+    var seconds = headerTimerSeconds % 60;
+    document.getElementById("headerTimer").innerText = "Next refresh in " + minutes + " min " + String(seconds).padStart(2, "0") + " sec";
+
+    headerTimerSeconds--;
+    if (headerTimerSeconds < 0) {
+      headerTimerSeconds = 300;
+    }
+  }
+
+  function resetHeaderTimer() {
+    headerTimerSeconds = 300;
+    updateHeaderTimer();
+  }
+
+  function startHeaderTimer() {
+    if (headerTimerInterval) {
+      clearInterval(headerTimerInterval);
+    }
+    updateHeaderTimer();
+    headerTimerInterval = setInterval(updateHeaderTimer, 1000);
   }
 
   window.onload = function() {
+    startHeaderTimer();
     getData();
+    startAutoRefresh();
   };
 </script>
 <div id="loaderOverlay" class="loader-overlay">
