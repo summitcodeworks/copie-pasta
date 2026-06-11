@@ -4,6 +4,7 @@
 <meta charset="UTF-8">
 <meta http-equiv="X-UA-Compatible" content="IE=edge">
 <title>Parameter Change Report</title>
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css">
 <script src="https://cdn.jsdelivr.net/npm/echarts@4.9.0/dist/echarts.min.js"></script>
 <style>
   body {
@@ -239,6 +240,20 @@
     position: relative;
     display: inline-block;
   }
+  .date-picker-wrap .date-input {
+    padding-right: 22px;
+    box-sizing: border-box;
+  }
+  .date-input-icon {
+    position: absolute;
+    right: 7px;
+    top: 50%;
+    transform: translateY(-50%);
+    -ms-transform: translateY(-50%);
+    color: #003366;
+    font-size: 12px;
+    pointer-events: none;
+  }
   .date-picker-popup {
     display: none;
     position: absolute;
@@ -267,11 +282,22 @@
     white-space: nowrap;
   }
   .date-picker-nav button {
-    padding: 1px 4px;
+    width: 20px;
+    height: 20px;
+    padding: 0;
     cursor: pointer;
     margin: 0 1px;
     font-size: 10px;
     vertical-align: middle;
+    border: 1px solid #cccccc;
+    background-color: #ffffff;
+    color: #003366;
+  }
+  .date-picker-nav button:hover {
+    background-color: #e6f2ff;
+  }
+  .date-picker-nav button i {
+    pointer-events: none;
   }
   .date-picker-nav select {
     padding: 1px 0;
@@ -336,6 +362,7 @@
     color: #0066cc;
   }
   .sortable-header {
+    position: relative;
     cursor: pointer;
     -webkit-user-select: none;
     -ms-user-select: none;
@@ -343,6 +370,75 @@
   }
   .sortable-header:hover {
     background-color: #d0d0d0;
+  }
+  .th-label {
+    display: inline-block;
+    padding-right: 18px;
+  }
+  .sort-icon {
+    margin-left: 4px;
+    color: #333333;
+    font-size: 11px;
+  }
+  .column-filter-btn {
+    position: absolute;
+    right: 3px;
+    top: 50%;
+    transform: translateY(-50%);
+    -ms-transform: translateY(-50%);
+    width: 15px;
+    height: 15px;
+    border: 1px solid #999999;
+    background-color: #ffffff;
+    color: #003366;
+    font-size: 10px;
+    line-height: 12px;
+    padding: 0;
+    cursor: pointer;
+  }
+  .column-filter-btn.active {
+    background-color: #003366;
+    color: #ffffff;
+  }
+  .column-filter-btn i {
+    pointer-events: none;
+  }
+  .column-filter-menu {
+    display: none;
+    position: fixed;
+    width: 210px;
+    max-height: 300px;
+    overflow-y: auto;
+    background-color: #ffffff;
+    border: 1px solid #999999;
+    box-shadow: 0 3px 8px rgba(0,0,0,0.25);
+    padding: 7px;
+    z-index: 2500;
+    box-sizing: border-box;
+  }
+  .column-filter-actions {
+    margin-bottom: 6px;
+    white-space: nowrap;
+  }
+  .column-filter-actions button {
+    padding: 2px 6px;
+    margin-right: 3px;
+    border: 1px solid #cccccc;
+    background-color: #f5f5f5;
+    cursor: pointer;
+    font-size: 11px;
+  }
+  .column-filter-options label {
+    display: block;
+    padding: 2px 0;
+    cursor: pointer;
+    font-size: 11px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+  .column-filter-options input {
+    margin-right: 5px;
   }
   .no-data-row td {
     text-align: center;
@@ -479,6 +575,7 @@
     <span class="filter-label">Date Range</span>
     <div class="date-picker-wrap">
       <input type="text" class="date-input" id="dateRange" placeholder="DD/MM/YYYY - DD/MM/YYYY" readonly onclick="openDatePickerFromInput()" style="width:150px;">
+      <i class="fa fa-calendar-alt date-input-icon"></i>
       <div id="datePickerPopup" class="date-picker-popup"></div>
     </div>
   </div>
@@ -503,17 +600,17 @@
   <table id="table1">
     <thead>
       <tr>
-        <th class="col-source sortable-header" onclick="sortTable('table1', 0)">Source</th>
-        <th class="col-module sortable-header" onclick="sortTable('table1', 1)">Module</th>
-        <th class="col-rcp sortable-header" onclick="sortTable('table1', 2)">RCP ID</th>
-        <th class="col-param sortable-header" onclick="sortTable('table1', 3)">Parameters</th>
-        <th class="col-value sortable-header" onclick="sortTable('table1', 4)">Value</th>
-        <th class="col-lsl sortable-header" onclick="sortTable('table1', 5)">LSL</th>
-        <th class="col-usl sortable-header" onclick="sortTable('table1', 6)">USL</th>
-        <th class="col-date sortable-header" onclick="sortTable('table1', 7)">Create DTTD</th>
-        <th class="col-prev-value sortable-header" onclick="sortTable('table1', 8)">Previous Value</th>
-        <th class="col-prev-lsl sortable-header" onclick="sortTable('table1', 9)">Previous LSL</th>
-        <th class="col-prev-usl sortable-header" onclick="sortTable('table1', 10)">Previous USL</th>
+        <th class="col-source sortable-header" onclick="sortTable('table1', 0)"><span class="th-label" data-base-text="Source">Source <i class="fa fa-sort sort-icon"></i></span><button type="button" class="column-filter-btn" onclick="toggleColumnFilter(event, 'table1', 0)"><i class="fa fa-filter"></i></button></th>
+        <th class="col-module sortable-header" onclick="sortTable('table1', 1)"><span class="th-label" data-base-text="Module">Module <i class="fa fa-sort sort-icon"></i></span><button type="button" class="column-filter-btn" onclick="toggleColumnFilter(event, 'table1', 1)"><i class="fa fa-filter"></i></button></th>
+        <th class="col-rcp sortable-header" onclick="sortTable('table1', 2)"><span class="th-label" data-base-text="RCP ID">RCP ID <i class="fa fa-sort sort-icon"></i></span><button type="button" class="column-filter-btn" onclick="toggleColumnFilter(event, 'table1', 2)"><i class="fa fa-filter"></i></button></th>
+        <th class="col-param sortable-header" onclick="sortTable('table1', 3)"><span class="th-label" data-base-text="Parameters">Parameters <i class="fa fa-sort sort-icon"></i></span><button type="button" class="column-filter-btn" onclick="toggleColumnFilter(event, 'table1', 3)"><i class="fa fa-filter"></i></button></th>
+        <th class="col-value sortable-header" onclick="sortTable('table1', 4)"><span class="th-label" data-base-text="Value">Value <i class="fa fa-sort sort-icon"></i></span><button type="button" class="column-filter-btn" onclick="toggleColumnFilter(event, 'table1', 4)"><i class="fa fa-filter"></i></button></th>
+        <th class="col-lsl sortable-header" onclick="sortTable('table1', 5)"><span class="th-label" data-base-text="LSL">LSL <i class="fa fa-sort sort-icon"></i></span><button type="button" class="column-filter-btn" onclick="toggleColumnFilter(event, 'table1', 5)"><i class="fa fa-filter"></i></button></th>
+        <th class="col-usl sortable-header" onclick="sortTable('table1', 6)"><span class="th-label" data-base-text="USL">USL <i class="fa fa-sort sort-icon"></i></span><button type="button" class="column-filter-btn" onclick="toggleColumnFilter(event, 'table1', 6)"><i class="fa fa-filter"></i></button></th>
+        <th class="col-date sortable-header" onclick="sortTable('table1', 7)"><span class="th-label" data-base-text="Create DTTD">Create DTTD <i class="fa fa-sort sort-icon"></i></span><button type="button" class="column-filter-btn" onclick="toggleColumnFilter(event, 'table1', 7)"><i class="fa fa-filter"></i></button></th>
+        <th class="col-prev-value sortable-header" onclick="sortTable('table1', 8)"><span class="th-label" data-base-text="Previous Value">Previous Value <i class="fa fa-sort sort-icon"></i></span><button type="button" class="column-filter-btn" onclick="toggleColumnFilter(event, 'table1', 8)"><i class="fa fa-filter"></i></button></th>
+        <th class="col-prev-lsl sortable-header" onclick="sortTable('table1', 9)"><span class="th-label" data-base-text="Previous LSL">Previous LSL <i class="fa fa-sort sort-icon"></i></span><button type="button" class="column-filter-btn" onclick="toggleColumnFilter(event, 'table1', 9)"><i class="fa fa-filter"></i></button></th>
+        <th class="col-prev-usl sortable-header" onclick="sortTable('table1', 10)"><span class="th-label" data-base-text="Previous USL">Previous USL <i class="fa fa-sort sort-icon"></i></span><button type="button" class="column-filter-btn" onclick="toggleColumnFilter(event, 'table1', 10)"><i class="fa fa-filter"></i></button></th>
       </tr>
     </thead>
     <tbody id="tbody1"></tbody>
@@ -524,17 +621,17 @@
   <table id="table2">
     <thead>
       <tr>
-        <th class="col-source sortable-header" onclick="sortTable('table2', 0)">Source</th>
-        <th class="col-module sortable-header" onclick="sortTable('table2', 1)">Module</th>
-        <th class="col-rcp sortable-header" onclick="sortTable('table2', 2)">RCP ID</th>
-        <th class="col-param sortable-header" onclick="sortTable('table2', 3)">Parameters</th>
-        <th class="col-value sortable-header" onclick="sortTable('table2', 4)">Value</th>
-        <th class="col-lsl sortable-header" onclick="sortTable('table2', 5)">LSL</th>
-        <th class="col-usl sortable-header" onclick="sortTable('table2', 6)">USL</th>
-        <th class="col-date sortable-header" onclick="sortTable('table2', 7)">Create DTTD</th>
-        <th class="col-prev-value sortable-header" onclick="sortTable('table2', 8)">Previous Value</th>
-        <th class="col-prev-lsl sortable-header" onclick="sortTable('table2', 9)">Previous LSL</th>
-        <th class="col-prev-usl sortable-header" onclick="sortTable('table2', 10)">Previous USL</th>
+        <th class="col-source sortable-header" onclick="sortTable('table2', 0)"><span class="th-label" data-base-text="Source">Source <i class="fa fa-sort sort-icon"></i></span><button type="button" class="column-filter-btn" onclick="toggleColumnFilter(event, 'table2', 0)"><i class="fa fa-filter"></i></button></th>
+        <th class="col-module sortable-header" onclick="sortTable('table2', 1)"><span class="th-label" data-base-text="Module">Module <i class="fa fa-sort sort-icon"></i></span><button type="button" class="column-filter-btn" onclick="toggleColumnFilter(event, 'table2', 1)"><i class="fa fa-filter"></i></button></th>
+        <th class="col-rcp sortable-header" onclick="sortTable('table2', 2)"><span class="th-label" data-base-text="RCP ID">RCP ID <i class="fa fa-sort sort-icon"></i></span><button type="button" class="column-filter-btn" onclick="toggleColumnFilter(event, 'table2', 2)"><i class="fa fa-filter"></i></button></th>
+        <th class="col-param sortable-header" onclick="sortTable('table2', 3)"><span class="th-label" data-base-text="Parameters">Parameters <i class="fa fa-sort sort-icon"></i></span><button type="button" class="column-filter-btn" onclick="toggleColumnFilter(event, 'table2', 3)"><i class="fa fa-filter"></i></button></th>
+        <th class="col-value sortable-header" onclick="sortTable('table2', 4)"><span class="th-label" data-base-text="Value">Value <i class="fa fa-sort sort-icon"></i></span><button type="button" class="column-filter-btn" onclick="toggleColumnFilter(event, 'table2', 4)"><i class="fa fa-filter"></i></button></th>
+        <th class="col-lsl sortable-header" onclick="sortTable('table2', 5)"><span class="th-label" data-base-text="LSL">LSL <i class="fa fa-sort sort-icon"></i></span><button type="button" class="column-filter-btn" onclick="toggleColumnFilter(event, 'table2', 5)"><i class="fa fa-filter"></i></button></th>
+        <th class="col-usl sortable-header" onclick="sortTable('table2', 6)"><span class="th-label" data-base-text="USL">USL <i class="fa fa-sort sort-icon"></i></span><button type="button" class="column-filter-btn" onclick="toggleColumnFilter(event, 'table2', 6)"><i class="fa fa-filter"></i></button></th>
+        <th class="col-date sortable-header" onclick="sortTable('table2', 7)"><span class="th-label" data-base-text="Create DTTD">Create DTTD <i class="fa fa-sort sort-icon"></i></span><button type="button" class="column-filter-btn" onclick="toggleColumnFilter(event, 'table2', 7)"><i class="fa fa-filter"></i></button></th>
+        <th class="col-prev-value sortable-header" onclick="sortTable('table2', 8)"><span class="th-label" data-base-text="Previous Value">Previous Value <i class="fa fa-sort sort-icon"></i></span><button type="button" class="column-filter-btn" onclick="toggleColumnFilter(event, 'table2', 8)"><i class="fa fa-filter"></i></button></th>
+        <th class="col-prev-lsl sortable-header" onclick="sortTable('table2', 9)"><span class="th-label" data-base-text="Previous LSL">Previous LSL <i class="fa fa-sort sort-icon"></i></span><button type="button" class="column-filter-btn" onclick="toggleColumnFilter(event, 'table2', 9)"><i class="fa fa-filter"></i></button></th>
+        <th class="col-prev-usl sortable-header" onclick="sortTable('table2', 10)"><span class="th-label" data-base-text="Previous USL">Previous USL <i class="fa fa-sort sort-icon"></i></span><button type="button" class="column-filter-btn" onclick="toggleColumnFilter(event, 'table2', 10)"><i class="fa fa-filter"></i></button></th>
       </tr>
     </thead>
     <tbody id="tbody2"></tbody>
@@ -637,6 +734,22 @@
     moduleId: ""
   };
 
+  function hasClass(el, className) {
+    return el && (" " + el.className + " ").indexOf(" " + className + " ") !== -1;
+  }
+
+  function addClass(el, className) {
+    if (el && !hasClass(el, className)) {
+      el.className = el.className ? el.className + " " + className : className;
+    }
+  }
+
+  function removeClass(el, className) {
+    if (el) {
+      el.className = (" " + el.className + " ").replace(" " + className + " ", " ").replace(/^\s+|\s+$/g, "");
+    }
+  }
+
   function buildDropdown(ddId, btnId, options, groupName, includeAll) {
     var dd = document.getElementById(ddId);
     if (includeAll !== false) includeAll = true;
@@ -697,9 +810,9 @@
 
     // Clear validation errors on any selection change
     document.getElementById("lineError").style.display = "none";
-    document.getElementById("lineBtn").classList.remove("error-border");
+    removeClass(document.getElementById("lineBtn"), "error-border");
     document.getElementById("moduleError").style.display = "none";
-    document.getElementById("moduleBtn").classList.remove("error-border");
+    removeClass(document.getElementById("moduleBtn"), "error-border");
 
     document.getElementById(ddId).style.display = "none";
     hideDatePicker();
@@ -785,21 +898,21 @@
     var hasError = false;
     if (selectedFilters.site && !selectedFilters.line) {
       document.getElementById("lineError").style.display = "block";
-      document.getElementById("lineBtn").classList.add("error-border");
+      addClass(document.getElementById("lineBtn"), "error-border");
       hasError = true;
     } else {
       document.getElementById("lineError").style.display = "none";
-      document.getElementById("lineBtn").classList.remove("error-border");
+      removeClass(document.getElementById("lineBtn"), "error-border");
     }
 
     // Validate: Module ID is required only after narrowing by Site or Line.
     if ((selectedFilters.site || selectedFilters.line) && !selectedFilters.moduleId) {
       document.getElementById("moduleError").style.display = "block";
-      document.getElementById("moduleBtn").classList.add("error-border");
+      addClass(document.getElementById("moduleBtn"), "error-border");
       hasError = true;
     } else {
       document.getElementById("moduleError").style.display = "none";
-      document.getElementById("moduleBtn").classList.remove("error-border");
+      removeClass(document.getElementById("moduleBtn"), "error-border");
     }
 
     if (hasError) {
@@ -814,14 +927,16 @@
   function resetFilters() {
     selectedFilters = { site: "", line: "", moduleId: "" };
     sortState = { table1: { col: -1, dir: "asc" }, table2: { col: -1, dir: "asc" } };
+    columnFilterState = { table1: {}, table2: {} };
+    hideAllColumnFilterMenus();
 
     document.getElementById("siteBtn").innerText = "All";
     document.getElementById("lineBtn").innerText = "All";
     document.getElementById("moduleBtn").innerText = "All";
     document.getElementById("lineError").style.display = "none";
-    document.getElementById("lineBtn").classList.remove("error-border");
+    removeClass(document.getElementById("lineBtn"), "error-border");
     document.getElementById("moduleError").style.display = "none";
-    document.getElementById("moduleBtn").classList.remove("error-border");
+    removeClass(document.getElementById("moduleBtn"), "error-border");
     document.getElementById("paramSearch").value = "";
 
     var siteOpts = getUniqueValues(data1, data2, "site");
@@ -838,10 +953,7 @@
     pickerEndDate = today;
     document.getElementById("dateRange").value = formatDate(pickerStartDate) + ' - ' + formatDate(pickerEndDate);
 
-    // Don't auto-search on reset since Module ID is now required
-    renderTableBody("tbody1", []);
-    renderTableBody("tbody2", []);
-    document.getElementById("changeCount").innerText = 0;
+    applyFilters();
   }
 
   function fetchCascadingOptions(callback) {
@@ -886,6 +998,12 @@
     var dateWrap = document.getElementById('dateRange').parentNode;
     if (!dateWrap.contains(e.target)) {
       hideDatePicker();
+    }
+    var columnMenus = document.getElementsByClassName("column-filter-menu");
+    for (var c = 0; c < columnMenus.length; c++) {
+      if (!columnMenus[c].contains(e.target) && !(hasClass(e.target, "column-filter-btn"))) {
+        columnMenus[c].style.display = "none";
+      }
     }
   });
 
@@ -968,7 +1086,7 @@
 
     var html = '<div class="date-picker-header">' + monthNames[month] + ' ' + year + '</div>';
     html += '<div class="date-picker-nav">';
-    html += '<button onclick="stopPickerEvent(); changePickerMonth(-1)">&lt;</button>';
+    html += '<button type="button" onclick="stopPickerEvent(); changePickerMonth(-1)"><i class="fa fa-chevron-left"></i></button>';
     html += '<select class="year-select" onchange="stopPickerEvent(); changePickerYear(this.value)">';
     for (var y = year - 10; y <= year + 10; y++) {
       html += '<option value="' + y + '"' + (y === year ? ' selected' : '') + '>' + y + '</option>';
@@ -979,7 +1097,7 @@
       html += '<option value="' + m + '"' + (m === month ? ' selected' : '') + '>' + monthNames[m] + '</option>';
     }
     html += '</select>';
-    html += '<button onclick="stopPickerEvent(); changePickerMonth(1)">&gt;</button>';
+    html += '<button type="button" onclick="stopPickerEvent(); changePickerMonth(1)"><i class="fa fa-chevron-right"></i></button>';
     html += '</div>';
 
     html += '<table class="date-picker-days">';
@@ -1190,10 +1308,154 @@
     "previousValue", "previousLsl", "previousUsl"
   ];
 
+  var columnFilterState = {
+    table1: {},
+    table2: {}
+  };
+
+  function getTableData(tableId) {
+    return tableId === "table1" ? data1 : data2;
+  }
+
+  function escapeHtml(value) {
+    return String(value == null ? "" : value)
+      .replace(/&/g, "&amp;")
+      .replace(/</g, "&lt;")
+      .replace(/>/g, "&gt;")
+      .replace(/"/g, "&quot;")
+      .replace(/'/g, "&#39;");
+  }
+
+  function getColumnUniqueValues(rows, colIndex) {
+    var field = colToField[colIndex];
+    var unique = [];
+    for (var i = 0; i < rows.length; i++) {
+      var value = rows[i][field] == null ? "" : String(rows[i][field]);
+      if (unique.indexOf(value) === -1) {
+        unique.push(value);
+      }
+    }
+    unique.sort(function(a, b) {
+      return a.toLowerCase() < b.toLowerCase() ? -1 : (a.toLowerCase() > b.toLowerCase() ? 1 : 0);
+    });
+    return unique;
+  }
+
+  function toggleColumnFilter(event, tableId, colIndex) {
+    if (event) {
+      event.stopPropagation();
+    }
+    hideAllColumnFilterMenus();
+    var menuId = "columnFilterMenu_" + tableId + "_" + colIndex;
+    var menu = document.getElementById(menuId);
+    if (!menu) {
+      menu = document.createElement("div");
+      menu.id = menuId;
+      menu.className = "column-filter-menu";
+      document.body.appendChild(menu);
+    }
+    buildColumnFilterMenu(tableId, colIndex, menu);
+    var rect = event.target.getBoundingClientRect();
+    menu.style.left = Math.max(5, rect.right - 210) + "px";
+    menu.style.top = (rect.bottom + 3) + "px";
+    menu.style.display = "block";
+  }
+
+  function buildColumnFilterMenu(tableId, colIndex, menu) {
+    var values = getColumnUniqueValues(getTableData(tableId), colIndex);
+    var selected = columnFilterState[tableId][colIndex];
+    var html = '<input type="text" class="dropdown-search" placeholder="Search..." oninput="filterColumnMenuOptions(this)" onclick="stopPickerEvent()">';
+    html += '<div class="column-filter-actions">';
+    html += '<button type="button" onclick="setAllColumnFilterOptions(\'' + tableId + '\',' + colIndex + ', true)">Select All</button>';
+    html += '<button type="button" onclick="setAllColumnFilterOptions(\'' + tableId + '\',' + colIndex + ', false)">Clear</button>';
+    html += '<button type="button" onclick="applyColumnFilter(\'' + tableId + '\',' + colIndex + ')">OK</button>';
+    html += '</div><div class="column-filter-options">';
+    for (var i = 0; i < values.length; i++) {
+      var value = values[i];
+      var checked = !selected || selected.indexOf(value) !== -1;
+      var label = value === "" ? "(Blanks)" : value;
+      html += '<label><input type="checkbox" value="' + escapeHtml(value) + '"' + (checked ? ' checked' : '') + '> ' + escapeHtml(label) + '</label>';
+    }
+    html += '</div>';
+    menu.innerHTML = html;
+  }
+
+  function filterColumnMenuOptions(input) {
+    var menu = input.parentNode;
+    var labels = menu.getElementsByTagName("label");
+    var search = input.value.toLowerCase();
+    for (var i = 0; i < labels.length; i++) {
+      labels[i].style.display = labels[i].innerText.toLowerCase().indexOf(search) !== -1 ? "block" : "none";
+    }
+  }
+
+  function setAllColumnFilterOptions(tableId, colIndex, checked) {
+    var menu = document.getElementById("columnFilterMenu_" + tableId + "_" + colIndex);
+    if (!menu) return;
+    var inputs = menu.getElementsByTagName("input");
+    for (var i = 0; i < inputs.length; i++) {
+      if (inputs[i].type === "checkbox") {
+        inputs[i].checked = checked;
+      }
+    }
+  }
+
+  function applyColumnFilter(tableId, colIndex) {
+    var menu = document.getElementById("columnFilterMenu_" + tableId + "_" + colIndex);
+    if (!menu) return;
+    var inputs = menu.getElementsByTagName("input");
+    var selected = [];
+    var total = 0;
+    for (var i = 0; i < inputs.length; i++) {
+      if (inputs[i].type === "checkbox") {
+        total++;
+        if (inputs[i].checked) {
+          selected.push(inputs[i].value);
+        }
+      }
+    }
+    if (selected.length === total) {
+      delete columnFilterState[tableId][colIndex];
+    } else {
+      columnFilterState[tableId][colIndex] = selected;
+    }
+    menu.style.display = "none";
+    applyFilters();
+  }
+
+  function applyColumnFiltersToRows(tableId, rows) {
+    var filters = columnFilterState[tableId];
+    var result = rows.slice();
+    for (var colIndex in filters) {
+      if (!filters.hasOwnProperty(colIndex)) continue;
+      var selected = filters[colIndex];
+      var field = colToField[parseInt(colIndex, 10)];
+      result = result.filter(function(row) {
+        var value = row[field] == null ? "" : String(row[field]);
+        return selected.indexOf(value) !== -1;
+      });
+    }
+    return result;
+  }
+
+  function hideAllColumnFilterMenus() {
+    var menus = document.getElementsByClassName("column-filter-menu");
+    for (var i = 0; i < menus.length; i++) {
+      menus[i].style.display = "none";
+    }
+  }
+
   function sortTable(tableId, colIndex) {
     var state = sortState[tableId];
     if (state.col === colIndex) {
-      state.dir = state.dir === "asc" ? "desc" : "asc";
+      if (state.dir === "asc") {
+        state.dir = "desc";
+      } else if (state.dir === "desc") {
+        state.col = -1;
+        state.dir = "asc";
+      } else {
+        state.dir = "asc";
+      }
     } else {
       state.col = colIndex;
       state.dir = "asc";
@@ -1225,18 +1487,27 @@
 
   function updateSortHeaders() {
     var tables = ["table1", "table2"];
-    var arrowMap = { "asc": " ▲", "desc": " ▼" };
     for (var t = 0; t < tables.length; t++) {
       var tbl = document.getElementById(tables[t]);
       if (!tbl) continue;
       var headers = tbl.getElementsByTagName("th");
       var state = sortState[tables[t]];
       for (var h = 0; h < headers.length; h++) {
-        var baseText = headers[h].innerText.replace(" ▲", "").replace(" ▼", "");
+        var label = headers[h].getElementsByClassName("th-label")[0];
+        var filterBtn = headers[h].getElementsByClassName("column-filter-btn")[0];
+        if (!label) continue;
+        var baseText = label.getAttribute("data-base-text") || label.innerText;
+        var iconClass = "fa fa-sort";
         if (state.col === h) {
-          headers[h].innerText = baseText + arrowMap[state.dir];
-        } else {
-          headers[h].innerText = baseText;
+          iconClass = state.dir === "asc" ? "fa fa-sort-up" : "fa fa-sort-down";
+        }
+        label.innerHTML = baseText + ' <i class="' + iconClass + ' sort-icon"></i>';
+        if (filterBtn) {
+          if (columnFilterState[tables[t]][h]) {
+            addClass(filterBtn, "active");
+          } else {
+            removeClass(filterBtn, "active");
+          }
         }
       }
     }
@@ -1279,6 +1550,9 @@
       if (toDate && d && d > toDate) continue;
       filtered2.push(r);
     }
+
+    filtered1 = applyColumnFiltersToRows("table1", filtered1);
+    filtered2 = applyColumnFiltersToRows("table2", filtered2);
 
     filtered1 = sortData(filtered1, sortState.table1.col, sortState.table1.dir);
     filtered2 = sortData(filtered2, sortState.table2.col, sortState.table2.dir);
@@ -1463,10 +1737,7 @@
     pickerEndDate = today;
     document.getElementById("dateRange").value = formatDate(pickerStartDate) + ' - ' + formatDate(pickerEndDate);
 
-    // Don't auto-search on init; Module ID is required first
-    renderTableBody("tbody1", []);
-    renderTableBody("tbody2", []);
-    document.getElementById("changeCount").innerText = 0;
+    applyFilters();
   }
 
   // Auto-refresh interval (5 minutes = 300000ms)
@@ -1488,7 +1759,8 @@
   function updateHeaderTimer() {
     var minutes = Math.floor(headerTimerSeconds / 60);
     var seconds = headerTimerSeconds % 60;
-    document.getElementById("headerTimer").innerText = "Next refresh in " + minutes + " min " + String(seconds).padStart(2, "0") + " sec";
+    var secondsText = seconds < 10 ? "0" + seconds : String(seconds);
+    document.getElementById("headerTimer").innerText = "Next refresh in " + minutes + " min " + secondsText + " sec";
 
     headerTimerSeconds--;
     if (headerTimerSeconds < 0) {
