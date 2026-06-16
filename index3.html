@@ -213,6 +213,19 @@
   .download-btn:hover {
     background-color: #e6f2ff;
   }
+  .summary-btn {
+    float: right;
+    padding: 4px 12px;
+    background-color: #003366;
+    color: #ffffff;
+    border: none;
+    cursor: pointer;
+    font-size: 12px;
+    margin-left: 8px;
+  }
+  .summary-btn:hover {
+    background-color: #004080;
+  }
   .download-btn i {
     margin-right: 5px;
   }
@@ -667,7 +680,8 @@
 
 <div class="summary">
   No. of change parameters: <span id="changeCount">0</span>
-  <button type="button" class="download-btn" onclick="downloadMainExcel()"><i class="fa fa-download"></i>Download Excel</button>
+  <button type="button" class="download-btn" onclick="downloadCurrentViewExcel()"><i class="fa fa-download"></i>Download Excel</button>
+  <button type="button" id="summaryToggleBtn" class="summary-btn" onclick="toggleSummaryView()">Summary</button>
 </div>
 
   <div class="table-wrapper">
@@ -710,6 +724,44 @@
     </thead>
     <tbody id="tbody2"></tbody>
   </table>
+</div>
+
+<div id="summaryView" style="display:none;">
+  <div class="table-wrapper" style="margin-bottom:10px;">
+    <table id="summaryTable1">
+      <thead>
+        <tr>
+          <th class="col-source sortable-header" onclick="sortTable('summaryTable1', 0)"><span class="th-label" data-base-text="Source">Source <i class="fa fa-sort sort-icon"></i></span><button type="button" class="column-filter-btn" onclick="toggleColumnFilter(event, 'summaryTable1', 0)"><i class="fa fa-filter"></i></button></th>
+          <th class="col-module sortable-header" onclick="sortTable('summaryTable1', 1)"><span class="th-label" data-base-text="Module">Module <i class="fa fa-sort sort-icon"></i></span><button type="button" class="column-filter-btn" onclick="toggleColumnFilter(event, 'summaryTable1', 1)"><i class="fa fa-filter"></i></button></th>
+          <th class="col-rcp sortable-header" onclick="sortTable('summaryTable1', 2)"><span class="th-label" data-base-text="RCP ID">RCP ID <i class="fa fa-sort sort-icon"></i></span><button type="button" class="column-filter-btn" onclick="toggleColumnFilter(event, 'summaryTable1', 2)"><i class="fa fa-filter"></i></button></th>
+          <th class="col-param sortable-header" onclick="sortTable('summaryTable1', 3)"><span class="th-label" data-base-text="Parameters">Parameters <i class="fa fa-sort sort-icon"></i></span><button type="button" class="column-filter-btn" onclick="toggleColumnFilter(event, 'summaryTable1', 3)"><i class="fa fa-filter"></i></button></th>
+          <th class="col-value sortable-header" onclick="sortTable('summaryTable1', 4)"><span class="th-label" data-base-text="Value">Value <i class="fa fa-sort sort-icon"></i></span><button type="button" class="column-filter-btn" onclick="toggleColumnFilter(event, 'summaryTable1', 4)"><i class="fa fa-filter"></i></button></th>
+          <th class="col-lsl sortable-header" onclick="sortTable('summaryTable1', 5)"><span class="th-label" data-base-text="LSL">LSL <i class="fa fa-sort sort-icon"></i></span><button type="button" class="column-filter-btn" onclick="toggleColumnFilter(event, 'summaryTable1', 5)"><i class="fa fa-filter"></i></button></th>
+          <th class="col-usl sortable-header" onclick="sortTable('summaryTable1', 6)"><span class="th-label" data-base-text="USL">USL <i class="fa fa-sort sort-icon"></i></span><button type="button" class="column-filter-btn" onclick="toggleColumnFilter(event, 'summaryTable1', 6)"><i class="fa fa-filter"></i></button></th>
+          <th class="col-date sortable-header" onclick="sortTable('summaryTable1', 7)"><span class="th-label" data-base-text="Create DTTD">Create DTTD <i class="fa fa-sort sort-icon"></i></span><button type="button" class="column-filter-btn" onclick="toggleColumnFilter(event, 'summaryTable1', 7)"><i class="fa fa-filter"></i></button></th>
+        </tr>
+      </thead>
+      <tbody id="summaryTableBody1"></tbody>
+    </table>
+  </div>
+
+  <div class="table-wrapper">
+    <table id="summaryTable2">
+      <thead>
+        <tr>
+          <th class="col-source sortable-header" onclick="sortTable('summaryTable2', 0)"><span class="th-label" data-base-text="Source">Source <i class="fa fa-sort sort-icon"></i></span><button type="button" class="column-filter-btn" onclick="toggleColumnFilter(event, 'summaryTable2', 0)"><i class="fa fa-filter"></i></button></th>
+          <th class="col-module sortable-header" onclick="sortTable('summaryTable2', 1)"><span class="th-label" data-base-text="Module">Module <i class="fa fa-sort sort-icon"></i></span><button type="button" class="column-filter-btn" onclick="toggleColumnFilter(event, 'summaryTable2', 1)"><i class="fa fa-filter"></i></button></th>
+          <th class="col-rcp sortable-header" onclick="sortTable('summaryTable2', 2)"><span class="th-label" data-base-text="RCP ID">RCP ID <i class="fa fa-sort sort-icon"></i></span><button type="button" class="column-filter-btn" onclick="toggleColumnFilter(event, 'summaryTable2', 2)"><i class="fa fa-filter"></i></button></th>
+          <th class="col-param sortable-header" onclick="sortTable('summaryTable2', 3)"><span class="th-label" data-base-text="Parameters">Parameters <i class="fa fa-sort sort-icon"></i></span><button type="button" class="column-filter-btn" onclick="toggleColumnFilter(event, 'summaryTable2', 3)"><i class="fa fa-filter"></i></button></th>
+          <th class="col-value sortable-header" onclick="sortTable('summaryTable2', 4)"><span class="th-label" data-base-text="Value">Value <i class="fa fa-sort sort-icon"></i></span><button type="button" class="column-filter-btn" onclick="toggleColumnFilter(event, 'summaryTable2', 4)"><i class="fa fa-filter"></i></button></th>
+          <th class="col-lsl sortable-header" onclick="sortTable('summaryTable2', 5)"><span class="th-label" data-base-text="LSL">LSL <i class="fa fa-sort sort-icon"></i></span><button type="button" class="column-filter-btn" onclick="toggleColumnFilter(event, 'summaryTable2', 5)"><i class="fa fa-filter"></i></button></th>
+          <th class="col-usl sortable-header" onclick="sortTable('summaryTable2', 6)"><span class="th-label" data-base-text="USL">USL <i class="fa fa-sort sort-icon"></i></span><button type="button" class="column-filter-btn" onclick="toggleColumnFilter(event, 'summaryTable2', 6)"><i class="fa fa-filter"></i></button></th>
+          <th class="col-date sortable-header" onclick="sortTable('summaryTable2', 7)"><span class="th-label" data-base-text="Create DTTD">Create DTTD <i class="fa fa-sort sort-icon"></i></span><button type="button" class="column-filter-btn" onclick="toggleColumnFilter(event, 'summaryTable2', 7)"><i class="fa fa-filter"></i></button></th>
+        </tr>
+      </thead>
+      <tbody id="summaryTableBody2"></tbody>
+    </table>
+  </div>
 </div>
 
 <script>
@@ -1429,7 +1481,9 @@
 
   var sortState = {
     table1: { col: -1, dir: "asc" },
-    table2: { col: -1, dir: "asc" }
+    table2: { col: -1, dir: "asc" },
+    summaryTable1: { col: -1, dir: "asc" },
+    summaryTable2: { col: -1, dir: "asc" }
   };
 
   var colToField = [
@@ -1440,11 +1494,19 @@
 
   var columnFilterState = {
     table1: {},
-    table2: {}
+    table2: {},
+    summaryTable1: {},
+    summaryTable2: {}
   };
 
+  var summaryData1 = [], summaryData2 = [];
+
   function getTableData(tableId) {
-    return tableId === "table1" ? data1 : data2;
+    if (tableId === "table1") return data1;
+    if (tableId === "table2") return data2;
+    if (tableId === "summaryTable1") return summaryData1;
+    if (tableId === "summaryTable2") return summaryData2;
+    return [];
   }
 
   function escapeHtml(value) {
@@ -1629,13 +1691,13 @@
     updateFixedLayoutSpacing();
     var fixedTop = getFixedTopOffset();
     var div = getFixedHeaderDiv();
-    var tables = ["table1", "table2"];
+    var tables = ["table1", "table2", "summaryTable1", "summaryTable2"];
     var activeTable = null;
     var activeWrapper = null;
 
     for (var i = 0; i < tables.length; i++) {
       var table = document.getElementById(tables[i]);
-      if (!table) continue;
+      if (!table || table.offsetParent === null) continue;
       var wrapper = table.parentNode;
       var rect = wrapper.getBoundingClientRect();
       if (rect.top <= fixedTop && rect.bottom > fixedTop + table.tHead.offsetHeight) {
@@ -1840,6 +1902,14 @@
     }
   }
 
+  function downloadCurrentViewExcel() {
+    if (isSummaryView) {
+      downloadSummaryExcel();
+    } else {
+      downloadMainExcel();
+    }
+  }
+
   function downloadMainExcel() {
     var html = tableToExcelHtml("table1", "Parameter Changes - Table 1") + '<br>' + tableToExcelHtml("table2", "Parameter Changes - Table 2");
     saveExcelFile("parameter-change-report.xls", html);
@@ -1890,7 +1960,7 @@
   }
 
   function updateSortHeaders() {
-    var tables = ["table1", "table2"];
+    var tables = ["table1", "table2", "summaryTable1", "summaryTable2"];
     for (var t = 0; t < tables.length; t++) {
       var tbl = document.getElementById(tables[t]);
       if (!tbl) continue;
@@ -1966,6 +2036,9 @@
     var count1 = renderTableBody("tbody1", filtered1);
     var count2 = renderTableBody("tbody2", filtered2);
     document.getElementById("changeCount").innerText = count1 + count2;
+    if (isSummaryView) {
+      buildSummaryTable();
+    }
     updateSortHeaders();
     updateFixedTableHeader();
   }
@@ -2053,6 +2126,104 @@
       trendChart.dispose();
       trendChart = null;
     }
+  }
+
+  var isSummaryView = false;
+
+  function toggleSummaryView() {
+    isSummaryView = !isSummaryView;
+    var btn = document.getElementById('summaryToggleBtn');
+    if (isSummaryView) {
+      btn.innerText = 'Main Data';
+      document.getElementById('table1').parentNode.style.display = 'none';
+      document.getElementById('table2').parentNode.style.display = 'none';
+      document.getElementById('summaryView').style.display = 'block';
+      buildSummaryTable();
+      updateSortHeaders();
+      updateFixedTableHeader();
+    } else {
+      btn.innerText = 'Summary';
+      document.getElementById('table1').parentNode.style.display = 'block';
+      document.getElementById('table2').parentNode.style.display = 'block';
+      document.getElementById('summaryView').style.display = 'none';
+      updateSortHeaders();
+      updateFixedTableHeader();
+    }
+  }
+
+  function getFilteredArray(arr) {
+    var sites = selectedFilters.site ? [selectedFilters.site] : [];
+    var lines = selectedFilters.line ? [selectedFilters.line] : [];
+    var mods = selectedFilters.moduleId ? [selectedFilters.moduleId] : [];
+    var prods = selectedFilters.productId ? [selectedFilters.productId] : [];
+    var dateRange = parseDateRange(document.getElementById("dateRange").value);
+    var fromDate = dateRange.from;
+    var toDate = dateRange.to;
+    var paramSearch = document.getElementById("paramSearch").value.toLowerCase();
+
+    var filtered = [];
+    for (var i = 0; i < arr.length; i++) {
+      var r = arr[i];
+      if (sites.length > 0 && sites.indexOf(r.site) === -1) continue;
+      if (lines.length > 0 && lines.indexOf(r.line) === -1) continue;
+      if (mods.length > 0 && mods.indexOf(r.moduleId) === -1) continue;
+      if (prods.length > 0 && prods.indexOf(r.productId) === -1) continue;
+      if (paramSearch && String(r.parameterName || "").toLowerCase().indexOf(paramSearch) === -1) continue;
+      var d = parseDate(r.createDttd);
+      if (fromDate && d && d < fromDate) continue;
+      if (toDate && d && d > toDate) continue;
+      filtered.push(r);
+    }
+    return filtered;
+  }
+
+  function buildSummaryRowHtml(r) {
+    return '<tr>' +
+      '<td>' + (r.source || "") + '</td>' +
+      '<td>' + (r.moduleId || "") + '</td>' +
+      '<td>' + (r.productId || "") + '</td>' +
+      '<td><span class="param-link" onclick="openTrendModal(\'' + (r.parameterName || "").replace(/'/g, "\\'") + '\')">' + (r.parameterName || "") + '</span></td>' +
+      '<td>' + (r.currentValue || "") + '</td>' +
+      '<td>' + (r.currentLsl || "") + '</td>' +
+      '<td>' + (r.currentUsl || "") + '</td>' +
+      '<td>' + (r.createDttd || "") + '</td>' +
+      '</tr>';
+  }
+
+  function buildSummaryTable() {
+    summaryData1 = getFilteredArray(data1);
+    summaryData2 = getFilteredArray(data2);
+
+    summaryData1 = applyColumnFiltersToRows("summaryTable1", summaryData1);
+    summaryData2 = applyColumnFiltersToRows("summaryTable2", summaryData2);
+
+    summaryData1 = sortData(summaryData1, sortState.summaryTable1.col, sortState.summaryTable1.dir);
+    summaryData2 = sortData(summaryData2, sortState.summaryTable2.col, sortState.summaryTable2.dir);
+
+    var html1 = '';
+    if (summaryData1.length === 0) {
+      html1 = '<tr class="no-data-row"><td colspan="8">No data found in RCP table.</td></tr>';
+    } else {
+      for (var i = 0; i < summaryData1.length; i++) {
+        html1 += buildSummaryRowHtml(summaryData1[i]);
+      }
+    }
+    document.getElementById('summaryTableBody1').innerHTML = html1;
+
+    var html2 = '';
+    if (summaryData2.length === 0) {
+      html2 = '<tr class="no-data-row"><td colspan="8">No data found in ECM table.</td></tr>';
+    } else {
+      for (var i = 0; i < summaryData2.length; i++) {
+        html2 += buildSummaryRowHtml(summaryData2[i]);
+      }
+    }
+    document.getElementById('summaryTableBody2').innerHTML = html2;
+  }
+
+  function downloadSummaryExcel() {
+    var html = tableToExcelHtml("summaryTable1", "Summary - RCP") + '<br>' + tableToExcelHtml("summaryTable2", "Summary - ECM");
+    saveExcelFile("Summary_Report.xls", html);
   }
 
   function renderTrendTable() {
@@ -2267,5 +2438,6 @@
     </div>
   </div>
 </div>
+
 </body>
 </html>
