@@ -2,16 +2,16 @@ WITH params AS (
     SELECT
         TO_DATE(:start_date, 'DDMMYYYY') AS start_dt,
         TO_DATE(:end_date, 'DDMMYYYY') + 1 AS end_dt,
-        :parameter_name AS parameter_name,
+        :param_name AS param_name,
         UPPER(:change_type) AS change_type
     FROM dual
 ),
 range_rows AS (
     SELECT
         ph.ROWID AS rid,
-        ph.product_id,
-        ph.module_id,
-        ph.parameter_name,
+        ph.PRODUCTID,
+        ph.MODULE_ID,
+        ph.PARAM_NAME,
         ph.create_dtts,
         ph.value,
         ph.lsl,
@@ -19,23 +19,23 @@ range_rows AS (
         1 AS is_range_row
     FROM parameter_history ph
     CROSS JOIN params p
-    WHERE ph.parameter_name = p.parameter_name
+    WHERE ph.PARAM_NAME = p.param_name
       AND ph.create_dtts >= p.start_dt
       AND ph.create_dtts <  p.end_dt
 ),
 range_keys AS (
     SELECT DISTINCT
-        product_id,
-        module_id,
-        parameter_name
+        PRODUCTID,
+        MODULE_ID,
+        PARAM_NAME
     FROM range_rows
 ),
 prev_rows AS (
     SELECT
         rid,
-        product_id,
-        module_id,
-        parameter_name,
+        PRODUCTID,
+        MODULE_ID,
+        PARAM_NAME,
         create_dtts,
         value,
         lsl,
@@ -44,24 +44,24 @@ prev_rows AS (
     FROM (
         SELECT
             ph.ROWID AS rid,
-            ph.product_id,
-            ph.module_id,
-            ph.parameter_name,
+            ph.PRODUCTID,
+            ph.MODULE_ID,
+            ph.PARAM_NAME,
             ph.create_dtts,
             ph.value,
             ph.lsl,
             ph.usl,
 
             ROW_NUMBER() OVER (
-                PARTITION BY ph.product_id, ph.module_id, ph.parameter_name
+                PARTITION BY ph.PRODUCTID, ph.MODULE_ID, ph.PARAM_NAME
                 ORDER BY ph.create_dtts DESC, ph.ROWID DESC
             ) AS rn
 
         FROM parameter_history ph
         JOIN range_keys rk
-          ON rk.product_id = ph.product_id
-         AND rk.module_id = ph.module_id
-         AND rk.parameter_name = ph.parameter_name
+          ON rk.PRODUCTID = ph.PRODUCTID
+         AND rk.MODULE_ID = ph.MODULE_ID
+         AND rk.PARAM_NAME = ph.PARAM_NAME
         CROSS JOIN params p
         WHERE ph.create_dtts < p.start_dt
     )
@@ -74,27 +74,27 @@ all_rows AS (
 ),
 data AS (
     SELECT
-        product_id,
-        module_id,
-        parameter_name,
+        PRODUCTID,
+        MODULE_ID,
+        PARAM_NAME,
         create_dtts,
         is_range_row,
 
         value,
         LAG(value) OVER (
-            PARTITION BY product_id, module_id, parameter_name
+            PARTITION BY PRODUCTID, MODULE_ID, PARAM_NAME
             ORDER BY create_dtts, rid
         ) AS prev_value,
 
         lsl,
         LAG(lsl) OVER (
-            PARTITION BY product_id, module_id, parameter_name
+            PARTITION BY PRODUCTID, MODULE_ID, PARAM_NAME
             ORDER BY create_dtts, rid
         ) AS prev_lsl,
 
         usl,
         LAG(usl) OVER (
-            PARTITION BY product_id, module_id, parameter_name
+            PARTITION BY PRODUCTID, MODULE_ID, PARAM_NAME
             ORDER BY create_dtts, rid
         ) AS prev_usl
 
@@ -102,9 +102,9 @@ data AS (
 ),
 flags AS (
     SELECT
-        d.product_id,
-        d.module_id,
-        d.parameter_name,
+        d.PRODUCTID,
+        d.MODULE_ID,
+        d.PARAM_NAME,
         d.create_dtts,
 
         d.prev_value,
@@ -150,6 +150,12 @@ filtered AS (
             WHEN p.change_type = 'USL'   THEN TO_CHAR(f.usl)
         END AS current_selected_value,
 
+        CASE
+            WHEN p.change_type = 'VALUE' THEN TO_NUMBER(f.value)
+            WHEN p.change_type = 'LSL'   THEN f.lsl
+            WHEN p.change_type = 'USL'   THEN f.usl
+        END AS graph_numeric_value,
+
         p.change_type
 
     FROM flags f
@@ -160,9 +166,9 @@ filtered AS (
         OR (p.change_type = 'USL'   AND f.usl_change_flag = 1)
 )
 SELECT
-    product_id,
-    module_id,
-    parameter_name,
+    PRODUCTID,
+    MODULE_ID,
+    PARAM_NAME,
 
     create_dtts,
 
@@ -171,13 +177,15 @@ SELECT
     previous_selected_value,
     current_selected_value,
 
+    graph_numeric_value,
+
     COUNT(*) OVER (
-        PARTITION BY product_id, module_id, parameter_name, change_type
+        PARTITION BY PRODUCTID, MODULE_ID, PARAM_NAME, change_type
     ) AS selected_change_count
 
 FROM filtered
 ORDER BY
-    product_id,
-    module_id,
-    parameter_name,
+    PRODUCTID,
+    MODULE_ID,
+    PARAM_NAME,
     create_dtts;
