@@ -1,72 +1,72 @@
-WITH d AS (
+WITH p AS (
     SELECT
-        PARAM_NAME,
-        create_dtts,
+        TO_DATE(?, 'DDMMYYYY') AS start_dt,
+        TO_DATE(?, 'DDMMYYYY') + 1 AS end_dt,
+        TRIM(?) AS param_name,
+        UPPER(TRIM(?)) AS change_type
+    FROM dual
+),
+d AS (
+    SELECT
+        ph.PARAM_NAME,
+        ph.CREATE_DTTS,
 
-        value,
-        LAG(value) OVER (
-            PARTITION BY PARAM_NAME
-            ORDER BY create_dtts, ROWID
-        ) AS prev_value,
+        ph.VALUE,
+        LAG(ph.VALUE) OVER (
+            PARTITION BY ph.PARAM_NAME
+            ORDER BY ph.CREATE_DTTS, ph.ROWID
+        ) AS PREV_VALUE,
 
-        lsl,
-        LAG(lsl) OVER (
-            PARTITION BY PARAM_NAME
-            ORDER BY create_dtts, ROWID
-        ) AS prev_lsl,
+        ph.LSL,
+        LAG(ph.LSL) OVER (
+            PARTITION BY ph.PARAM_NAME
+            ORDER BY ph.CREATE_DTTS, ph.ROWID
+        ) AS PREV_LSL,
 
-        usl,
-        LAG(usl) OVER (
-            PARTITION BY PARAM_NAME
-            ORDER BY create_dtts, ROWID
-        ) AS prev_usl
+        ph.USL,
+        LAG(ph.USL) OVER (
+            PARTITION BY ph.PARAM_NAME
+            ORDER BY ph.CREATE_DTTS, ph.ROWID
+        ) AS PREV_USL
 
-    FROM parameter_history
-    WHERE PARAM_NAME = :param_name
-      AND create_dtts >= TO_DATE(:start_date, 'DDMMYYYY') - 1
-      AND create_dtts <  TO_DATE(:end_date, 'DDMMYYYY') + 1
+    FROM PARAMETER_HISTORY ph
+    CROSS JOIN p
+    WHERE ph.PARAM_NAME = p.param_name
+      AND ph.CREATE_DTTS >= p.start_dt - 30
+      AND ph.CREATE_DTTS <  p.end_dt
 ),
 x AS (
     SELECT
-        PARAM_NAME,
-        create_dtts,
-
-        CASE
-            WHEN UPPER(:change_type) IN ('VALUE', 'VALUE_CHANGED') THEN TO_CHAR(prev_value)
-            WHEN UPPER(:change_type) IN ('LSL', 'LSL_CHANGED')     THEN TO_CHAR(prev_lsl)
-            WHEN UPPER(:change_type) IN ('USL', 'USL_CHANGED')     THEN TO_CHAR(prev_usl)
-        END AS previous_value,
-
-        CASE
-            WHEN UPPER(:change_type) IN ('VALUE', 'VALUE_CHANGED') THEN TO_CHAR(value)
-            WHEN UPPER(:change_type) IN ('LSL', 'LSL_CHANGED')     THEN TO_CHAR(lsl)
-            WHEN UPPER(:change_type) IN ('USL', 'USL_CHANGED')     THEN TO_CHAR(usl)
-        END AS current_value,
-
-        CASE
-            WHEN UPPER(:change_type) IN ('VALUE', 'VALUE_CHANGED')
-             AND DECODE(prev_value, value, 0, 1) = 1 THEN 1
-
-            WHEN UPPER(:change_type) IN ('LSL', 'LSL_CHANGED')
-             AND DECODE(prev_lsl, lsl, 0, 1) = 1 THEN 1
-
-            WHEN UPPER(:change_type) IN ('USL', 'USL_CHANGED')
-             AND DECODE(prev_usl, usl, 0, 1) = 1 THEN 1
-
-            ELSE 0
-        END AS is_changed
-
+        d.*,
+        p.change_type
     FROM d
-    WHERE create_dtts >= TO_DATE(:start_date, 'DDMMYYYY')
-      AND create_dtts <  TO_DATE(:end_date, 'DDMMYYYY') + 1
+    CROSS JOIN p
+    WHERE d.CREATE_DTTS >= p.start_dt
+      AND d.CREATE_DTTS <  p.end_dt
 )
 SELECT
     PARAM_NAME,
-    create_dtts,
-    previous_value,
-    current_value,
-    current_value AS graph_value,
-    COUNT(*) OVER () AS change_count
+    CREATE_DTTS,
+
+    CASE
+        WHEN change_type = 'VALUE' THEN TO_CHAR(PREV_VALUE)
+        WHEN change_type = 'LSL'   THEN TO_CHAR(PREV_LSL)
+        WHEN change_type = 'USL'   THEN TO_CHAR(PREV_USL)
+    END AS PREVIOUS_VALUE,
+
+    CASE
+        WHEN change_type = 'VALUE' THEN TO_CHAR(VALUE)
+        WHEN change_type = 'LSL'   THEN TO_CHAR(LSL)
+        WHEN change_type = 'USL'   THEN TO_CHAR(USL)
+    END AS CURRENT_VALUE,
+
+    change_type,
+
+    COUNT(*) OVER () AS CHANGE_COUNT
+
 FROM x
-WHERE is_changed = 1
-ORDER BY create_dtts;
+WHERE
+       (change_type = 'VALUE' AND DECODE(PREV_VALUE, VALUE, 0, 1) = 1)
+    OR (change_type = 'LSL'   AND DECODE(PREV_LSL, LSL, 0, 1) = 1)
+    OR (change_type = 'USL'   AND DECODE(PREV_USL, USL, 0, 1) = 1)
+ORDER BY CREATE_DTTS;
