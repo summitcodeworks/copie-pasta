@@ -1,0 +1,456 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>SQL Single-Line Converter</title>
+  <script src="https://code.jquery.com/jquery-3.7.1.min.js"></script>
+  <style>
+    * {
+      box-sizing: border-box;
+    }
+
+    body {
+      margin: 0;
+      min-height: 100vh;
+      padding: 30px 15px;
+      font-family: Arial, sans-serif;
+      color: #1f2937;
+      background: #f3f4f6;
+    }
+
+    .container {
+      width: min(1600px, 98%);
+      margin: auto;
+      padding: 32px;
+      background: #fff;
+      border-radius: 8px;
+      box-shadow: 0 4px 18px rgba(0, 0, 0, 0.1);
+    }
+
+    h1 {
+      margin: 0 0 8px;
+      color: #036;
+      font-size: 24px;
+    }
+
+    .description {
+      margin: 0 0 25px;
+      color: #6b7280;
+    }
+
+    .editor-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 20px;
+    }
+
+    .editor-panel {
+      min-width: 0;
+    }
+
+    label {
+      display: block;
+      margin-bottom: 7px;
+      font-weight: bold;
+    }
+
+    textarea {
+      width: 100%;
+      min-height: 620px;
+      padding: 12px;
+      border: 1px solid #cbd5e1;
+      border-radius: 5px;
+      outline: none;
+      resize: vertical;
+      font: 14px/1.5 Consolas, Monaco, monospace;
+    }
+
+    textarea:focus {
+      border-color: #036;
+      box-shadow: 0 0 0 2px rgba(0, 51, 102, 0.12);
+    }
+
+    #outputSql {
+      background: #f8fafc;
+    }
+
+    .actions {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 10px;
+      margin: 15px 0 22px;
+    }
+
+    button {
+      padding: 9px 18px;
+      color: #036;
+      background: #fff;
+      border: 1px solid #036;
+      border-radius: 4px;
+      cursor: pointer;
+      font-weight: bold;
+    }
+
+    button:hover {
+      background: #e6f2ff;
+    }
+
+    .primary {
+      color: #fff;
+      background: #036;
+    }
+
+    .primary:hover {
+      background: #047;
+    }
+
+    .status {
+      min-height: 20px;
+      margin-top: 8px;
+      color: #16803a;
+      font-size: 13px;
+    }
+
+    .counts {
+      display: flex;
+      justify-content: space-between;
+      margin-top: 5px;
+      color: #6b7280;
+      font-size: 12px;
+    }
+
+    @media (max-width: 600px) {
+      body {
+        padding: 15px 10px;
+      }
+
+      .container {
+        padding: 18px;
+      }
+
+      button {
+        flex: 1;
+      }
+    }
+
+    @media (max-width: 850px) {
+      .editor-grid {
+        grid-template-columns: 1fr;
+      }
+
+      textarea {
+        min-height: 400px;
+      }
+    }
+  </style>
+</head>
+<body>
+  <main class="container">
+    <h1>SQL Single-Line Converter</h1>
+    <p class="description">Paste multiline SQL and convert it into one clean line.</p>
+
+    <div class="editor-grid">
+      <section class="editor-panel">
+        <label for="inputSql">Input SQL</label>
+        <textarea id="inputSql" placeholder="Paste your SQL query here..."></textarea>
+        <div class="counts">
+          <span id="inputLines">0 lines</span>
+          <span id="inputCharacters">0 characters</span>
+        </div>
+      </section>
+
+      <section class="editor-panel">
+        <label for="outputSql">Converted SQL</label>
+        <textarea id="outputSql" readonly placeholder="Converted SQL will appear here..."></textarea>
+        <div class="counts">
+          <span id="outputLines">0 lines</span>
+          <span id="outputCharacters">0 characters</span>
+        </div>
+      </section>
+    </div>
+
+    <div class="actions">
+      <button type="button" id="convertBtn" class="primary">Convert to Single Line</button>
+      <button type="button" id="multilineBtn" class="primary">Convert to Multiline</button>
+      <button type="button" id="quoteParamsBtn">Convert ? to '?'</button>
+      <button type="button" id="copyBtn">Copy Result</button>
+      <button type="button" id="clearBtn">Clear</button>
+    </div>
+
+    <div id="status" class="status"></div>
+  </main>
+
+  <script>
+    $(function () {
+      function convertToSingleLine(sql) {
+        var result = "";
+        var quote = "";
+        var pendingSpace = false;
+
+        for (var i = 0; i < sql.length; i++) {
+          var character = sql[i];
+          var nextCharacter = sql[i + 1];
+
+          if (quote) {
+            result += character;
+
+            if (character === quote) {
+              if (nextCharacter === quote) {
+                result += nextCharacter;
+                i++;
+              } else {
+                quote = "";
+              }
+            }
+            continue;
+          }
+
+          if (character === "'" || character === '"') {
+            if (pendingSpace && result && result[result.length - 1] !== " ") {
+              result += " ";
+            }
+            pendingSpace = false;
+            quote = character;
+            result += character;
+            continue;
+          }
+
+          if (/\s/.test(character)) {
+            pendingSpace = true;
+            continue;
+          }
+
+          if (pendingSpace && result && result[result.length - 1] !== " ") {
+            result += " ";
+          }
+          pendingSpace = false;
+          result += character;
+        }
+
+        return result.trim();
+      }
+
+      function convertToMultiline(sql) {
+        var singleLine = convertToSingleLine(sql);
+        var quote = "";
+        var keywords = [
+          "UNION ALL", "UNION", "ORDER BY", "GROUP BY", "PARTITION BY",
+          "LEFT JOIN", "RIGHT JOIN", "INNER JOIN", "FULL JOIN", "CROSS JOIN",
+          "CONNECT BY", "START WITH", "INSERT INTO", "DELETE FROM",
+          "SELECT", "FROM", "WHERE", "HAVING", "JOIN", "ON",
+          "VALUES", "SET", "OFFSET", "FETCH NEXT"
+        ];
+
+        var protectedText = "";
+        var values = [];
+        var text = "";
+
+        for (var j = 0; j < singleLine.length; j++) {
+          var current = singleLine[j];
+          var next = singleLine[j + 1];
+
+          if (!quote && (current === "'" || current === '"')) {
+            quote = current;
+            text = current;
+          } else if (quote) {
+            text += current;
+            if (current === quote) {
+              if (next === quote) {
+                text += next;
+                j++;
+              } else {
+                values.push(text);
+                protectedText += "__SQL_STRING_" + (values.length - 1) + "__";
+                quote = "";
+                text = "";
+              }
+            }
+          } else {
+            protectedText += current;
+          }
+        }
+
+        if (text) protectedText += text;
+
+        keywords.forEach(function (keyword) {
+          var pattern = new RegExp("\\s+(" + keyword.replace(/ /g, "\\s+") + ")\\s+", "gi");
+          protectedText = protectedText.replace(pattern, "\n$1 ");
+        });
+
+        protectedText = protectedText
+          .replace(/\s+(AND|OR)\s+/gi, "\n  $1 ")
+          .replace(/\n\s*\n/g, "\n");
+
+        /*
+         * Split SELECT lists without splitting function arguments.
+         * Example: DECODE(a, b, 0, 1) remains on one line.
+         */
+        var formatted = "";
+        var depth = 0;
+        var selectDepth = -1;
+
+        for (var k = 0; k < protectedText.length; k++) {
+          var remaining = protectedText.substring(k);
+
+          if (/^SELECT\b/i.test(remaining)) {
+            selectDepth = depth;
+          }
+
+          var character = protectedText[k];
+          if (character === "(") {
+            depth++;
+            formatted += character;
+          } else if (character === ")") {
+            depth = Math.max(0, depth - 1);
+            formatted += character;
+            if (selectDepth > depth) selectDepth = depth;
+          } else if (character === "," && depth === selectDepth) {
+            formatted += ",\n  ";
+            while (/\s/.test(protectedText[k + 1] || "")) k++;
+          } else {
+            formatted += character;
+          }
+        }
+
+        protectedText = formatted
+          .split("\n")
+          .map(function (line) {
+            return line.trimEnd();
+          })
+          .join("\n")
+          .replace(/\n{2,}/g, "\n")
+          .trim();
+
+        values.forEach(function (value, index) {
+          protectedText = protectedText.replace("__SQL_STRING_" + index + "__", value);
+        });
+
+        return protectedText;
+      }
+
+      function quotePlaceholders(sql) {
+        var result = "";
+        var quote = "";
+
+        for (var i = 0; i < sql.length; i++) {
+          var character = sql[i];
+          var nextCharacter = sql[i + 1];
+
+          if (quote) {
+            result += character;
+            if (character === quote) {
+              if (nextCharacter === quote) {
+                result += nextCharacter;
+                i++;
+              } else {
+                quote = "";
+              }
+            }
+          } else if (character === "'" || character === '"') {
+            quote = character;
+            result += character;
+          } else {
+            result += character === "?" ? "'?'" : character;
+          }
+        }
+
+        return result;
+      }
+
+      function updateCounts() {
+        var value = $("#inputSql").val();
+        var lineCount = value ? value.split(/\r\n|\r|\n/).length : 0;
+        $("#inputLines").text(lineCount + (lineCount === 1 ? " line" : " lines"));
+        $("#inputCharacters").text(value.length + " characters");
+
+        var output = $("#outputSql").val();
+        var outputLineCount = output ? output.split(/\r\n|\r|\n/).length : 0;
+        $("#outputLines").text(outputLineCount + (outputLineCount === 1 ? " line" : " lines"));
+        $("#outputCharacters").text(output.length + " characters");
+      }
+
+      function showStatus(message, isError) {
+        $("#status")
+          .text(message)
+          .css("color", isError ? "#c00" : "#16803a");
+      }
+
+      $("#inputSql").on("input", function () {
+        updateCounts();
+        showStatus("");
+      });
+
+      $("#convertBtn").on("click", function () {
+        var sql = $("#inputSql").val();
+
+        if (!sql.trim()) {
+          $("#outputSql").val("");
+          showStatus("Enter a SQL query first.", true);
+          return;
+        }
+
+        $("#outputSql").val(convertToSingleLine(sql));
+        updateCounts();
+        showStatus("SQL converted successfully.");
+      });
+
+      $("#multilineBtn").on("click", function () {
+        var sql = $("#inputSql").val();
+
+        if (!sql.trim()) {
+          $("#outputSql").val("");
+          showStatus("Enter a SQL query first.", true);
+          return;
+        }
+
+        $("#outputSql").val(convertToMultiline(sql));
+        updateCounts();
+        showStatus("SQL converted to multiline format.");
+      });
+
+      $("#quoteParamsBtn").on("click", function () {
+        var sql = $("#inputSql").val();
+
+        if (!sql.trim()) {
+          $("#outputSql").val("");
+          updateCounts();
+          showStatus("Enter a SQL query first.", true);
+          return;
+        }
+
+        $("#outputSql").val(quotePlaceholders(sql));
+        updateCounts();
+        showStatus("SQL placeholders converted from ? to '?'.");
+      });
+
+      $("#copyBtn").on("click", function () {
+        var output = $("#outputSql").val();
+
+        if (!output) {
+          showStatus("There is no converted SQL to copy.", true);
+          return;
+        }
+
+        navigator.clipboard.writeText(output).then(function () {
+          showStatus("Copied to clipboard.");
+        }).catch(function () {
+          $("#outputSql").prop("readonly", false).select();
+          document.execCommand("copy");
+          $("#outputSql").prop("readonly", true);
+          showStatus("Copied to clipboard.");
+        });
+      });
+
+      $("#clearBtn").on("click", function () {
+        $("#inputSql, #outputSql").val("");
+        updateCounts();
+        showStatus("");
+        $("#inputSql").focus();
+      });
+
+      updateCounts();
+    });
+  </script>
+</body>
+</html>
