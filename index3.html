@@ -1,2443 +1,742 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-<meta charset="UTF-8">
-<meta http-equiv="X-UA-Compatible" content="IE=edge">
-<title>Parameter Change Report</title>
-<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css">
-<script src="https://cdn.jsdelivr.net/npm/echarts@4.9.0/dist/echarts.min.js"></script>
-<style>
-  body {
-    font-family: Arial, sans-serif;
-    margin: 0;
-    padding: 0;
-    padding-top: 47px;
-    font-size: 12px;
-  }
-  .header {
-    background-color: #003366;
-    color: #ffffff;
-    padding: 15px;
-    font-size: 16px;
-    font-weight: bold;
-    position: fixed;
-    top: 0;
-    left: 0;
-    width: 100%;
-    z-index: 1000;
-    box-sizing: border-box;
-    box-shadow: 0 2px 4px rgba(0,0,0,0.3);
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-  }
-  .header-timer {
-    font-size: 12px;
-    font-weight: normal;
-  }
-  .filters {
-    background-color: #f5f5f5;
-    padding: 10px;
-    border-bottom: 1px solid #cccccc;
-    position: fixed;
-    top: 47px;
-    left: 0;
-    width: 100%;
-    z-index: 999;
-    box-shadow: 0 2px 4px rgba(0,0,0,0.08);
-    box-sizing: border-box;
-  }
-  .filter-group {
-    display: inline-block;
-    vertical-align: top;
-    margin-right: 15px;
-    margin-bottom: 5px;
-  }
-  .filter-label {
-    font-weight: bold;
-    display: block;
-    margin-bottom: 3px;
-  }
-  .custom-select {
-    position: relative;
-    width: 150px;
-    display: inline-block;
-  }
-  .select-toggle {
-    width: 150px;
-    min-height: 24px;
-    padding: 4px;
-    background-color: #ffffff;
-    border: 1px solid #cccccc;
-    cursor: pointer;
-    text-align: left;
-    overflow: hidden;
-    white-space: nowrap;
-  }
-  .dropdown-menu {
-    display: none;
-    position: absolute;
-    background-color: #ffffff;
-    border: 1px solid #cccccc;
-    width: 148px;
-    max-height: 200px;
-    overflow-y: auto;
-    z-index: 1000;
-    padding: 5px;
-    box-sizing: border-box;
-  }
-  .dropdown-search {
-    width: 100%;
-    padding: 3px;
-    margin-bottom: 5px;
-    border: 1px solid #cccccc;
-    box-sizing: border-box;
-  }
-  .dropdown-menu label {
-    display: block;
-    padding: 3px 0;
-    cursor: pointer;
-    font-size: 11px;
-  }
-  .dropdown-menu label.hidden {
-    display: none;
-  }
-  .dropdown-menu input[type="radio"] {
-    margin-right: 5px;
-  }
-  .search-btn {
-    padding: 4px 15px;
-    background-color: #003366;
-    color: #ffffff;
-    border: none;
-    cursor: pointer;
-    font-size: 12px;
-    margin-left: 10px;
-  }
-  .search-btn:hover {
-    background-color: #004080;
-  }
-  .reset-btn {
-    padding: 4px 15px;
-    background-color: #ffffff;
-    color: #003366;
-    border: 1px solid #003366;
-    cursor: pointer;
-    font-size: 12px;
-    margin-left: 5px;
-  }
-  .reset-btn:hover {
-    background-color: #e6f2ff;
-  }
-  .filter-required {
-    color: #cc0000;
-    margin-left: 2px;
-  }
-  .filter-error {
-    color: #cc0000;
-    font-size: 11px;
-    display: none;
-    margin-top: 2px;
-  }
-  .select-toggle.error-border {
-    border-color: #cc0000;
-  }
-  .loader-overlay {
-    display: none;
-    position: fixed;
-    top: 0;
-    left: 0;
-    width: 100%;
-    height: 100%;
-    background-color: rgba(255,255,255,0.7);
-    z-index: 4000;
-  }
-  .loader-spinner {
-    position: absolute;
-    top: 50%;
-    left: 50%;
-    width: 50px;
-    height: 50px;
-    margin-top: -25px;
-    margin-left: -25px;
-    border: 5px solid #e0e0e0;
-    border-top: 5px solid #003366;
-    border-radius: 50%;
-    -webkit-animation: spin 1s linear infinite;
-    -ms-animation: spin 1s linear infinite;
-    animation: spin 1s linear infinite;
-  }
-  @-webkit-keyframes spin {
-    0% { -webkit-transform: rotate(0deg); }
-    100% { -webkit-transform: rotate(360deg); }
-  }
-  @-ms-keyframes spin {
-    0% { -ms-transform: rotate(0deg); }
-    100% { -ms-transform: rotate(360deg); }
-  }
-  @keyframes spin {
-    0% { transform: rotate(0deg); }
-    100% { transform: rotate(360deg); }
-  }
-  .loader-text {
-    position: absolute;
-    top: 50%;
-    left: 50%;
-    margin-top: 45px;
-    transform: translateX(-50%);
-    -ms-transform: translateX(-50%);
-    font-size: 13px;
-    color: #003366;
-    font-weight: bold;
-    white-space: nowrap;
-  }
-  .date-input {
-    width: 90px;
-    padding: 3px;
-    border: 1px solid #cccccc;
-  }
-  .summary {
-    padding: 10px;
-    font-weight: bold;
-    color: #003366;
-  }
-  .download-btn {
-    padding: 4px 12px;
-    background-color: #ffffff;
-    color: #003366;
-    border: 1px solid #003366;
-    cursor: pointer;
-    font-size: 12px;
-    margin-left: 12px;
-  }
-  .download-btn:hover {
-    background-color: #e6f2ff;
-  }
-  .summary-btn {
-    float: right;
-    padding: 4px 12px;
-    background-color: #003366;
-    color: #ffffff;
-    border: none;
-    cursor: pointer;
-    font-size: 12px;
-    margin-left: 8px;
-  }
-  .summary-btn:hover {
-    background-color: #004080;
-  }
-  .download-btn i {
-    margin-right: 5px;
-  }
-  .table-wrapper {
-    overflow-x: auto;
-    margin: 0 10px 20px 10px;
-    border: 1px solid #cccccc;
-  }
-  .table-wrapper table {
-    border-collapse: collapse;
-    width: 100%;
-    min-width: 1300px;
-    background-color: #ffffff;
-  }
-  .table-wrapper th, .table-wrapper td {
-    border: 1px solid #cccccc;
-    padding: 5px 7px;
-    text-align: left;
-    white-space: nowrap;
-  }
-  .table-wrapper th {
-    background-color: #e0e0e0;
-    font-weight: bold;
-  }
-  .floating-table-header {
-    display: none;
-    position: fixed;
-    overflow: hidden;
-    z-index: 998;
-    border-left: 1px solid #cccccc;
-    border-right: 1px solid #cccccc;
-    box-sizing: border-box;
-  }
-  .floating-table-header table {
-    border-collapse: collapse;
-    background-color: #ffffff;
-  }
-  .floating-table-header th {
-    border: 1px solid #cccccc;
-    padding: 5px 7px;
-    text-align: left;
-    white-space: nowrap;
-    background-color: #e0e0e0;
-    font-weight: bold;
-    box-sizing: border-box;
-  }
-  .col-source { width: 80px; }
-  .col-module { width: 100px; }
-  .col-rcp { width: 100px; }
-  .col-param { width: 220px; }
-  .col-value { width: 80px; }
-  .col-lsl { width: 80px; }
-  .col-usl { width: 80px; }
-  .col-date { width: 110px; }
-  .col-prev-value { width: 110px; }
-  .col-prev-lsl { width: 100px; }
-  .col-prev-usl { width: 100px; }
-  .highlight {
-    background-color: #ffff99;
-  }
-  tr:nth-child(even) {
-    background-color: #f9f9f9;
-  }
-  .date-picker-wrap {
-    position: relative;
-    display: inline-block;
-  }
-  .date-picker-wrap .date-input {
-    padding-right: 22px;
-    box-sizing: border-box;
-  }
-  .date-input-icon {
-    position: absolute;
-    right: 7px;
-    top: 50%;
-    transform: translateY(-50%);
-    -ms-transform: translateY(-50%);
-    color: #003366;
-    font-size: 12px;
-    pointer-events: none;
-  }
-  .date-picker-popup {
-    display: none;
-    position: absolute;
-    top: 22px;
-    left: 0;
-    width: 215px;
-    background-color: #ffffff;
-    border: 1px solid #cccccc;
-    z-index: 2000;
-    padding: 3px;
-    box-shadow: 2px 2px 5px rgba(0,0,0,0.2);
-    font-size: 10px;
-    box-sizing: border-box;
-  }
-  .date-picker-header {
-    text-align: center;
-    padding: 2px 0;
-    font-weight: bold;
-    background-color: #f0f0f0;
-    margin-bottom: 2px;
-    font-size: 10px;
-  }
-  .date-picker-nav {
-    text-align: center;
-    margin-bottom: 2px;
-    white-space: nowrap;
-  }
-  .date-picker-nav button {
-    width: 20px;
-    height: 20px;
-    padding: 0;
-    cursor: pointer;
-    margin: 0 1px;
-    font-size: 10px;
-    vertical-align: middle;
-    border: 1px solid #cccccc;
-    background-color: #ffffff;
-    color: #003366;
-  }
-  .date-picker-nav button:hover {
-    background-color: #e6f2ff;
-  }
-  .date-picker-nav button i {
-    pointer-events: none;
-  }
-  .date-picker-nav select {
-    padding: 1px 0;
-    margin: 0 1px;
-    vertical-align: middle;
-    font-size: 10px;
-  }
-  .date-picker-nav select.year-select {
-    max-width: 48px;
-  }
-  .date-picker-nav select.month-select {
-    max-width: 58px;
-  }
-  .date-picker-days {
-    width: 100%;
-    border-collapse: collapse;
-    table-layout: fixed;
-  }
-  .date-picker-days th {
-    background-color: #e0e0e0;
-    padding: 2px 0;
-    text-align: center;
-    font-size: 10px;
-    border: 1px solid #cccccc;
-    height: 16px;
-    width: 14.28%;
-  }
-  .date-picker-days td {
-    text-align: center;
-    padding: 2px 0;
-    cursor: pointer;
-    border: 1px solid #eeeeee;
-    font-size: 10px;
-    height: 18px;
-    width: 14.28%;
-  }
-  .date-picker-days td:hover {
-    background-color: #e6f2ff;
-  }
-  .date-picker-days td.range-start,
-  .date-picker-days td.range-end {
-    background-color: #003366;
-    color: #ffffff;
-  }
-  .date-picker-days td.in-range {
-    background-color: #c2d8f2;
-  }
-  .date-picker-days td.other-month {
-    color: #aaaaaa;
-  }
-  .date-picker-days td.disabled {
-    color: #cccccc;
-    cursor: not-allowed;
-    background-color: #f5f5f5;
-  }
-  .param-link {
-    color: #003366;
-    text-decoration: underline;
-    cursor: pointer;
-  }
-  .param-link:hover {
-    color: #0066cc;
-  }
-  .sortable-header {
-    position: relative;
-    cursor: pointer;
-    -webkit-user-select: none;
-    -ms-user-select: none;
-    user-select: none;
-  }
-  .sortable-header:hover {
-    background-color: #d0d0d0;
-  }
-  .th-label {
-    display: inline-block;
-    padding-right: 18px;
-  }
-  .sort-icon {
-    margin-left: 4px;
-    color: #333333;
-    font-size: 11px;
-  }
-  .column-filter-btn {
-    position: absolute;
-    right: 3px;
-    top: 50%;
-    transform: translateY(-50%);
-    -ms-transform: translateY(-50%);
-    width: 15px;
-    height: 15px;
-    border: 1px solid #999999;
-    background-color: #ffffff;
-    color: #003366;
-    font-size: 10px;
-    line-height: 12px;
-    padding: 0;
-    cursor: pointer;
-  }
-  .column-filter-btn.active {
-    background-color: #003366;
-    color: #ffffff;
-  }
-  .column-filter-btn i {
-    pointer-events: none;
-  }
-  .column-filter-menu {
-    display: none;
-    position: fixed;
-    width: 210px;
-    max-height: 300px;
-    overflow-y: auto;
-    background-color: #ffffff;
-    border: 1px solid #999999;
-    box-shadow: 0 3px 8px rgba(0,0,0,0.25);
-    padding: 7px;
-    z-index: 2500;
-    box-sizing: border-box;
-  }
-  .column-filter-actions {
-    margin-bottom: 6px;
-    white-space: nowrap;
-  }
-  .column-filter-actions button {
-    padding: 2px 6px;
-    margin-right: 3px;
-    border: 1px solid #cccccc;
-    background-color: #f5f5f5;
-    cursor: pointer;
-    font-size: 11px;
-  }
-  .column-filter-options label {
-    display: block;
-    padding: 2px 0;
-    cursor: pointer;
-    font-size: 11px;
-    overflow: hidden;
-    text-overflow: ellipsis;
-    white-space: nowrap;
-  }
-  .column-filter-options input {
-    margin-right: 5px;
-  }
-  .no-data-row td {
-    text-align: center;
-    padding: 30px 0;
-    font-size: 13px;
-    color: #777777;
-    font-style: italic;
-  }
-  .modal-overlay {
-    display: none;
-    position: fixed;
-    top: 0;
-    left: 0;
-    width: 100%;
-    height: 100%;
-    background-color: rgba(0,0,0,0.5);
-    z-index: 3000;
-  }
-  .modal-box {
-    position: absolute;
-    top: 50%;
-    left: 50%;
-    transform: translate(-50%, -50%);
-    -ms-transform: translate(-50%, -50%);
-    background-color: #ffffff;
-    border: none;
-    border-radius: 6px;
-    width: 1000px;
-    max-height: 90%;
-    overflow-y: auto;
-    padding: 30px;
-    box-shadow: 0 8px 40px rgba(0,0,0,0.4);
-  }
-  .modal-header {
-    font-size: 16px;
-    font-weight: bold;
-    margin-bottom: 20px;
-    padding-bottom: 12px;
-    border-bottom: 2px solid #003366;
-    color: #003366;
-  }
-  .modal-close {
-    float: right;
-    cursor: pointer;
-    font-size: 22px;
-    color: #666666;
-    line-height: 16px;
-    padding: 2px 6px;
-    border-radius: 3px;
-  }
-  .modal-close:hover {
-    color: #000000;
-    background-color: #f0f0f0;
-  }
-  .modal-download-btn {
-    float: right;
-    margin-right: 10px;
-    padding: 3px 10px;
-    background-color: #ffffff;
-    color: #003366;
-    border: 1px solid #003366;
-    cursor: pointer;
-    font-size: 12px;
-  }
-  .chart-container {
-    width: 100%;
-    height: 420px;
-    margin-bottom: 25px;
-    padding: 10px;
-    border: 1px solid #e0e0e0;
-    border-radius: 4px;
-    background-color: #fafafa;
-    box-sizing: border-box;
-  }
-  .modal-table-wrapper {
-    position: relative;
-    overflow-x: auto;
-    border: 1px solid #e0e0e0;
-    border-radius: 4px;
-    max-height: 250px;
-    overflow-y: auto;
-    margin-top: 10px;
-  }
-  .modal-table-wrapper table {
-    border-collapse: collapse;
-    width: 100%;
-    background-color: #ffffff;
-  }
-  .modal-table-wrapper th, .modal-table-wrapper td {
-    border: 1px solid #e0e0e0;
-    padding: 8px 12px;
-    text-align: left;
-    font-size: 12px;
-    white-space: nowrap;
-  }
-  .modal-table-wrapper th {
-    background-color: #003366;
-    color: #ffffff;
-    font-weight: bold;
-  }
-  .modal-table-fixed-header {
-    display: none;
-    position: absolute;
-    top: 0;
-    left: 0;
-    overflow: hidden;
-    z-index: 2;
-    background-color: #ffffff;
-  }
-  .modal-table-fixed-header table {
-    border-collapse: collapse;
-    background-color: #ffffff;
-  }
-  .modal-table-fixed-header th {
-    border: 1px solid #e0e0e0;
-    padding: 8px 12px;
-    text-align: left;
-    font-size: 12px;
-    white-space: nowrap;
-    background-color: #003366;
-    color: #ffffff;
-    font-weight: bold;
-    box-sizing: border-box;
-  }
-  .modal-table-wrapper tr:nth-child(even) {
-    background-color: #f5f8fc;
-  }
-  .modal-table-wrapper tr:hover {
-    background-color: #e6f2ff;
-  }
-</style>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Parameter Change Report</title>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css">
+  <script src="https://code.jquery.com/jquery-1.12.4.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/echarts@4.9.0/dist/echarts.min.js"></script>
+  <style>
+    :root {
+      --blue: #036;
+      --border: #ccc;
+      --light-blue: #e6f2ff;
+      --header-height: 47px;
+      --filter-height: 67px;
+    }
+
+    * { box-sizing: border-box; }
+    body { margin: 0; padding-top: calc(var(--header-height) + var(--filter-height)); font: 12px Arial, sans-serif; }
+    button, input, select { font: inherit; }
+
+    .header {
+      position: fixed;
+      inset: 0 0 auto;
+      z-index: 20;
+      height: var(--header-height);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 0 15px;
+      color: white;
+      background: var(--blue);
+      box-shadow: 0 2px 4px #0005;
+      font-size: 16px;
+      font-weight: bold;
+    }
+
+    .header-timer { font-size: 12px; font-weight: normal; }
+
+    .filters {
+      position: fixed;
+      inset: var(--header-height) 0 auto;
+      z-index: 19;
+      min-height: var(--filter-height);
+      display: flex;
+      align-items: end;
+      gap: 15px;
+      padding: 8px 10px;
+      background: #f5f5f5;
+      border-bottom: 1px solid var(--border);
+      box-shadow: 0 2px 4px #0001;
+    }
+
+    .filter-group { min-width: 120px; }
+    .filter-label { display: block; margin-bottom: 3px; font-weight: bold; }
+    .filter-required, .filter-error { color: #c00; }
+    .filter-error { display: none; margin-top: 2px; font-size: 11px; }
+    .filter-control { width: 150px; height: 26px; padding: 3px 5px; border: 1px solid var(--border); background: white; }
+    .filter-control.error { border-color: #c00; }
+    .date-control { width: 125px; }
+    .date-range { display: flex; gap: 5px; }
+
+    .btn {
+      height: 26px;
+      padding: 4px 12px;
+      color: var(--blue);
+      background: white;
+      border: 1px solid var(--blue);
+      cursor: pointer;
+    }
+
+    .btn:hover { background: var(--light-blue); }
+    .btn-primary { color: white; background: var(--blue); }
+    .btn-primary:hover { background: #048; }
+    .actions { display: flex; gap: 5px; }
+
+    .summary {
+      padding: 10px;
+      color: var(--blue);
+      font-weight: bold;
+    }
+
+    .summary .btn { margin-left: 8px; }
+    #summaryToggleBtn { float: right; }
+
+    .table-wrapper {
+      max-height: calc(100vh - 165px);
+      margin: 0 10px 20px;
+      overflow: auto;
+      border: 1px solid var(--border);
+    }
+
+    table { width: 100%; min-width: 1100px; border-collapse: collapse; background: white; }
+    th, td { padding: 5px 7px; border: 1px solid var(--border); text-align: left; white-space: nowrap; }
+    th { position: sticky; top: 0; z-index: 2; background: #e0e0e0; }
+    tbody tr:nth-child(even) { background: #f9f9f9; }
+    .highlight { background: #ff9; }
+    .param-link { color: var(--blue); text-decoration: underline; cursor: pointer; }
+    .no-data-row td { padding: 30px; color: #777; text-align: center; font-style: italic; }
+
+    .loader-overlay, .modal-overlay {
+      display: none;
+      position: fixed;
+      inset: 0;
+      z-index: 40;
+      background: #fffB;
+    }
+
+    .loader-spinner {
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      width: 50px;
+      height: 50px;
+      margin: -25px;
+      border: 5px solid #ddd;
+      border-top-color: var(--blue);
+      border-radius: 50%;
+      animation: spin 1s linear infinite;
+    }
+
+    .loader-text {
+      position: absolute;
+      top: calc(50% + 45px);
+      left: 50%;
+      transform: translateX(-50%);
+      color: var(--blue);
+      font-weight: bold;
+    }
+
+    @keyframes spin { to { transform: rotate(360deg); } }
+
+    .modal-overlay { z-index: 30; background: #0008; }
+    .modal-box {
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      width: min(1000px, 90vw);
+      max-height: 90vh;
+      padding: 25px;
+      overflow: auto;
+      transform: translate(-50%, -50%);
+      background: white;
+      border-radius: 6px;
+      box-shadow: 0 8px 40px #0006;
+    }
+
+    .modal-header {
+      margin-bottom: 20px;
+      padding-bottom: 12px;
+      color: var(--blue);
+      border-bottom: 2px solid var(--blue);
+      font-size: 16px;
+      font-weight: bold;
+    }
+
+    .modal-close { float: right; padding: 0 6px; color: #666; font-size: 22px; cursor: pointer; }
+    .modal-header .btn { float: right; margin-right: 10px; }
+    .chart-container { height: 420px; margin-bottom: 20px; border: 1px solid #ddd; background: #fafafa; }
+    .modal-table-wrapper { max-height: 250px; overflow: auto; border: 1px solid #ddd; }
+    .modal-table-wrapper th { color: white; background: var(--blue); }
+
+    @media (max-width: 900px) {
+      :root { --filter-height: 115px; }
+      .filters { flex-wrap: wrap; align-content: center; }
+    }
+  </style>
 </head>
 <body>
-<div class="header">
-  <span>Parameter Change Report</span>
-  <span class="header-timer" id="headerTimer">00:00:00</span>
-</div>
+  <header class="header">
+    <span>Parameter Change Report</span>
+    <span id="headerTimer" class="header-timer"></span>
+  </header>
 
-<div class="filters">
-  <div class="filter-group">
-    <span class="filter-label">SITE</span>
-    <div class="custom-select">
-      <button type="button" class="select-toggle" id="siteBtn" onclick="toggleDropdown('siteDd')">All</button>
-      <div id="siteDd" class="dropdown-menu"></div>
+  <section class="filters">
+    <label class="filter-group">
+      <span class="filter-label">SITE</span>
+      <select id="siteFilter" class="filter-control"></select>
+    </label>
+
+    <label class="filter-group">
+      <span class="filter-label">LINE</span>
+      <select id="lineFilter" class="filter-control"></select>
+      <span id="lineError" class="filter-error">Line is required</span>
+    </label>
+
+    <label class="filter-group">
+      <span class="filter-label">Module ID <span class="filter-required">*</span></span>
+      <select id="moduleFilter" class="filter-control"></select>
+      <span id="moduleError" class="filter-error">Module ID is required</span>
+    </label>
+
+    <div class="filter-group">
+      <span class="filter-label">Date Range</span>
+      <div class="date-range">
+        <input id="fromDate" class="filter-control date-control" type="date">
+        <input id="toDate" class="filter-control date-control" type="date">
+      </div>
+      <span id="dateError" class="filter-error">Start date cannot be greater than end date</span>
+    </div>
+
+    <label class="filter-group">
+      <span class="filter-label">Parameter Search</span>
+      <input id="paramSearch" class="filter-control" placeholder="Search parameter...">
+    </label>
+
+    <div class="filter-group actions">
+      <button id="searchBtn" class="btn btn-primary">Search</button>
+      <button id="resetBtn" class="btn">Reset</button>
+    </div>
+  </section>
+
+  <div class="summary">
+    No. of changes: <span id="changeCount">0</span>
+    <button id="downloadBtn" class="btn"><i class="fa fa-download"></i> Download Excel</button>
+    <button id="summaryToggleBtn" class="btn btn-primary">Summary</button>
+  </div>
+
+  <main>
+    <div id="mainView" class="table-wrapper">
+      <table id="mainTable">
+        <thead>
+          <tr>
+            <th>Source</th><th>Module</th><th>RCP ID</th><th>Parameters</th>
+            <th>Value</th><th>LSL</th><th>USL</th><th>Create DTTD</th>
+            <th>Previous Value</th><th>Previous LSL</th><th>Previous USL</th>
+          </tr>
+        </thead>
+        <tbody id="mainBody"></tbody>
+      </table>
+    </div>
+
+    <div id="summaryView" class="table-wrapper" hidden>
+      <table id="summaryTable">
+        <thead>
+          <tr>
+            <th>Source</th><th>Module</th><th>Parameter</th>
+            <th>First Change</th><th>Last Change</th>
+            <th>Value Changes</th><th>LSL Changes</th><th>USL Changes</th>
+            <th>Total Change Points</th><th>Change Type</th>
+          </tr>
+        </thead>
+        <tbody id="summaryBody"></tbody>
+      </table>
+    </div>
+  </main>
+
+  <div id="loader" class="loader-overlay">
+    <div class="loader-spinner"></div>
+    <div class="loader-text">Loading...</div>
+  </div>
+
+  <div id="trendModal" class="modal-overlay">
+    <div class="modal-box">
+      <div class="modal-header">
+        <span id="modalTitle">Parameter Trend</span>
+        <span id="modalClose" class="modal-close">&times;</span>
+        <button id="modalDownloadBtn" class="btn"><i class="fa fa-download"></i> Download Excel</button>
+      </div>
+      <div id="trendChart" class="chart-container"></div>
+      <div class="modal-table-wrapper">
+        <table id="trendTable">
+          <thead>
+            <tr>
+              <th>Date Time</th><th>Value</th><th>LSL</th><th>USL</th>
+              <th>Prev Value</th><th>Prev LSL</th><th>Prev USL</th>
+            </tr>
+          </thead>
+          <tbody id="trendBody"></tbody>
+        </table>
+      </div>
     </div>
   </div>
 
-  <div class="filter-group">
-    <span class="filter-label">LINE</span>
-    <div class="custom-select">
-      <button type="button" class="select-toggle" id="lineBtn" onclick="toggleDropdown('lineDd')">All</button>
-      <div id="lineDd" class="dropdown-menu"></div>
-    </div>
-    <div class="filter-error" id="lineError">Line is required</div>
-  </div>
-
-  <div class="filter-group">
-    <span class="filter-label">Module ID<span class="filter-required">*</span></span>
-    <div class="custom-select">
-      <button type="button" class="select-toggle" id="moduleBtn" onclick="toggleDropdown('moduleDd')">All</button>
-      <div id="moduleDd" class="dropdown-menu"></div>
-    </div>
-    <div class="filter-error" id="moduleError">Module ID is required</div>
-  </div>
-
-  <div class="filter-group">
-    <span class="filter-label">Date Range</span>
-    <div class="date-picker-wrap">
-      <input type="text" class="date-input" id="dateRange" placeholder="DD/MM/YYYY - DD/MM/YYYY" readonly onclick="openDatePickerFromInput()" style="width:150px;">
-      <i class="fa fa-calendar-alt date-input-icon"></i>
-      <div id="datePickerPopup" class="date-picker-popup"></div>
-    </div>
-  </div>
-
-  <div class="filter-group">
-    <span class="filter-label">Parameter Search</span>
-    <input type="text" class="date-input" id="paramSearch" placeholder="Search parameter..." style="width:150px;">
-  </div>
-
-  <div class="filter-group">
-    <span class="filter-label">&nbsp;</span>
-    <button type="button" class="search-btn" onclick="searchWithFilters()">Search</button>
-    <button type="button" class="reset-btn" onclick="resetFilters()">Reset</button>
-  </div>
-</div>
-
-<div class="summary">
-  No. of change parameters: <span id="changeCount">0</span>
-  <button type="button" class="download-btn" onclick="downloadCurrentViewExcel()"><i class="fa fa-download"></i>Download Excel</button>
-  <button type="button" id="summaryToggleBtn" class="summary-btn" onclick="toggleSummaryView()">Summary</button>
-</div>
-
-  <div class="table-wrapper">
-  <table id="table1">
-    <thead>
-      <tr>
-        <th class="col-source sortable-header" onclick="sortTable('table1', 0)"><span class="th-label" data-base-text="Source">Source <i class="fa fa-sort sort-icon"></i></span><button type="button" class="column-filter-btn" onclick="toggleColumnFilter(event, 'table1', 0)"><i class="fa fa-filter"></i></button></th>
-        <th class="col-module sortable-header" onclick="sortTable('table1', 1)"><span class="th-label" data-base-text="Module">Module <i class="fa fa-sort sort-icon"></i></span><button type="button" class="column-filter-btn" onclick="toggleColumnFilter(event, 'table1', 1)"><i class="fa fa-filter"></i></button></th>
-        <th class="col-rcp sortable-header" onclick="sortTable('table1', 2)"><span class="th-label" data-base-text="RCP ID">RCP ID <i class="fa fa-sort sort-icon"></i></span><button type="button" class="column-filter-btn" onclick="toggleColumnFilter(event, 'table1', 2)"><i class="fa fa-filter"></i></button></th>
-        <th class="col-param sortable-header" onclick="sortTable('table1', 3)"><span class="th-label" data-base-text="Parameters">Parameters <i class="fa fa-sort sort-icon"></i></span><button type="button" class="column-filter-btn" onclick="toggleColumnFilter(event, 'table1', 3)"><i class="fa fa-filter"></i></button></th>
-        <th class="col-value sortable-header" onclick="sortTable('table1', 4)"><span class="th-label" data-base-text="Value">Value <i class="fa fa-sort sort-icon"></i></span><button type="button" class="column-filter-btn" onclick="toggleColumnFilter(event, 'table1', 4)"><i class="fa fa-filter"></i></button></th>
-        <th class="col-lsl sortable-header" onclick="sortTable('table1', 5)"><span class="th-label" data-base-text="LSL">LSL <i class="fa fa-sort sort-icon"></i></span><button type="button" class="column-filter-btn" onclick="toggleColumnFilter(event, 'table1', 5)"><i class="fa fa-filter"></i></button></th>
-        <th class="col-usl sortable-header" onclick="sortTable('table1', 6)"><span class="th-label" data-base-text="USL">USL <i class="fa fa-sort sort-icon"></i></span><button type="button" class="column-filter-btn" onclick="toggleColumnFilter(event, 'table1', 6)"><i class="fa fa-filter"></i></button></th>
-        <th class="col-date sortable-header" onclick="sortTable('table1', 7)"><span class="th-label" data-base-text="Create DTTD">Create DTTD <i class="fa fa-sort sort-icon"></i></span><button type="button" class="column-filter-btn" onclick="toggleColumnFilter(event, 'table1', 7)"><i class="fa fa-filter"></i></button></th>
-        <th class="col-prev-value sortable-header" onclick="sortTable('table1', 8)"><span class="th-label" data-base-text="Previous Value">Previous Value <i class="fa fa-sort sort-icon"></i></span><button type="button" class="column-filter-btn" onclick="toggleColumnFilter(event, 'table1', 8)"><i class="fa fa-filter"></i></button></th>
-        <th class="col-prev-lsl sortable-header" onclick="sortTable('table1', 9)"><span class="th-label" data-base-text="Previous LSL">Previous LSL <i class="fa fa-sort sort-icon"></i></span><button type="button" class="column-filter-btn" onclick="toggleColumnFilter(event, 'table1', 9)"><i class="fa fa-filter"></i></button></th>
-        <th class="col-prev-usl sortable-header" onclick="sortTable('table1', 10)"><span class="th-label" data-base-text="Previous USL">Previous USL <i class="fa fa-sort sort-icon"></i></span><button type="button" class="column-filter-btn" onclick="toggleColumnFilter(event, 'table1', 10)"><i class="fa fa-filter"></i></button></th>
-      </tr>
-    </thead>
-    <tbody id="tbody1"></tbody>
-  </table>
-</div>
-
-<div class="table-wrapper">
-  <table id="table2">
-    <thead>
-      <tr>
-        <th class="col-source sortable-header" onclick="sortTable('table2', 0)"><span class="th-label" data-base-text="Source">Source <i class="fa fa-sort sort-icon"></i></span><button type="button" class="column-filter-btn" onclick="toggleColumnFilter(event, 'table2', 0)"><i class="fa fa-filter"></i></button></th>
-        <th class="col-module sortable-header" onclick="sortTable('table2', 1)"><span class="th-label" data-base-text="Module">Module <i class="fa fa-sort sort-icon"></i></span><button type="button" class="column-filter-btn" onclick="toggleColumnFilter(event, 'table2', 1)"><i class="fa fa-filter"></i></button></th>
-        <th class="col-rcp sortable-header" onclick="sortTable('table2', 2)"><span class="th-label" data-base-text="RCP ID">RCP ID <i class="fa fa-sort sort-icon"></i></span><button type="button" class="column-filter-btn" onclick="toggleColumnFilter(event, 'table2', 2)"><i class="fa fa-filter"></i></button></th>
-        <th class="col-param sortable-header" onclick="sortTable('table2', 3)"><span class="th-label" data-base-text="Parameters">Parameters <i class="fa fa-sort sort-icon"></i></span><button type="button" class="column-filter-btn" onclick="toggleColumnFilter(event, 'table2', 3)"><i class="fa fa-filter"></i></button></th>
-        <th class="col-value sortable-header" onclick="sortTable('table2', 4)"><span class="th-label" data-base-text="Value">Value <i class="fa fa-sort sort-icon"></i></span><button type="button" class="column-filter-btn" onclick="toggleColumnFilter(event, 'table2', 4)"><i class="fa fa-filter"></i></button></th>
-        <th class="col-lsl sortable-header" onclick="sortTable('table2', 5)"><span class="th-label" data-base-text="LSL">LSL <i class="fa fa-sort sort-icon"></i></span><button type="button" class="column-filter-btn" onclick="toggleColumnFilter(event, 'table2', 5)"><i class="fa fa-filter"></i></button></th>
-        <th class="col-usl sortable-header" onclick="sortTable('table2', 6)"><span class="th-label" data-base-text="USL">USL <i class="fa fa-sort sort-icon"></i></span><button type="button" class="column-filter-btn" onclick="toggleColumnFilter(event, 'table2', 6)"><i class="fa fa-filter"></i></button></th>
-        <th class="col-date sortable-header" onclick="sortTable('table2', 7)"><span class="th-label" data-base-text="Create DTTD">Create DTTD <i class="fa fa-sort sort-icon"></i></span><button type="button" class="column-filter-btn" onclick="toggleColumnFilter(event, 'table2', 7)"><i class="fa fa-filter"></i></button></th>
-        <th class="col-prev-value sortable-header" onclick="sortTable('table2', 8)"><span class="th-label" data-base-text="Previous Value">Previous Value <i class="fa fa-sort sort-icon"></i></span><button type="button" class="column-filter-btn" onclick="toggleColumnFilter(event, 'table2', 8)"><i class="fa fa-filter"></i></button></th>
-        <th class="col-prev-lsl sortable-header" onclick="sortTable('table2', 9)"><span class="th-label" data-base-text="Previous LSL">Previous LSL <i class="fa fa-sort sort-icon"></i></span><button type="button" class="column-filter-btn" onclick="toggleColumnFilter(event, 'table2', 9)"><i class="fa fa-filter"></i></button></th>
-        <th class="col-prev-usl sortable-header" onclick="sortTable('table2', 10)"><span class="th-label" data-base-text="Previous USL">Previous USL <i class="fa fa-sort sort-icon"></i></span><button type="button" class="column-filter-btn" onclick="toggleColumnFilter(event, 'table2', 10)"><i class="fa fa-filter"></i></button></th>
-      </tr>
-    </thead>
-    <tbody id="tbody2"></tbody>
-  </table>
-</div>
-
-<div id="summaryView" style="display:none;">
-  <div class="table-wrapper" style="margin-bottom:10px;">
-    <table id="summaryTable1">
-      <thead>
-        <tr>
-          <th class="col-source sortable-header" onclick="sortTable('summaryTable1', 0)"><span class="th-label" data-base-text="Source">Source <i class="fa fa-sort sort-icon"></i></span><button type="button" class="column-filter-btn" onclick="toggleColumnFilter(event, 'summaryTable1', 0)"><i class="fa fa-filter"></i></button></th>
-          <th class="col-module sortable-header" onclick="sortTable('summaryTable1', 1)"><span class="th-label" data-base-text="Module">Module <i class="fa fa-sort sort-icon"></i></span><button type="button" class="column-filter-btn" onclick="toggleColumnFilter(event, 'summaryTable1', 1)"><i class="fa fa-filter"></i></button></th>
-          <th class="col-rcp sortable-header" onclick="sortTable('summaryTable1', 2)"><span class="th-label" data-base-text="RCP ID">RCP ID <i class="fa fa-sort sort-icon"></i></span><button type="button" class="column-filter-btn" onclick="toggleColumnFilter(event, 'summaryTable1', 2)"><i class="fa fa-filter"></i></button></th>
-          <th class="col-param sortable-header" onclick="sortTable('summaryTable1', 3)"><span class="th-label" data-base-text="Parameters">Parameters <i class="fa fa-sort sort-icon"></i></span><button type="button" class="column-filter-btn" onclick="toggleColumnFilter(event, 'summaryTable1', 3)"><i class="fa fa-filter"></i></button></th>
-          <th class="col-value sortable-header" onclick="sortTable('summaryTable1', 4)"><span class="th-label" data-base-text="Value">Value <i class="fa fa-sort sort-icon"></i></span><button type="button" class="column-filter-btn" onclick="toggleColumnFilter(event, 'summaryTable1', 4)"><i class="fa fa-filter"></i></button></th>
-          <th class="col-lsl sortable-header" onclick="sortTable('summaryTable1', 5)"><span class="th-label" data-base-text="LSL">LSL <i class="fa fa-sort sort-icon"></i></span><button type="button" class="column-filter-btn" onclick="toggleColumnFilter(event, 'summaryTable1', 5)"><i class="fa fa-filter"></i></button></th>
-          <th class="col-usl sortable-header" onclick="sortTable('summaryTable1', 6)"><span class="th-label" data-base-text="USL">USL <i class="fa fa-sort sort-icon"></i></span><button type="button" class="column-filter-btn" onclick="toggleColumnFilter(event, 'summaryTable1', 6)"><i class="fa fa-filter"></i></button></th>
-          <th class="col-date sortable-header" onclick="sortTable('summaryTable1', 7)"><span class="th-label" data-base-text="Create DTTD">Create DTTD <i class="fa fa-sort sort-icon"></i></span><button type="button" class="column-filter-btn" onclick="toggleColumnFilter(event, 'summaryTable1', 7)"><i class="fa fa-filter"></i></button></th>
-        </tr>
-      </thead>
-      <tbody id="summaryTableBody1"></tbody>
-    </table>
-  </div>
-
-  <div class="table-wrapper">
-    <table id="summaryTable2">
-      <thead>
-        <tr>
-          <th class="col-source sortable-header" onclick="sortTable('summaryTable2', 0)"><span class="th-label" data-base-text="Source">Source <i class="fa fa-sort sort-icon"></i></span><button type="button" class="column-filter-btn" onclick="toggleColumnFilter(event, 'summaryTable2', 0)"><i class="fa fa-filter"></i></button></th>
-          <th class="col-module sortable-header" onclick="sortTable('summaryTable2', 1)"><span class="th-label" data-base-text="Module">Module <i class="fa fa-sort sort-icon"></i></span><button type="button" class="column-filter-btn" onclick="toggleColumnFilter(event, 'summaryTable2', 1)"><i class="fa fa-filter"></i></button></th>
-          <th class="col-rcp sortable-header" onclick="sortTable('summaryTable2', 2)"><span class="th-label" data-base-text="RCP ID">RCP ID <i class="fa fa-sort sort-icon"></i></span><button type="button" class="column-filter-btn" onclick="toggleColumnFilter(event, 'summaryTable2', 2)"><i class="fa fa-filter"></i></button></th>
-          <th class="col-param sortable-header" onclick="sortTable('summaryTable2', 3)"><span class="th-label" data-base-text="Parameters">Parameters <i class="fa fa-sort sort-icon"></i></span><button type="button" class="column-filter-btn" onclick="toggleColumnFilter(event, 'summaryTable2', 3)"><i class="fa fa-filter"></i></button></th>
-          <th class="col-value sortable-header" onclick="sortTable('summaryTable2', 4)"><span class="th-label" data-base-text="Value">Value <i class="fa fa-sort sort-icon"></i></span><button type="button" class="column-filter-btn" onclick="toggleColumnFilter(event, 'summaryTable2', 4)"><i class="fa fa-filter"></i></button></th>
-          <th class="col-lsl sortable-header" onclick="sortTable('summaryTable2', 5)"><span class="th-label" data-base-text="LSL">LSL <i class="fa fa-sort sort-icon"></i></span><button type="button" class="column-filter-btn" onclick="toggleColumnFilter(event, 'summaryTable2', 5)"><i class="fa fa-filter"></i></button></th>
-          <th class="col-usl sortable-header" onclick="sortTable('summaryTable2', 6)"><span class="th-label" data-base-text="USL">USL <i class="fa fa-sort sort-icon"></i></span><button type="button" class="column-filter-btn" onclick="toggleColumnFilter(event, 'summaryTable2', 6)"><i class="fa fa-filter"></i></button></th>
-          <th class="col-date sortable-header" onclick="sortTable('summaryTable2', 7)"><span class="th-label" data-base-text="Create DTTD">Create DTTD <i class="fa fa-sort sort-icon"></i></span><button type="button" class="column-filter-btn" onclick="toggleColumnFilter(event, 'summaryTable2', 7)"><i class="fa fa-filter"></i></button></th>
-        </tr>
-      </thead>
-      <tbody id="summaryTableBody2"></tbody>
-    </table>
-  </div>
-</div>
-
-<script>
-  var data1 = [];
-  var data2 = [];
-
-  function buildDummyRows(count, startIndex, sourcePrefix) {
-    var rows = [];
-    var sites = ["Site A", "Site B", "Site C", "Site D"];
-    var lines = ["Line 1", "Line 2", "Line 3", "Line 4"];
-    var params = ["ROLLER", "PRESSURE", "TEMP_CTRL", "SPEED", "VOLTAGE", "FLOW_RATE", "TENSION", "GAP_CTRL", "FORCE", "POSITION"];
-    var changeTypes = ["VALUE_CHANGED", "LSL_CHANGED", "USL_CHANGED", "VALUE_CHANGED|LSL_CHANGED", "VALUE_CHANGED|USL_CHANGED", "LSL_CHANGED|USL_CHANGED", ""];
-
-    for (var i = 0; i < count; i++) {
-      var idx = startIndex + i;
-      var baseValue = 20 + (idx % 80);
-      var lsl = baseValue - 10;
-      var usl = baseValue + 20;
-      var day = (i % 10) + 1;
-      var dayText = day < 10 ? "0" + day : String(day);
-      var month = ((Math.floor(i / 10) % 6) + 1);
-      var monthText = month < 10 ? "0" + month : String(month);
-      var changeType = changeTypes[i % changeTypes.length];
-      var currentValue = baseValue;
-      var currentLsl = lsl;
-      var currentUsl = usl;
-
-      if (changeType.indexOf("VALUE_CHANGED") !== -1) {
-        currentValue = baseValue + (i % 5) + 1;
-      }
-      if (changeType.indexOf("LSL_CHANGED") !== -1) {
-        currentLsl = lsl + (i % 4) + 1;
-      }
-      if (changeType.indexOf("USL_CHANGED") !== -1) {
-        currentUsl = usl + (i % 6) + 1;
-      }
-
-      rows.push({
-        site: sites[i % sites.length],
-        line: lines[(i + 1) % lines.length],
-        productId: "AMB" + (700 + idx),
-        moduleId: "N1DLE" + (100 + idx),
-        source: sourcePrefix + ((i % 5) + 1),
-        parameterName: "M_CHB" + (idx % 100) + "_" + params[i % params.length],
-        createDate: 1751328000000 + (i * 86400000),
-        createDttd: dayText + "/" + monthText + "/2026",
-        previousValue: String(baseValue),
-        currentValue: String(currentValue),
-        previousLsl: String(lsl),
-        currentLsl: String(currentLsl),
-        previousUsl: String(usl),
-        currentUsl: String(currentUsl),
-        changeType: changeType
-      });
-    }
-    return rows;
-  }
-
-  function getData(useFilters) {
-    showLoader();
-    var xhr = new XMLHttpRequest();
-    var url = "/api/parameter-changes";
-    var params = useFilters ? buildApiFilterParams() : [];
-    if (params.length) {
-      url += "?" + params.join("&");
-    }
-    xhr.open("GET", url, true);
-    xhr.onreadystatechange = function() {
-      if (xhr.readyState === 4) {
-        if (xhr.status === 200) {
-          var response = JSON.parse(xhr.responseText);
-          if (response.data1) {
-            data1 = response.data1;
-          }
-          if (response.data2) {
-            data2 = response.data2;
-          }
-          if (useFilters) {
-            applyFilters();
-          } else {
-            initPage();
-          }
-          hideLoader();
-        } else {
-          // Fallback sample data if API fails
-          data1 = [
-            { site: "Site A", line: "Line 1", productId: "AMB674", moduleId: "N1DLE32", parameterName: "M_CHB3_ESC_ROLLER", createDate: 175244452455, createDttd: "01/06/2026", previousValue: "0", currentValue: "1", previousLsl: "0", currentLsl: "895.000", previousUsl: "0", currentUsl: "895.000", changeType: "VALUE_CHANGED|USL_CHANGED|LSL_CHANGED" },
-            { site: "Site A", line: "Line 2", productId: "AMB675", moduleId: "N1DLE33", parameterName: "M_CHB4_PRESSURE", createDate: 175253092455, createDttd: "02/06/2026", previousValue: "120", currentValue: "125", previousLsl: "100", currentLsl: "100", previousUsl: "150", currentUsl: "150", changeType: "VALUE_CHANGED" },
-            { site: "Site B", line: "Line 1", productId: "AMB676", moduleId: "N1DLE34", parameterName: "M_CHB5_TEMP_CTRL", createDate: 175261732455, createDttd: "03/06/2026", previousValue: "80", currentValue: "80", previousLsl: "70", currentLsl: "75", previousUsl: "90", currentUsl: "90", changeType: "LSL_CHANGED" },
-            { site: "Site B", line: "Line 3", productId: "AMB677", moduleId: "N1DLE35", parameterName: "M_CHB6_SPEED", createDate: 175270372455, createDttd: "04/06/2026", previousValue: "1000", currentValue: "1100", previousLsl: "900", currentLsl: "900", previousUsl: "1200", currentUsl: "1300", changeType: "VALUE_CHANGED|USL_CHANGED" },
-            { site: "Site C", line: "Line 2", productId: "AMB678", moduleId: "N1DLE36", parameterName: "M_CHB7_VOLTAGE", createDate: 175279012455, createDttd: "05/06/2026", previousValue: "220", currentValue: "220", previousLsl: "210", currentLsl: "210", previousUsl: "240", currentUsl: "240", changeType: "" },
-            { site: "Site A", line: "Line 3", productId: "AMB679", moduleId: "N1DLE37", parameterName: "M_CHB8_FLOW_RATE", createDate: 175287652455, createDttd: "06/06/2026", previousValue: "50", currentValue: "55", previousLsl: "40", currentLsl: "45", previousUsl: "60", currentUsl: "60", changeType: "VALUE_CHANGED|LSL_CHANGED" }
-          ];
-          data2 = [
-            { site: "Site A", line: "Line 1", productId: "AMB680", moduleId: "N1DLE38", parameterName: "M_CHB9_ROLLER_POS", createDate: 175244452455, createDttd: "01/06/2026", previousValue: "10", currentValue: "12", previousLsl: "8", currentLsl: "8", previousUsl: "15", currentUsl: "15", changeType: "VALUE_CHANGED" },
-            { site: "Site C", line: "Line 2", productId: "AMB681", moduleId: "N1DLE39", parameterName: "M_CHB10_TENSION", createDate: 175253092455, createDttd: "02/06/2026", previousValue: "200", currentValue: "200", previousLsl: "180", currentLsl: "180", previousUsl: "220", currentUsl: "230", changeType: "USL_CHANGED" },
-            { site: "Site B", line: "Line 3", productId: "AMB682", moduleId: "N1DLE40", parameterName: "M_CHB11_GAP_CTRL", createDate: 175261732455, createDttd: "03/06/2026", previousValue: "5", currentValue: "6", previousLsl: "4", currentLsl: "4", previousUsl: "8", currentUsl: "8", changeType: "VALUE_CHANGED" },
-            { site: "Site A", line: "Line 2", productId: "AMB683", moduleId: "N1DLE41", parameterName: "M_CHB12_FORCE", createDate: 175270372455, createDttd: "04/06/2026", previousValue: "500", currentValue: "500", previousLsl: "450", currentLsl: "460", previousUsl: "550", currentUsl: "550", changeType: "LSL_CHANGED" }
-          ];
-          data1 = data1.concat(buildDummyRows(100, 1, "SRC-A"));
-          data2 = data2.concat(buildDummyRows(100, 101, "SRC-B"));
-          if (useFilters) {
-            applyFilters();
-          } else {
-            initPage();
-          }
-          hideLoader();
-        }
-      }
+  <script>
+    var state = {
+      rows: [],
+      filteredRows: [],
+      summaryRows: [],
+      page: 0,
+      pageSize: 50,
+      hasMore: true,
+      loading: false,
+      summary: false
     };
-    xhr.send();
-  }
 
-  function buildApiFilterParams() {
-    var params = [];
-    var dateRange = parseDateRange(document.getElementById("dateRange").value);
-    var paramSearch = document.getElementById("paramSearch").value;
+    var trendChart;
+    var refreshSeconds = 300;
 
-    if (selectedFilters.site) params.push("site=" + encodeURIComponent(selectedFilters.site));
-    if (selectedFilters.line) params.push("line=" + encodeURIComponent(selectedFilters.line));
-    if (selectedFilters.moduleId) params.push("moduleId=" + encodeURIComponent(selectedFilters.moduleId));
-    if (paramSearch) params.push("parameterName=" + encodeURIComponent(paramSearch));
-    if (dateRange.from) params.push("startDate=" + encodeURIComponent(formatDate(dateRange.from)));
-    if (dateRange.to) params.push("endDate=" + encodeURIComponent(formatDate(dateRange.to)));
+    var trendData = [
+      ["01/06/2026 08:00", 0.2, 0, 895, 0.5, 0, 900],
+      ["01/06/2026 09:00", 0.4, 0, 895, 0.6, 0, 900],
+      ["01/06/2026 10:00", 0.6, 0, 895, 0.7, 0, 900],
+      ["01/06/2026 11:00", 0.8, 0, 895, 0.8, 0, 900],
+      ["01/06/2026 12:00", 1.0, 0, 895, 0.9, 0, 900],
+      ["01/06/2026 13:00", 1.2, 0, 895, 1.0, 0, 900],
+      ["01/06/2026 14:00", 1.0, 0, 895, 1.1, 0, 900],
+      ["01/06/2026 15:00", 0.9, 0, 895, 1.0, 0, 900],
+      ["01/06/2026 16:00", 1.1, 0, 895, 1.1, 0, 900],
+      ["01/06/2026 17:00", 1.0, 0, 895, 1.2, 0, 900]
+    ];
 
-    return params;
-  }
-
-  function getUniqueValues(arr1, arr2, field) {
-    var combined = [];
-    var i;
-    for (i = 0; i < arr1.length; i++) {
-      combined.push(arr1[i][field]);
-    }
-    for (i = 0; i < arr2.length; i++) {
-      combined.push(arr2[i][field]);
-    }
-    var unique = [];
-    for (i = 0; i < combined.length; i++) {
-      if (unique.indexOf(combined[i]) === -1) {
-        unique.push(combined[i]);
-      }
-    }
-    return unique.sort();
-  }
-
-  var selectedFilters = {
-    site: "",
-    line: "",
-    moduleId: ""
-  };
-
-  function hasClass(el, className) {
-    return el && (" " + el.className + " ").indexOf(" " + className + " ") !== -1;
-  }
-
-  function addClass(el, className) {
-    if (el && !hasClass(el, className)) {
-      el.className = el.className ? el.className + " " + className : className;
-    }
-  }
-
-  function removeClass(el, className) {
-    if (el) {
-      el.className = (" " + el.className + " ").replace(" " + className + " ", " ").replace(/^\s+|\s+$/g, "");
-    }
-  }
-
-  function buildDropdown(ddId, btnId, options, groupName, includeAll) {
-    var dd = document.getElementById(ddId);
-    if (includeAll !== false) includeAll = true;
-    var html = '<input type="text" class="dropdown-search" placeholder="Search..." oninput="filterDropdown(this, \'' + ddId + '\')" onclick="stopPickerEvent()">';
-    if (includeAll) {
-      html += '<label class="dd-item"><input type="radio" name="' + groupName + '" value="" onclick="selectFilter(\'' + ddId + '\', \'' + btnId + '\', this.value)"> All</label>';
-    }
-    for (var i = 0; i < options.length; i++) {
-      html += '<label class="dd-item"><input type="radio" name="' + groupName + '" value="' + options[i] + '" onclick="selectFilter(\'' + ddId + '\', \'' + btnId + '\', this.value)"> ' + options[i] + '</label>';
-    }
-    dd.innerHTML = html;
-  }
-
-  function filterDropdown(input, ddId) {
-    var dd = document.getElementById(ddId);
-    var labels = dd.getElementsByClassName("dd-item");
-    var search = input.value.toLowerCase();
-    for (var i = 0; i < labels.length; i++) {
-      var text = labels[i].innerText.toLowerCase();
-      if (text.indexOf(search) !== -1) {
-        labels[i].style.display = "block";
-      } else {
-        labels[i].style.display = "none";
-      }
-    }
-  }
-
-  function getSelectedRadioValue(ddId) {
-    var dd = document.getElementById(ddId);
-    var inputs = dd.getElementsByTagName("input");
-    for (var i = 0; i < inputs.length; i++) {
-      if (inputs[i].type === "radio" && inputs[i].checked) {
-        return inputs[i].value;
-      }
-    }
-    return "";
-  }
-
-  function selectFilter(ddId, btnId, value) {
-    var btn = document.getElementById(btnId);
-    btn.innerText = value || "All";
-    var key = ddId.replace("Dd", "");
-    if (key === "module") key = "moduleId";
-    selectedFilters[key] = value;
-
-    // Cascading reset: selecting SITE resets LINE + MODULE
-    if (key === "site") {
-      selectedFilters.line = "";
-      selectedFilters.moduleId = "";
-      document.getElementById("lineBtn").innerText = "";
-      document.getElementById("moduleBtn").innerText = "";
-    }
-    // Selecting LINE resets MODULE
-    if (key === "line") {
-      selectedFilters.moduleId = "";
-      document.getElementById("moduleBtn").innerText = "";
+    function el(id) {
+      return document.getElementById(id);
     }
 
-    // Clear validation errors on any selection change
-    document.getElementById("lineError").style.display = "none";
-    removeClass(document.getElementById("lineBtn"), "error-border");
-    document.getElementById("moduleError").style.display = "none";
-    removeClass(document.getElementById("moduleBtn"), "error-border");
-
-    document.getElementById(ddId).style.display = "none";
-    hideDatePicker();
-    updateCascadingDropdowns();
-  }
-
-  function getFilteredUniqueValues(arr1, arr2, field, filters) {
-    var combined = [];
-    var i;
-    for (i = 0; i < arr1.length; i++) {
-      if (matchesFilters(arr1[i], filters)) {
-        combined.push(arr1[i][field]);
-      }
-    }
-    for (i = 0; i < arr2.length; i++) {
-      if (matchesFilters(arr2[i], filters)) {
-        combined.push(arr2[i][field]);
-      }
-    }
-    var unique = [];
-    for (i = 0; i < combined.length; i++) {
-      if (unique.indexOf(combined[i]) === -1) {
-        unique.push(combined[i]);
-      }
-    }
-    return unique.sort();
-  }
-
-  function matchesFilters(record, filters) {
-    if (filters.site && record.site !== filters.site) return false;
-    if (filters.line && record.line !== filters.line) return false;
-    if (filters.moduleId && record.moduleId !== filters.moduleId) return false;
-    return true;
-  }
-
-  function updateCascadingDropdowns() {
-    var siteFilters = { site: selectedFilters.site, line: "", moduleId: "" };
-    var modFilters  = { site: selectedFilters.site, line: selectedFilters.line, moduleId: "" };
-
-    var lineOpts = getFilteredUniqueValues(data1, data2, "line", siteFilters);
-    var modOpts  = getFilteredUniqueValues(data1, data2, "moduleId", modFilters);
-
-    rebuildDropdownKeepValue("lineDd",   "lineBtn",   lineOpts, "lineGroup", !selectedFilters.site);
-    rebuildDropdownKeepValue("moduleDd", "moduleBtn", modOpts,  "moduleGroup", !(selectedFilters.site || selectedFilters.line));
-  }
-
-  // Rebuild a downstream dropdown but only force-reset its value if the
-  // parent already cleared it via selectFilter (selectedFilters already updated).
-  function rebuildDropdownKeepValue(ddId, btnId, newOptions, groupName, includeAll) {
-    var dd = document.getElementById(ddId);
-    var key = ddId.replace("Dd", "");
-    if (key === "module") key = "moduleId";
-    var currentVal = selectedFilters[key]; // use authoritative state, not DOM
-
-    buildDropdown(ddId, btnId, newOptions, groupName, includeAll);
-
-    if (currentVal && newOptions.indexOf(currentVal) !== -1) {
-      // Restore radio selection
-      var inputs = dd.getElementsByTagName("input");
-      for (var i = 0; i < inputs.length; i++) {
-        if (inputs[i].type === "radio" && inputs[i].value === currentVal) {
-          inputs[i].checked = true;
-          break;
-        }
-      }
-      document.getElementById(btnId).innerText = currentVal;
-    } else {
-      // Value no longer valid — reset
-      document.getElementById(btnId).innerText = includeAll === false ? "" : "All";
-      selectedFilters[key] = "";
-    }
-  }
-
-  function showLoader() {
-    document.getElementById('loaderOverlay').style.display = 'block';
-  }
-
-  function hideLoader() {
-    document.getElementById('loaderOverlay').style.display = 'none';
-  }
-
-  function searchWithFilters() {
-    var hasError = false;
-    if (selectedFilters.site && !selectedFilters.line) {
-      document.getElementById("lineError").style.display = "block";
-      addClass(document.getElementById("lineBtn"), "error-border");
-      hasError = true;
-    } else {
-      document.getElementById("lineError").style.display = "none";
-      removeClass(document.getElementById("lineBtn"), "error-border");
+    function escapeHtml(value) {
+      return String(value == null ? "" : value)
+        .replace(/&/g, "&amp;")
+        .replace(/</g, "&lt;")
+        .replace(/>/g, "&gt;")
+        .replace(/"/g, "&quot;")
+        .replace(/'/g, "&#039;");
     }
 
-    // Validate: Module ID is required only after narrowing by Site or Line.
-    if ((selectedFilters.site || selectedFilters.line) && !selectedFilters.moduleId) {
-      document.getElementById("moduleError").style.display = "block";
-      addClass(document.getElementById("moduleBtn"), "error-border");
-      hasError = true;
-    } else {
-      document.getElementById("moduleError").style.display = "none";
-      removeClass(document.getElementById("moduleBtn"), "error-border");
+    function formatInputDate(date) {
+      var month = String(date.getMonth() + 1);
+      var day = String(date.getDate());
+      return date.getFullYear() + "-" + (month.length < 2 ? "0" + month : month) + "-" + (day.length < 2 ? "0" + day : day);
     }
 
-    if (hasError) {
-      return;
-    }
-    showLoader();
-    setTimeout(function() {
-      getData(true);
-    }, 2000);
-  }
-
-  function resetFilters() {
-    selectedFilters = { site: "", line: "", moduleId: "" };
-    sortState = { table1: { col: -1, dir: "asc" }, table2: { col: -1, dir: "asc" } };
-    columnFilterState = { table1: {}, table2: {} };
-    hideAllColumnFilterMenus();
-
-    document.getElementById("siteBtn").innerText = "All";
-    document.getElementById("lineBtn").innerText = "All";
-    document.getElementById("moduleBtn").innerText = "All";
-    document.getElementById("lineError").style.display = "none";
-    removeClass(document.getElementById("lineBtn"), "error-border");
-    document.getElementById("moduleError").style.display = "none";
-    removeClass(document.getElementById("moduleBtn"), "error-border");
-    document.getElementById("paramSearch").value = "";
-
-    var siteOpts = getUniqueValues(data1, data2, "site");
-    var lineOpts = getUniqueValues(data1, data2, "line");
-    var modOpts  = getUniqueValues(data1, data2, "moduleId");
-
-    buildDropdown("siteDd",   "siteBtn",   siteOpts, "siteGroup");
-    buildDropdown("lineDd",   "lineBtn",   lineOpts, "lineGroup");
-    buildDropdown("moduleDd", "moduleBtn", modOpts,  "moduleGroup");
-
-    var today = new Date();
-    var sevenDaysAgo = new Date(today.getFullYear(), today.getMonth(), today.getDate() - 6);
-    pickerStartDate = sevenDaysAgo;
-    pickerEndDate = today;
-    document.getElementById("dateRange").value = formatDate(pickerStartDate) + ' - ' + formatDate(pickerEndDate);
-
-    applyFilters();
-  }
-
-  function fetchCascadingOptions(callback) {
-    var xhr = new XMLHttpRequest();
-    var params = [];
-    if (selectedFilters.site) params.push("site=" + encodeURIComponent(selectedFilters.site));
-    if (selectedFilters.line) params.push("line=" + encodeURIComponent(selectedFilters.line));
-    if (selectedFilters.moduleId) params.push("moduleId=" + encodeURIComponent(selectedFilters.moduleId));
-    var url = "/api/cascading-options" + (params.length ? "?" + params.join("&") : "");
-    xhr.open("GET", url, true);
-    xhr.onreadystatechange = function() {
-      if (xhr.readyState === 4 && xhr.status === 200) {
-        var response = JSON.parse(xhr.responseText);
-        if (callback) callback(response);
-      }
-    };
-    xhr.send();
-  }
-
-  function toggleDropdown(ddId) {
-    var target = document.getElementById(ddId);
-    var currentlyHidden = target.style.display === "none" || target.style.display === "";
-    var allMenus = document.getElementsByClassName("dropdown-menu");
-    for (var i = 0; i < allMenus.length; i++) {
-      allMenus[i].style.display = "none";
-    }
-    hideDatePicker();
-    if (currentlyHidden) {
-      target.style.display = "block";
-    }
-  }
-
-  document.addEventListener("click", function(e) {
-    var menus = document.getElementsByClassName("dropdown-menu");
-    for (var i = 0; i < menus.length; i++) {
-      var menu = menus[i];
-      var parent = menu.parentNode;
-      if (!parent.contains(e.target)) {
-        menu.style.display = "none";
-      }
-    }
-    var dateWrap = document.getElementById('dateRange').parentNode;
-    if (!dateWrap.contains(e.target)) {
-      hideDatePicker();
-    }
-    var columnMenus = document.getElementsByClassName("column-filter-menu");
-    for (var c = 0; c < columnMenus.length; c++) {
-      if (!columnMenus[c].contains(e.target) && !(hasClass(e.target, "column-filter-btn"))) {
-        columnMenus[c].style.display = "none";
-      }
-    }
-  });
-
-  function parseDate(str) {
-    if (!str) return null;
-    var parts = str.split("/");
-    if (parts.length === 3) {
-      return new Date(parseInt(parts[2], 10), parseInt(parts[1], 10) - 1, parseInt(parts[0], 10));
-    }
-    return new Date(str);
-  }
-
-  // Date Picker State
-  var pickerCurrentDate = null;
-  var pickerStartDate = null;
-  var pickerEndDate = null;
-  var pickerSelecting = false;
-
-  function stopPickerEvent() {
-    var e = window.event;
-    if (e) {
-      e.cancelBubble = true;
-      if (e.stopPropagation) e.stopPropagation();
-    }
-  }
-
-  var monthNames = ["January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December"];
-  var dayNames = ["Su", "Mo", "Tu", "We", "Th", "Fr", "Sa"];
-
-  function formatDate(date) {
-    if (!date) return "";
-    var m = date.getMonth() + 1;
-    var d = date.getDate();
-    var y = date.getFullYear();
-    return (d < 10 ? "0" + d : d) + "/" + (m < 10 ? "0" + m : m) + "/" + y;
-  }
-
-  function isSameDate(d1, d2) {
-    if (!d1 || !d2) return false;
-    return d1.getFullYear() === d2.getFullYear() && d1.getMonth() === d2.getMonth() && d1.getDate() === d2.getDate();
-  }
-
-  function isDateBetween(target, start, end) {
-    if (!target || !start || !end) return false;
-    var t = new Date(target.getFullYear(), target.getMonth(), target.getDate()).getTime();
-    var s = new Date(start.getFullYear(), start.getMonth(), start.getDate()).getTime();
-    var e = new Date(end.getFullYear(), end.getMonth(), end.getDate()).getTime();
-    return t > s && t < e;
-  }
-
-  function getToday() {
-    var now = new Date();
-    return new Date(now.getFullYear(), now.getMonth(), now.getDate());
-  }
-
-  function isFutureDate(target) {
-    if (!target) return false;
-    var t = new Date(target.getFullYear(), target.getMonth(), target.getDate()).getTime();
-    var today = getToday().getTime();
-    return t > today;
-  }
-
-  function getDaysInMonth(year, month) {
-    return new Date(year, month + 1, 0).getDate();
-  }
-
-  function getFirstDayOfMonth(year, month) {
-    return new Date(year, month, 1).getDay();
-  }
-
-  function buildDatePickerHTML() {
-    if (!pickerCurrentDate) {
-      pickerCurrentDate = new Date();
+    function parseReportDate(value) {
+      var parts = String(value || "").split("/");
+      return parts.length === 3 ? new Date(parts[2], parts[1] - 1, parts[0]) : null;
     }
 
-    var year = pickerCurrentDate.getFullYear();
-    var month = pickerCurrentDate.getMonth();
-    var daysInMonth = getDaysInMonth(year, month);
-    var firstDay = getFirstDayOfMonth(year, month);
-
-    var html = '<div class="date-picker-header">' + monthNames[month] + ' ' + year + '</div>';
-    html += '<div class="date-picker-nav">';
-    html += '<button type="button" onclick="stopPickerEvent(); changePickerMonth(-1)"><i class="fa fa-chevron-left"></i></button>';
-    html += '<select class="year-select" onchange="stopPickerEvent(); changePickerYear(this.value)">';
-    for (var y = year - 10; y <= year + 10; y++) {
-      html += '<option value="' + y + '"' + (y === year ? ' selected' : '') + '>' + y + '</option>';
+    function setDefaultDates() {
+      var today = new Date();
+      var weekAgo = new Date(today.getFullYear(), today.getMonth(), today.getDate() - 6);
+      el("fromDate").value = formatInputDate(weekAgo);
+      el("toDate").value = formatInputDate(today);
     }
-    html += '</select>';
-    html += '<select class="month-select" onchange="stopPickerEvent(); changePickerMonthDirect(this.value)">';
-    for (var m = 0; m < 12; m++) {
-      html += '<option value="' + m + '"' + (m === month ? ' selected' : '') + '>' + monthNames[m] + '</option>';
+
+    function unique(field, filters) {
+      var values = state.rows.filter(function(row) {
+        return (!filters.site || row.site === filters.site) &&
+               (!filters.line || row.line === filters.line);
+      }).map(function(row) {
+        return row[field];
+      }).filter(Boolean);
+
+      return values.filter(function(value, index) {
+        return values.indexOf(value) === index;
+      }).sort();
     }
-    html += '</select>';
-    html += '<button type="button" onclick="stopPickerEvent(); changePickerMonth(1)"><i class="fa fa-chevron-right"></i></button>';
-    html += '</div>';
 
-    html += '<table class="date-picker-days">';
-    html += '<tr>';
-    for (var i = 0; i < dayNames.length; i++) {
-      html += '<th>' + dayNames[i] + '</th>';
+    function fillSelect(id, values, selected, allowAll) {
+      var select = el(id);
+      var firstLabel = allowAll === false ? "Select..." : "All";
+      select.innerHTML = '<option value="">' + firstLabel + '</option>' +
+        values.map(function(value) {
+          return '<option value="' + escapeHtml(value) + '">' + escapeHtml(value) + '</option>';
+        }).join("");
+      select.value = values.indexOf(selected) >= 0 ? selected : "";
     }
-    html += '</tr>';
 
-    var day = 1;
-    var rowCount = 0;
-    while (day <= daysInMonth || rowCount === 0) {
-      html += '<tr>';
-      for (var col = 0; col < 7; col++) {
-        if (rowCount === 0 && col < firstDay) {
-          var prevMonthDays = getDaysInMonth(year, month - 1);
-          var prevDay = prevMonthDays - firstDay + col + 1;
-          html += '<td class="other-month">' + prevDay + '</td>';
-        } else if (day > daysInMonth) {
-          var nextDay = day - daysInMonth;
-          html += '<td class="other-month">' + nextDay + '</td>';
-          day++;
-        } else {
-          var cellDate = new Date(year, month, day);
-          var isDisabled = isFutureDate(cellDate);
-          var cssClass = '';
-          if (isDisabled) {
-            cssClass = 'disabled';
-          } else if (isSameDate(cellDate, pickerStartDate)) {
-            cssClass = 'range-start';
-          } else if (isSameDate(cellDate, pickerEndDate)) {
-            cssClass = 'range-end';
-          } else if (pickerStartDate && pickerEndDate && isDateBetween(cellDate, pickerStartDate, pickerEndDate)) {
-            cssClass = 'in-range';
-          }
-          if (isDisabled) {
-            html += '<td class="' + cssClass + '">' + day + '</td>';
-          } else {
-            html += '<td class="' + cssClass + '" onclick="stopPickerEvent(); selectPickerDate(' + year + ', ' + month + ', ' + day + ')">' + day + '</td>';
-          }
-          day++;
-        }
-      }
-      html += '</tr>';
-      rowCount++;
-      if (day > daysInMonth && rowCount >= 6) break;
+    function updateFilterOptions() {
+      var site = el("siteFilter").value;
+      var line = el("lineFilter").value;
+      var moduleId = el("moduleFilter").value;
+
+      fillSelect("siteFilter", unique("site", {}), site, true);
+      fillSelect("lineFilter", unique("line", { site: site }), line, !site);
+      fillSelect("moduleFilter", unique("moduleId", { site: site, line: line }), moduleId, !(site || line));
     }
-    html += '</table>';
-    return html;
-  }
 
-  function openDatePicker() {
-    document.getElementById('datePickerPopup').innerHTML = buildDatePickerHTML();
-    document.getElementById('datePickerPopup').style.display = 'block';
-  }
-
-  function parseDateRange(rangeStr) {
-    var result = { from: null, to: null };
-    if (!rangeStr) return result;
-    var parts = rangeStr.split(" - ");
-    if (parts.length === 2) {
-      result.from = parseDate(parts[0]);
-      result.to = parseDate(parts[1]);
-    } else {
-      result.from = parseDate(rangeStr);
-    }
-    return result;
-  }
-
-  function openDatePickerFromInput() {
-    var val = document.getElementById('dateRange').value;
-    var parsed = parseDateRange(val);
-    if (parsed.from) {
-      pickerStartDate = parsed.from;
-      pickerCurrentDate = new Date(parsed.from.getFullYear(), parsed.from.getMonth(), 1);
-    } else {
-      pickerStartDate = null;
-      pickerCurrentDate = new Date();
-    }
-    if (parsed.to) {
-      pickerEndDate = parsed.to;
-      pickerSelecting = false;
-    } else {
-      pickerEndDate = null;
-      pickerSelecting = true;
-    }
-    openDatePicker();
-  }
-
-  function hideDatePicker() {
-    document.getElementById('datePickerPopup').style.display = 'none';
-  }
-
-  function changePickerMonth(delta) {
-    var newMonth = pickerCurrentDate.getMonth() + delta;
-    var newYear = pickerCurrentDate.getFullYear();
-    if (newMonth < 0) {
-      newMonth = 11;
-      newYear--;
-    } else if (newMonth > 11) {
-      newMonth = 0;
-      newYear++;
-    }
-    pickerCurrentDate = new Date(newYear, newMonth, 1);
-    openDatePicker();
-  }
-
-  function changePickerYear(year) {
-    pickerCurrentDate = new Date(parseInt(year, 10), pickerCurrentDate.getMonth(), 1);
-    openDatePicker();
-  }
-
-  function changePickerMonthDirect(month) {
-    pickerCurrentDate = new Date(pickerCurrentDate.getFullYear(), parseInt(month, 10), 1);
-    openDatePicker();
-  }
-
-  function selectPickerDate(year, month, day) {
-    var clicked = new Date(year, month, day);
-    if (isFutureDate(clicked)) {
-      return;
-    }
-    if (!pickerSelecting || !pickerStartDate) {
-      pickerStartDate = clicked;
-      pickerEndDate = null;
-      pickerSelecting = true;
-      document.getElementById('dateRange').value = formatDate(pickerStartDate);
-      openDatePicker();
-    } else {
-      if (clicked < pickerStartDate) {
-        pickerEndDate = pickerStartDate;
-        pickerStartDate = clicked;
-      } else {
-        pickerEndDate = clicked;
-      }
-      pickerSelecting = false;
-      document.getElementById('dateRange').value = formatDate(pickerStartDate) + ' - ' + formatDate(pickerEndDate);
-      hideDatePicker();
-    }
-  }
-
-  function renderTableBody(tbodyId, rows) {
-    var html = "";
-    var totalChanges = 0;
-    if (rows.length === 0) {
-      html = '<tr class="no-data-row"><td colspan="11">No data found matching the selected criteria.</td></tr>';
-      document.getElementById(tbodyId).innerHTML = html;
-      updateFixedTableHeader();
-      return 0;
-    }
-    for (var i = 0; i < rows.length; i++) {
-      var r = rows[i];
-      var vc = r.changeType || "";
-      var cValue = "";
-      var cLsl = "";
-      var cUsl = "";
-      var cPrevValue = "";
-      var cPrevLsl = "";
-      var cPrevUsl = "";
-
-      if (vc.indexOf("VALUE_CHANGED") !== -1) {
-        cValue = "highlight";
-        cPrevValue = "highlight";
-      }
-      if (vc.indexOf("LSL_CHANGED") !== -1) {
-        cLsl = "highlight";
-        cPrevLsl = "highlight";
-      }
-      if (vc.indexOf("USL_CHANGED") !== -1) {
-        cUsl = "highlight";
-        cPrevUsl = "highlight";
-      }
-
-      if (vc) {
-        var parts = vc.split("|");
-        for (var p = 0; p < parts.length; p++) {
-          if (parts[p]) {
-            totalChanges++;
-          }
-        }
-      }
-
-      html += '<tr>' +
-        '<td>' + (r.source || "") + '</td>' +
-        '<td>' + (r.moduleId || "") + '</td>' +
-        '<td>' + (r.productId || "") + '</td>' +
-        '<td><span class="param-link" onclick="openTrendModal(\'' + (r.parameterName || "").replace(/'/g, "\\'") + '\')">' + (r.parameterName || "") + '</span></td>' +
-        '<td class="' + cValue + '">' + (r.currentValue || "") + '</td>' +
-        '<td class="' + cLsl + '">' + (r.currentLsl || "") + '</td>' +
-        '<td class="' + cUsl + '">' + (r.currentUsl || "") + '</td>' +
-        '<td>' + (r.createDttd || "") + '</td>' +
-        '<td class="' + cPrevValue + '">' + (r.previousValue || "") + '</td>' +
-        '<td class="' + cPrevLsl + '">' + (r.previousLsl || "") + '</td>' +
-        '<td class="' + cPrevUsl + '">' + (r.previousUsl || "") + '</td>' +
-        '</tr>';
-    }
-    document.getElementById(tbodyId).innerHTML = html;
-    updateFixedTableHeader();
-    return totalChanges;
-  }
-
-  var sortState = {
-    table1: { col: -1, dir: "asc" },
-    table2: { col: -1, dir: "asc" },
-    summaryTable1: { col: -1, dir: "asc" },
-    summaryTable2: { col: -1, dir: "asc" }
-  };
-
-  var colToField = [
-    "source", "moduleId", "productId", "parameterName",
-    "currentValue", "currentLsl", "currentUsl", "createDttd",
-    "previousValue", "previousLsl", "previousUsl"
-  ];
-
-  var columnFilterState = {
-    table1: {},
-    table2: {},
-    summaryTable1: {},
-    summaryTable2: {}
-  };
-
-  var summaryData1 = [], summaryData2 = [];
-
-  function getTableData(tableId) {
-    if (tableId === "table1") return data1;
-    if (tableId === "table2") return data2;
-    if (tableId === "summaryTable1") return summaryData1;
-    if (tableId === "summaryTable2") return summaryData2;
-    return [];
-  }
-
-  function escapeHtml(value) {
-    return String(value == null ? "" : value)
-      .replace(/&/g, "&amp;")
-      .replace(/</g, "&lt;")
-      .replace(/>/g, "&gt;")
-      .replace(/"/g, "&quot;")
-      .replace(/'/g, "&#39;");
-  }
-
-  function getColumnUniqueValues(rows, colIndex) {
-    var field = colToField[colIndex];
-    var unique = [];
-    for (var i = 0; i < rows.length; i++) {
-      var value = rows[i][field] == null ? "" : String(rows[i][field]);
-      if (unique.indexOf(value) === -1) {
-        unique.push(value);
-      }
-    }
-    unique.sort(function(a, b) {
-      return a.toLowerCase() < b.toLowerCase() ? -1 : (a.toLowerCase() > b.toLowerCase() ? 1 : 0);
-    });
-    return unique;
-  }
-
-  function toggleColumnFilter(event, tableId, colIndex) {
-    if (event) {
-      event.stopPropagation();
-    }
-    hideAllColumnFilterMenus();
-    var menuId = "columnFilterMenu_" + tableId + "_" + colIndex;
-    var menu = document.getElementById(menuId);
-    if (!menu) {
-      menu = document.createElement("div");
-      menu.id = menuId;
-      menu.className = "column-filter-menu";
-      document.body.appendChild(menu);
-    }
-    buildColumnFilterMenu(tableId, colIndex, menu);
-    var rect = event.target.getBoundingClientRect();
-    menu.style.left = Math.max(5, rect.right - 210) + "px";
-    menu.style.top = (rect.bottom + 3) + "px";
-    menu.style.display = "block";
-  }
-
-  function buildColumnFilterMenu(tableId, colIndex, menu) {
-    var values = getColumnUniqueValues(getTableData(tableId), colIndex);
-    var selected = columnFilterState[tableId][colIndex];
-    var html = '<input type="text" class="dropdown-search" placeholder="Search..." oninput="filterColumnMenuOptions(this)" onclick="stopPickerEvent()">';
-    html += '<div class="column-filter-actions">';
-    html += '<button type="button" onclick="setAllColumnFilterOptions(\'' + tableId + '\',' + colIndex + ', true)">Select All</button>';
-    html += '<button type="button" onclick="setAllColumnFilterOptions(\'' + tableId + '\',' + colIndex + ', false)">Clear</button>';
-    html += '<button type="button" onclick="applyColumnFilter(\'' + tableId + '\',' + colIndex + ')">OK</button>';
-    html += '</div><div class="column-filter-options">';
-    for (var i = 0; i < values.length; i++) {
-      var value = values[i];
-      var checked = !selected || selected.indexOf(value) !== -1;
-      var label = value === "" ? "(Blanks)" : value;
-      html += '<label><input type="checkbox" value="' + escapeHtml(value) + '"' + (checked ? ' checked' : '') + '> ' + escapeHtml(label) + '</label>';
-    }
-    html += '</div>';
-    menu.innerHTML = html;
-  }
-
-  function filterColumnMenuOptions(input) {
-    var menu = input.parentNode;
-    var labels = menu.getElementsByTagName("label");
-    var search = input.value.toLowerCase();
-    for (var i = 0; i < labels.length; i++) {
-      labels[i].style.display = labels[i].innerText.toLowerCase().indexOf(search) !== -1 ? "block" : "none";
-    }
-  }
-
-  function setAllColumnFilterOptions(tableId, colIndex, checked) {
-    var menu = document.getElementById("columnFilterMenu_" + tableId + "_" + colIndex);
-    if (!menu) return;
-    var inputs = menu.getElementsByTagName("input");
-    for (var i = 0; i < inputs.length; i++) {
-      if (inputs[i].type === "checkbox") {
-        inputs[i].checked = checked;
-      }
-    }
-  }
-
-  function applyColumnFilter(tableId, colIndex) {
-    var menu = document.getElementById("columnFilterMenu_" + tableId + "_" + colIndex);
-    if (!menu) return;
-    var inputs = menu.getElementsByTagName("input");
-    var selected = [];
-    var total = 0;
-    for (var i = 0; i < inputs.length; i++) {
-      if (inputs[i].type === "checkbox") {
-        total++;
-        if (inputs[i].checked) {
-          selected.push(inputs[i].value);
-        }
-      }
-    }
-    if (selected.length === total) {
-      delete columnFilterState[tableId][colIndex];
-    } else {
-      columnFilterState[tableId][colIndex] = selected;
-    }
-    menu.style.display = "none";
-    applyFilters();
-  }
-
-  function applyColumnFiltersToRows(tableId, rows) {
-    var filters = columnFilterState[tableId];
-    var result = rows.slice();
-    for (var colIndex in filters) {
-      if (!filters.hasOwnProperty(colIndex)) continue;
-      var selected = filters[colIndex];
-      var field = colToField[parseInt(colIndex, 10)];
-      result = result.filter(function(row) {
-        var value = row[field] == null ? "" : String(row[field]);
-        return selected.indexOf(value) !== -1;
+    function clearErrors() {
+      ["line", "module"].forEach(function(name) {
+        el(name + "Error").style.display = "none";
+        el(name + "Filter").classList.remove("error");
       });
+      el("dateError").style.display = "none";
+      el("fromDate").classList.remove("error");
+      el("toDate").classList.remove("error");
     }
-    return result;
-  }
 
-  function hideAllColumnFilterMenus() {
-    var menus = document.getElementsByClassName("column-filter-menu");
-    for (var i = 0; i < menus.length; i++) {
-      menus[i].style.display = "none";
-    }
-  }
+    function validateFilters() {
+      clearErrors();
+      var site = el("siteFilter").value;
+      var line = el("lineFilter").value;
+      var moduleId = el("moduleFilter").value;
+      var valid = true;
 
-  var fixedHeaderDiv = null;
-  var fixedHeaderTableId = "";
-
-  function getFixedTopOffset() {
-    var header = document.getElementsByClassName("header")[0];
-    var filters = document.getElementsByClassName("filters")[0];
-    var headerHeight = header ? header.offsetHeight : 0;
-    var filtersHeight = filters ? filters.offsetHeight : 0;
-    return headerHeight + filtersHeight;
-  }
-
-  function updateFixedLayoutSpacing() {
-    var header = document.getElementsByClassName("header")[0];
-    var filters = document.getElementsByClassName("filters")[0];
-    var headerHeight = header ? header.offsetHeight : 0;
-    var filtersHeight = filters ? filters.offsetHeight : 0;
-    if (filters) {
-      filters.style.top = headerHeight + "px";
-    }
-    document.body.style.paddingTop = (headerHeight + filtersHeight) + "px";
-  }
-
-  function getFixedHeaderDiv() {
-    if (!fixedHeaderDiv) {
-      fixedHeaderDiv = document.createElement("div");
-      fixedHeaderDiv.className = "floating-table-header";
-      document.body.appendChild(fixedHeaderDiv);
-    }
-    return fixedHeaderDiv;
-  }
-
-  function copyHeaderWidths(sourceTable, cloneTable) {
-    var sourceHeaders = sourceTable.getElementsByTagName("th");
-    var cloneHeaders = cloneTable.getElementsByTagName("th");
-    for (var i = 0; i < sourceHeaders.length && i < cloneHeaders.length; i++) {
-      cloneHeaders[i].style.width = sourceHeaders[i].offsetWidth + "px";
-      cloneHeaders[i].style.minWidth = sourceHeaders[i].offsetWidth + "px";
-      cloneHeaders[i].style.maxWidth = sourceHeaders[i].offsetWidth + "px";
-    }
-  }
-
-  function buildFixedHeader(tableId) {
-    var sourceTable = document.getElementById(tableId);
-    var div = getFixedHeaderDiv();
-    if (!sourceTable) return;
-    fixedHeaderTableId = tableId;
-    div.innerHTML = '<table id="' + tableId + '_fixedHeader">' + sourceTable.tHead.outerHTML + '</table>';
-    copyHeaderWidths(sourceTable, div.getElementsByTagName("table")[0]);
-  }
-
-  function updateFixedTableHeader() {
-    updateFixedLayoutSpacing();
-    var fixedTop = getFixedTopOffset();
-    var div = getFixedHeaderDiv();
-    var tables = ["table1", "table2", "summaryTable1", "summaryTable2"];
-    var activeTable = null;
-    var activeWrapper = null;
-
-    for (var i = 0; i < tables.length; i++) {
-      var table = document.getElementById(tables[i]);
-      if (!table || table.offsetParent === null) continue;
-      var wrapper = table.parentNode;
-      var rect = wrapper.getBoundingClientRect();
-      if (rect.top <= fixedTop && rect.bottom > fixedTop + table.tHead.offsetHeight) {
-        activeTable = table;
-        activeWrapper = wrapper;
-        break;
+      if (site && !line) {
+        el("lineError").style.display = "block";
+        el("lineFilter").classList.add("error");
+        valid = false;
       }
+      if ((site || line) && !moduleId) {
+        el("moduleError").style.display = "block";
+        el("moduleFilter").classList.add("error");
+        valid = false;
+      }
+      if (el("fromDate").value && el("toDate").value &&
+          el("fromDate").value > el("toDate").value) {
+        el("dateError").style.display = "block";
+        el("fromDate").classList.add("error");
+        el("toDate").classList.add("error");
+        valid = false;
+      }
+      return valid;
     }
 
-    if (!activeTable || !activeWrapper) {
-      div.style.display = "none";
-      fixedHeaderTableId = "";
-      return;
-    }
-
-    if (fixedHeaderTableId !== activeTable.id) {
-      buildFixedHeader(activeTable.id);
-    }
-
-    var wrapperRect = activeWrapper.getBoundingClientRect();
-    var cloneTable = div.getElementsByTagName("table")[0];
-    if (!cloneTable) return;
-
-    copyHeaderWidths(activeTable, cloneTable);
-    div.style.display = "block";
-    div.style.top = fixedTop + "px";
-    div.style.left = wrapperRect.left + "px";
-    div.style.width = activeWrapper.clientWidth + "px";
-    cloneTable.style.width = activeTable.offsetWidth + "px";
-    cloneTable.style.marginLeft = (-activeWrapper.scrollLeft) + "px";
-  }
-
-  var modalFixedHeaderDiv = null;
-
-  function getModalFixedHeaderDiv() {
-    var wrapper = document.getElementById("trendTableWrapper");
-    if (!wrapper) return null;
-    if (!modalFixedHeaderDiv) {
-      modalFixedHeaderDiv = document.createElement("div");
-      modalFixedHeaderDiv.className = "modal-table-fixed-header";
-      wrapper.appendChild(modalFixedHeaderDiv);
-    }
-    return modalFixedHeaderDiv;
-  }
-
-  function buildModalFixedHeader() {
-    var sourceTable = document.getElementById("trendTable");
-    var div = getModalFixedHeaderDiv();
-    if (!sourceTable || !div) return;
-    div.innerHTML = '<table>' + sourceTable.tHead.outerHTML + '</table>';
-    copyHeaderWidths(sourceTable, div.getElementsByTagName("table")[0]);
-  }
-
-  function updateModalFixedHeader() {
-    var wrapper = document.getElementById("trendTableWrapper");
-    var sourceTable = document.getElementById("trendTable");
-    var div = getModalFixedHeaderDiv();
-    if (!wrapper || !sourceTable || !div) return;
-
-    if (!div.getElementsByTagName("table")[0]) {
-      buildModalFixedHeader();
-    }
-
-    var cloneTable = div.getElementsByTagName("table")[0];
-    if (!cloneTable) return;
-
-    copyHeaderWidths(sourceTable, cloneTable);
-    div.style.display = wrapper.scrollTop > 0 ? "block" : "none";
-    div.style.top = wrapper.scrollTop + "px";
-    div.style.left = wrapper.scrollLeft + "px";
-    div.style.width = wrapper.clientWidth + "px";
-    cloneTable.style.width = sourceTable.offsetWidth + "px";
-    cloneTable.style.marginLeft = (-wrapper.scrollLeft) + "px";
-  }
-
-  function stopEvent(e) {
-    if (!e) e = window.event;
-    if (!e) return;
-    e.cancelBubble = true;
-    if (e.stopPropagation) e.stopPropagation();
-  }
-
-  function getWheelDelta(e) {
-    if (!e) e = window.event;
-    if (!e) return 0;
-    if (typeof e.deltaY === "number") return e.deltaY;
-    if (typeof e.wheelDelta === "number") return -e.wheelDelta;
-    if (typeof e.detail === "number") return e.detail;
-    return 0;
-  }
-
-  function containScroll(e, el) {
-    if (!e) e = window.event;
-    if (!el) return;
-    var delta = getWheelDelta(e);
-    var atTop = el.scrollTop <= 0;
-    var atBottom = el.scrollTop + el.clientHeight >= el.scrollHeight - 1;
-
-    if ((delta < 0 && atTop) || (delta > 0 && atBottom)) {
-      if (e.preventDefault) e.preventDefault();
-      e.returnValue = false;
-    }
-    stopEvent(e);
-  }
-
-  function hideModalFixedHeader() {
-    if (modalFixedHeaderDiv) {
-      modalFixedHeaderDiv.style.display = "none";
-    }
-  }
-
-  function bindWheelContainment(el) {
-    if (!el || el.wheelContainmentBound) return;
-    el.onwheel = function(e) { containScroll(e, el); };
-    el.onmousewheel = function(e) { containScroll(e, el); };
-    el.addEventListener && el.addEventListener("DOMMouseScroll", function(e) { containScroll(e, el); }, false);
-    el.wheelContainmentBound = true;
-  }
-
-  function bindModalScrollEvents() {
-    var overlay = document.getElementById("trendModal");
-    var box = overlay ? overlay.getElementsByClassName("modal-box")[0] : null;
-    var wrapper = document.getElementById("trendTableWrapper");
-
-    bindWheelContainment(box);
-    bindWheelContainment(wrapper);
-
-    if (overlay && !overlay.modalWheelBound) {
-      overlay.onwheel = function(e) {
-        if (!e) e = window.event;
-        if (e && e.preventDefault) e.preventDefault();
-        if (e) e.returnValue = false;
-        stopEvent(e);
+    function currentFilters() {
+      return {
+        site: el("siteFilter").value,
+        line: el("lineFilter").value,
+        moduleId: el("moduleFilter").value,
+        parameterName: el("paramSearch").value.trim(),
+        startDate: el("fromDate").value,
+        endDate: el("toDate").value
       };
-      overlay.onmousewheel = overlay.onwheel;
-      overlay.addEventListener && overlay.addEventListener("DOMMouseScroll", overlay.onwheel, false);
-      overlay.modalWheelBound = true;
     }
 
-    if (wrapper && !wrapper.modalHeaderScrollBound) {
-      wrapper.onscroll = updateModalFixedHeader;
-      wrapper.modalHeaderScrollBound = true;
+    function buildQuery(page) {
+      var filters = currentFilters();
+      var params = ["page=" + page, "pageSize=" + state.pageSize];
+      Object.keys(filters).forEach(function(key) {
+        if (filters[key]) params.push(key + "=" + encodeURIComponent(filters[key]));
+      });
+      return params.join("&");
     }
-  }
 
-  function getCellText(cell) {
-    return cell ? String(cell.innerText || cell.textContent || "") : "";
-  }
+    function filterRows() {
+      var filters = currentFilters();
+      var from = filters.startDate ? new Date(filters.startDate + "T00:00:00") : null;
+      var to = filters.endDate ? new Date(filters.endDate + "T23:59:59") : null;
+      var search = filters.parameterName.toLowerCase();
 
-  function excelEscape(value) {
-    return String(value == null ? "" : value)
-      .replace(/&/g, "&amp;")
-      .replace(/</g, "&lt;")
-      .replace(/>/g, "&gt;")
-      .replace(/"/g, "&quot;");
-  }
-
-  function tableToExcelHtml(tableId, title) {
-    var table = document.getElementById(tableId);
-    if (!table) return "";
-    var html = '<h3>' + excelEscape(title) + '</h3><table border="1">';
-    var headerCells = table.tHead ? table.tHead.getElementsByTagName("th") : [];
-    html += '<tr>';
-    for (var h = 0; h < headerCells.length; h++) {
-      var label = headerCells[h].getElementsByClassName("th-label")[0];
-      var headerText = label ? label.getAttribute("data-base-text") : getCellText(headerCells[h]);
-      html += '<th>' + excelEscape(headerText) + '</th>';
+      state.filteredRows = state.rows.filter(function(row) {
+        var date = parseReportDate(row.createDttd);
+        return (!filters.site || row.site === filters.site) &&
+          (!filters.line || row.line === filters.line) &&
+          (!filters.moduleId || row.moduleId === filters.moduleId) &&
+          (!search || String(row.parameterName || "").toLowerCase().indexOf(search) >= 0) &&
+          (!from || !date || date >= from) &&
+          (!to || !date || date <= to);
+      });
     }
-    html += '</tr>';
 
-    var rows = table.tBodies.length ? table.tBodies[0].getElementsByTagName("tr") : [];
-    for (var r = 0; r < rows.length; r++) {
-      if (rows[r].className && rows[r].className.indexOf("no-data-row") !== -1) continue;
-      var cells = rows[r].getElementsByTagName("td");
-      html += '<tr>';
-      for (var c = 0; c < cells.length; c++) {
-        html += '<td>' + excelEscape(getCellText(cells[c])) + '</td>';
+    function rowHtml(row, summary) {
+      var changes = row.changeType || "";
+      function changed(type) {
+        return changes.indexOf(type) >= 0 ? ' class="highlight"' : "";
       }
-      html += '</tr>';
+
+      var common =
+        "<td>" + escapeHtml(row.source) + "</td>" +
+        "<td>" + escapeHtml(row.moduleId) + "</td>" +
+        "<td>" + escapeHtml(row.productId) + "</td>" +
+        '<td><span class="param-link" data-parameter="' + escapeHtml(row.parameterName) + '">' + escapeHtml(row.parameterName) + "</span></td>" +
+        (summary ? "" :
+          "<td" + changed("VALUE_CHANGED") + ">" + escapeHtml(row.currentValue) + "</td>" +
+          "<td" + changed("LSL_CHANGED") + ">" + escapeHtml(row.currentLsl) + "</td>" +
+          "<td" + changed("USL_CHANGED") + ">" + escapeHtml(row.currentUsl) + "</td>") +
+        (summary ?
+          "<td>" + escapeHtml(row.currentValue) + "</td><td>" + escapeHtml(row.currentLsl) + "</td><td>" + escapeHtml(row.currentUsl) + "</td>" : "") +
+        "<td>" + escapeHtml(row.createDttd) + "</td>";
+
+      if (!summary) {
+        common +=
+          "<td" + changed("VALUE_CHANGED") + ">" + escapeHtml(row.previousValue) + "</td>" +
+          "<td" + changed("LSL_CHANGED") + ">" + escapeHtml(row.previousLsl) + "</td>" +
+          "<td" + changed("USL_CHANGED") + ">" + escapeHtml(row.previousUsl) + "</td>";
+      }
+      return "<tr>" + common + "</tr>";
     }
-    html += '</table>';
-    return html;
-  }
 
-  function saveExcelFile(fileName, bodyHtml) {
-    var excelHtml = '<html xmlns:o="urn:schemas-microsoft-com:office:office" xmlns:x="urn:schemas-microsoft-com:office:excel" xmlns="http://www.w3.org/TR/REC-html40"><head><meta charset="UTF-8"></head><body>' + bodyHtml + '</body></html>';
-    var blob = new Blob([excelHtml], { type: "application/vnd.ms-excel" });
+    function render() {
+      filterRows();
+      var rows = state.filteredRows;
+      var changeCount = rows.reduce(function(total, row) {
+        return total + (row.changeType ? row.changeType.split("|").filter(Boolean).length : 0);
+      }, 0);
 
-    if (window.navigator && window.navigator.msSaveBlob) {
-      window.navigator.msSaveBlob(blob, fileName);
-      return;
+      el("changeCount").textContent = changeCount;
+      el("mainBody").innerHTML = rows.length
+        ? rows.map(function(row) { return rowHtml(row, false); }).join("")
+        : '<tr class="no-data-row"><td colspan="11">No data found.</td></tr>';
     }
 
-    var link = document.createElement("a");
-    if (window.URL && window.URL.createObjectURL) {
-      link.href = window.URL.createObjectURL(blob);
-      link.download = fileName;
-      document.body.appendChild(link);
+    function summaryRowHtml(row) {
+      return "<tr>" +
+        "<td>" + escapeHtml(row.source) + "</td>" +
+        "<td>" + escapeHtml(row.moduleId) + "</td>" +
+        '<td><span class="param-link" data-parameter="' + escapeHtml(row.parameterName) + '">' +
+          escapeHtml(row.parameterName) + "</span></td>" +
+        "<td>" + escapeHtml(row.firstChangeTime) + "</td>" +
+        "<td>" + escapeHtml(row.lastChangeTime) + "</td>" +
+        "<td>" + escapeHtml(row.valueChangeCount) + "</td>" +
+        "<td>" + escapeHtml(row.lslChangeCount) + "</td>" +
+        "<td>" + escapeHtml(row.uslChangeCount) + "</td>" +
+        "<td>" + escapeHtml(row.totalChangePoints) + "</td>" +
+        "<td>" + escapeHtml(row.changeType) + "</td>" +
+        "</tr>";
+    }
+
+    function renderSummary() {
+      el("summaryBody").innerHTML = state.summaryRows.length
+        ? state.summaryRows.map(summaryRowHtml).join("")
+        : '<tr class="no-data-row"><td colspan="10">No summary data found.</td></tr>';
+    }
+
+    function buildLocalSummary() {
+      var grouped = {};
+      filterRows();
+      state.filteredRows.forEach(function(row) {
+        var key = row.source + "|" + row.moduleId + "|" + row.parameterName;
+        if (!grouped[key]) {
+          grouped[key] = {
+            source: row.source,
+            moduleId: row.moduleId,
+            parameterName: row.parameterName,
+            firstChangeTime: row.createDttd,
+            lastChangeTime: row.createDttd,
+            valueChangeCount: 0,
+            lslChangeCount: 0,
+            uslChangeCount: 0,
+            totalChangePoints: 0,
+            changeType: ""
+          };
+        }
+        var item = grouped[key];
+        var types = String(row.changeType || "").split("|");
+        if (types.indexOf("VALUE_CHANGED") >= 0) item.valueChangeCount++;
+        if (types.indexOf("LSL_CHANGED") >= 0) item.lslChangeCount++;
+        if (types.indexOf("USL_CHANGED") >= 0) item.uslChangeCount++;
+        if (row.changeType) item.totalChangePoints++;
+      });
+      return Object.keys(grouped).map(function(key) {
+        var item = grouped[key];
+        var types = [];
+        if (item.valueChangeCount) types.push("VALUE_CHANGED");
+        if (item.lslChangeCount) types.push("LSL_CHANGED");
+        if (item.uslChangeCount) types.push("USL_CHANGED");
+        item.changeType = types.join("|");
+        return item;
+      });
+    }
+
+    function loadSummary() {
+      el("loader").style.display = "block";
+      $.ajax({
+        url: "/api/parameter-change-summary?" + buildQuery(1),
+        dataType: "json",
+        cache: false
+      }).done(function(response) {
+        state.summaryRows = response.data || [];
+      }).fail(function() {
+        state.summaryRows = buildLocalSummary();
+      }).always(function() {
+        el("loader").style.display = "none";
+        renderSummary();
+      });
+    }
+
+    function sampleRows() {
+      var parameters = ["ROLLER", "PRESSURE", "TEMP_CTRL", "SPEED", "VOLTAGE", "FLOW_RATE"];
+      var changes = ["VALUE_CHANGED", "LSL_CHANGED", "USL_CHANGED", "VALUE_CHANGED|LSL_CHANGED", ""];
+      var rows = [];
+
+      for (var i = 0; i < 120; i++) {
+        var base = 20 + i % 80;
+        var change = changes[i % changes.length];
+        var date = new Date(2026, 5, 1 + i % 22);
+        rows.push({
+          site: "Site " + String.fromCharCode(65 + i % 3),
+          line: "Line " + (1 + i % 3),
+          source: "SRC-" + (1 + i % 5),
+          productId: "AMB" + (674 + i),
+          moduleId: "N1DLE" + (32 + i),
+          parameterName: "M_CHB" + (i % 100) + "_" + parameters[i % parameters.length],
+          createDttd: ("0" + date.getDate()).slice(-2) + "/06/2026",
+          previousValue: base,
+          currentValue: change.indexOf("VALUE_CHANGED") >= 0 ? base + 1 : base,
+          previousLsl: base - 10,
+          currentLsl: change.indexOf("LSL_CHANGED") >= 0 ? base - 9 : base - 10,
+          previousUsl: base + 20,
+          currentUsl: change.indexOf("USL_CHANGED") >= 0 ? base + 21 : base + 20,
+          changeType: change
+        });
+      }
+      return rows;
+    }
+
+    function loadData(append) {
+      if (state.loading || (append && !state.hasMore)) return;
+      state.loading = true;
+      if (!append) {
+        state.page = 0;
+        state.rows = [];
+        el("loader").style.display = "block";
+      }
+
+      var nextPage = state.page + 1;
+      $.ajax({
+        url: "/api/parameter-changes?" + buildQuery(nextPage),
+        dataType: "json",
+        cache: false
+      }).done(function(response) {
+        var newRows = response.data || [];
+        state.rows = append ? state.rows.concat(newRows) : newRows;
+        state.page = response.page || nextPage;
+        state.hasMore = response.hasMore === true;
+      }).fail(function() {
+        if (!append) state.rows = sampleRows();
+        state.hasMore = false;
+      }).always(function() {
+        state.loading = false;
+        el("loader").style.display = "none";
+        updateFilterOptions();
+        render();
+      });
+    }
+
+    function resetFilters() {
+      ["siteFilter", "lineFilter", "moduleFilter", "paramSearch"].forEach(function(id) {
+        el(id).value = "";
+      });
+      clearErrors();
+      setDefaultDates();
+      updateFilterOptions();
+      render();
+    }
+
+    function toggleSummary() {
+      state.summary = !state.summary;
+      el("mainView").hidden = state.summary;
+      el("summaryView").hidden = !state.summary;
+      el("summaryToggleBtn").textContent = state.summary ? "Main Data" : "Summary";
+      if (state.summary) loadSummary();
+    }
+
+    function tableToExcel(tableId, title) {
+      var table = el(tableId);
+      var copy = table.cloneNode(true);
+      var links = copy.querySelectorAll(".param-link");
+      for (var i = 0; i < links.length; i++) links[i].outerHTML = escapeHtml(links[i].textContent);
+      var html = "<h3>" + escapeHtml(title) + "</h3>" + copy.outerHTML;
+      var blob = new Blob(['<html><meta charset="UTF-8"><body>' + html + "</body></html>"], { type: "application/vnd.ms-excel" });
+      var link = document.createElement("a");
+      link.href = URL.createObjectURL(blob);
+      link.download = title.replace(/\s+/g, "-").toLowerCase() + ".xls";
       link.click();
-      document.body.removeChild(link);
-      window.URL.revokeObjectURL(link.href);
-    }
-  }
-
-  function downloadCurrentViewExcel() {
-    if (isSummaryView) {
-      downloadSummaryExcel();
-    } else {
-      downloadMainExcel();
-    }
-  }
-
-  function downloadMainExcel() {
-    var html = tableToExcelHtml("table1", "Parameter Changes - Table 1") + '<br>' + tableToExcelHtml("table2", "Parameter Changes - Table 2");
-    saveExcelFile("parameter-change-report.xls", html);
-  }
-
-  function downloadModalExcel() {
-    saveExcelFile("parameter-trend.xls", tableToExcelHtml("trendTable", "Parameter Trend"));
-  }
-
-  function sortTable(tableId, colIndex) {
-    var state = sortState[tableId];
-    if (state.col === colIndex) {
-      if (state.dir === "asc") {
-        state.dir = "desc";
-      } else if (state.dir === "desc") {
-        state.col = -1;
-        state.dir = "asc";
-      } else {
-        state.dir = "asc";
-      }
-    } else {
-      state.col = colIndex;
-      state.dir = "asc";
-    }
-    applyFilters();
-  }
-
-  function sortData(arr, colIndex, direction) {
-    if (colIndex < 0) return arr;
-    var field = colToField[colIndex];
-    var sorted = arr.slice();
-    sorted.sort(function(a, b) {
-      var av = a[field] || "";
-      var bv = b[field] || "";
-      var an = parseFloat(av);
-      var bn = parseFloat(bv);
-      var isNum = !isNaN(an) && !isNaN(bn) && av !== "" && bv !== "";
-      if (isNum) {
-        return direction === "asc" ? an - bn : bn - an;
-      }
-      av = String(av).toLowerCase();
-      bv = String(bv).toLowerCase();
-      if (av < bv) return direction === "asc" ? -1 : 1;
-      if (av > bv) return direction === "asc" ? 1 : -1;
-      return 0;
-    });
-    return sorted;
-  }
-
-  function updateSortHeaders() {
-    var tables = ["table1", "table2", "summaryTable1", "summaryTable2"];
-    for (var t = 0; t < tables.length; t++) {
-      var tbl = document.getElementById(tables[t]);
-      if (!tbl) continue;
-      var headers = tbl.getElementsByTagName("th");
-      var state = sortState[tables[t]];
-      for (var h = 0; h < headers.length; h++) {
-        var label = headers[h].getElementsByClassName("th-label")[0];
-        var filterBtn = headers[h].getElementsByClassName("column-filter-btn")[0];
-        if (!label) continue;
-        var baseText = label.getAttribute("data-base-text") || label.innerText;
-        var iconClass = "fa fa-sort";
-        if (state.col === h) {
-          iconClass = state.dir === "asc" ? "fa fa-sort-up" : "fa fa-sort-down";
-        }
-        label.innerHTML = baseText + ' <i class="' + iconClass + ' sort-icon"></i>';
-        if (filterBtn) {
-          if (columnFilterState[tables[t]][h]) {
-            addClass(filterBtn, "active");
-          } else {
-            removeClass(filterBtn, "active");
-          }
-        }
-      }
-    }
-    fixedHeaderTableId = "";
-    updateFixedTableHeader();
-  }
-
-  function applyFilters() {
-    var sites = selectedFilters.site ? [selectedFilters.site] : [];
-    var lines = selectedFilters.line ? [selectedFilters.line] : [];
-    var mods = selectedFilters.moduleId ? [selectedFilters.moduleId] : [];
-    var prods = selectedFilters.productId ? [selectedFilters.productId] : [];
-    var dateRange = parseDateRange(document.getElementById("dateRange").value);
-    var fromDate = dateRange.from;
-    var toDate = dateRange.to;
-    var paramSearch = document.getElementById("paramSearch").value.toLowerCase();
-
-    var filtered1 = [];
-    for (var i = 0; i < data1.length; i++) {
-      var r = data1[i];
-      if (sites.length > 0 && sites.indexOf(r.site) === -1) continue;
-      if (lines.length > 0 && lines.indexOf(r.line) === -1) continue;
-      if (mods.length > 0 && mods.indexOf(r.moduleId) === -1) continue;
-      if (prods.length > 0 && prods.indexOf(r.productId) === -1) continue;
-      if (paramSearch && String(r.parameterName || "").toLowerCase().indexOf(paramSearch) === -1) continue;
-      var d = parseDate(r.createDttd);
-      if (fromDate && d && d < fromDate) continue;
-      if (toDate && d && d > toDate) continue;
-      filtered1.push(r);
+      URL.revokeObjectURL(link.href);
     }
 
-    var filtered2 = [];
-    for (var i = 0; i < data2.length; i++) {
-      var r = data2[i];
-      if (sites.length > 0 && sites.indexOf(r.site) === -1) continue;
-      if (lines.length > 0 && lines.indexOf(r.line) === -1) continue;
-      if (mods.length > 0 && mods.indexOf(r.moduleId) === -1) continue;
-      if (prods.length > 0 && prods.indexOf(r.productId) === -1) continue;
-      if (paramSearch && String(r.parameterName || "").toLowerCase().indexOf(paramSearch) === -1) continue;
-      var d = parseDate(r.createDttd);
-      if (fromDate && d && d < fromDate) continue;
-      if (toDate && d && d > toDate) continue;
-      filtered2.push(r);
-    }
-
-    filtered1 = applyColumnFiltersToRows("table1", filtered1);
-    filtered2 = applyColumnFiltersToRows("table2", filtered2);
-
-    filtered1 = sortData(filtered1, sortState.table1.col, sortState.table1.dir);
-    filtered2 = sortData(filtered2, sortState.table2.col, sortState.table2.dir);
-
-    var count1 = renderTableBody("tbody1", filtered1);
-    var count2 = renderTableBody("tbody2", filtered2);
-    document.getElementById("changeCount").innerText = count1 + count2;
-    if (isSummaryView) {
-      buildSummaryTable();
-    }
-    updateSortHeaders();
-    updateFixedTableHeader();
-  }
-
-  var trendData = [
-    { dateTime: "01/06/2026 08:00", value: 0.2, lsl: 0, usl: 895, prevValue: 0.5, prevLsl: 0, prevUsl: 900 },
-    { dateTime: "01/06/2026 09:00", value: 0.4, lsl: 0, usl: 895, prevValue: 0.6, prevLsl: 0, prevUsl: 900 },
-    { dateTime: "01/06/2026 10:00", value: 0.6, lsl: 0, usl: 895, prevValue: 0.7, prevLsl: 0, prevUsl: 900 },
-    { dateTime: "01/06/2026 11:00", value: 0.8, lsl: 0, usl: 895, prevValue: 0.8, prevLsl: 0, prevUsl: 900 },
-    { dateTime: "01/06/2026 12:00", value: 1.0, lsl: 0, usl: 895, prevValue: 0.9, prevLsl: 0, prevUsl: 900 },
-    { dateTime: "01/06/2026 13:00", value: 1.2, lsl: 0, usl: 895, prevValue: 1.0, prevLsl: 0, prevUsl: 900 },
-    { dateTime: "01/06/2026 14:00", value: 1.0, lsl: 0, usl: 895, prevValue: 1.1, prevLsl: 0, prevUsl: 900 },
-    { dateTime: "01/06/2026 15:00", value: 0.9, lsl: 0, usl: 895, prevValue: 1.0, prevLsl: 0, prevUsl: 900 },
-    { dateTime: "01/06/2026 16:00", value: 1.1, lsl: 0, usl: 895, prevValue: 1.1, prevLsl: 0, prevUsl: 900 },
-    { dateTime: "01/06/2026 17:00", value: 1.0, lsl: 0, usl: 895, prevValue: 1.2, prevLsl: 0, prevUsl: 900 }
-  ];
-
-  var trendChart = null;
-  var trendModalTimer = null;
-  var bodyOverflowBeforeModal = "";
-  var modalScrollLocked = false;
-
-  function lockPageScrollForModal() {
-    if (!modalScrollLocked) {
-      bodyOverflowBeforeModal = document.body.style.overflow || "";
+    function openTrend(parameterName) {
+      el("modalTitle").textContent = "Trend: " + parameterName;
+      el("trendBody").innerHTML = trendData.map(function(row) {
+        return "<tr>" + row.map(function(value) { return "<td>" + value + "</td>"; }).join("") + "</tr>";
+      }).join("");
+      el("trendModal").style.display = "block";
       document.body.style.overflow = "hidden";
-      modalScrollLocked = true;
-    }
-  }
 
-  function restorePageScrollAfterModal() {
-    if (modalScrollLocked) {
-      document.body.style.overflow = bodyOverflowBeforeModal;
-      modalScrollLocked = false;
+      if (trendChart) trendChart.dispose();
+      trendChart = echarts.init(el("trendChart"));
+      var names = ["Value", "LSL", "USL", "Prev Value", "Prev LSL", "Prev USL"];
+      trendChart.setOption({
+        tooltip: { trigger: "axis" },
+        legend: { data: names, bottom: 5 },
+        grid: { left: "6%", right: "5%", top: "8%", bottom: "20%" },
+        xAxis: { type: "category", boundaryGap: false, data: trendData.map(function(row) { return row[0]; }), axisLabel: { rotate: 35 } },
+        yAxis: { type: "value" },
+        series: names.map(function(name, index) {
+          return { name: name, type: "line", smooth: true, data: trendData.map(function(row) { return row[index + 1]; }) };
+        })
+      });
     }
-  }
 
-  function openTrendModal(parameterName) {
-    document.getElementById('trendModal').style.display = 'none';
-    showLoader();
-    if (trendModalTimer) {
-      clearTimeout(trendModalTimer);
-    }
-    trendModalTimer = setTimeout(function() {
-      document.getElementById('modalTitle').innerText = 'Trend: ' + parameterName;
-      renderTrendTable();
-      document.getElementById('trendModal').style.display = 'block';
-      lockPageScrollForModal();
-      bindModalScrollEvents();
-      buildModalFixedHeader();
-      updateModalFixedHeader();
-      initTrendChart();
-      hideLoader();
-      trendModalTimer = null;
-    }, 1000);
-  }
-
-  function closeModal(event) {
-    if (event.target.id === 'trendModal') {
-      if (trendModalTimer) {
-        clearTimeout(trendModalTimer);
-        trendModalTimer = null;
-        hideLoader();
-      }
-      document.getElementById('trendModal').style.display = 'none';
-      hideModalFixedHeader();
-      restorePageScrollAfterModal();
+    function closeTrend() {
+      el("trendModal").style.display = "none";
+      document.body.style.overflow = "";
       if (trendChart) {
         trendChart.dispose();
         trendChart = null;
       }
     }
-  }
 
-  function closeModalDirect() {
-    if (trendModalTimer) {
-      clearTimeout(trendModalTimer);
-      trendModalTimer = null;
-      hideLoader();
+    function updateTimer() {
+      var minutes = Math.floor(refreshSeconds / 60);
+      var seconds = ("0" + refreshSeconds % 60).slice(-2);
+      el("headerTimer").textContent = "Next refresh in " + minutes + " min " + seconds + " sec";
+      refreshSeconds = refreshSeconds > 0 ? refreshSeconds - 1 : 300;
     }
-    document.getElementById('trendModal').style.display = 'none';
-    hideModalFixedHeader();
-    restorePageScrollAfterModal();
-    if (trendChart) {
-      trendChart.dispose();
-      trendChart = null;
-    }
-  }
 
-  var isSummaryView = false;
+    el("siteFilter").addEventListener("change", function() {
+      el("lineFilter").value = "";
+      el("moduleFilter").value = "";
+      clearErrors();
+      updateFilterOptions();
+    });
 
-  function toggleSummaryView() {
-    isSummaryView = !isSummaryView;
-    var btn = document.getElementById('summaryToggleBtn');
-    if (isSummaryView) {
-      btn.innerText = 'Main Data';
-      document.getElementById('table1').parentNode.style.display = 'none';
-      document.getElementById('table2').parentNode.style.display = 'none';
-      document.getElementById('summaryView').style.display = 'block';
-      buildSummaryTable();
-      updateSortHeaders();
-      updateFixedTableHeader();
-    } else {
-      btn.innerText = 'Summary';
-      document.getElementById('table1').parentNode.style.display = 'block';
-      document.getElementById('table2').parentNode.style.display = 'block';
-      document.getElementById('summaryView').style.display = 'none';
-      updateSortHeaders();
-      updateFixedTableHeader();
-    }
-  }
+    el("lineFilter").addEventListener("change", function() {
+      el("moduleFilter").value = "";
+      clearErrors();
+      updateFilterOptions();
+    });
 
-  function getFilteredArray(arr) {
-    var sites = selectedFilters.site ? [selectedFilters.site] : [];
-    var lines = selectedFilters.line ? [selectedFilters.line] : [];
-    var mods = selectedFilters.moduleId ? [selectedFilters.moduleId] : [];
-    var prods = selectedFilters.productId ? [selectedFilters.productId] : [];
-    var dateRange = parseDateRange(document.getElementById("dateRange").value);
-    var fromDate = dateRange.from;
-    var toDate = dateRange.to;
-    var paramSearch = document.getElementById("paramSearch").value.toLowerCase();
-
-    var filtered = [];
-    for (var i = 0; i < arr.length; i++) {
-      var r = arr[i];
-      if (sites.length > 0 && sites.indexOf(r.site) === -1) continue;
-      if (lines.length > 0 && lines.indexOf(r.line) === -1) continue;
-      if (mods.length > 0 && mods.indexOf(r.moduleId) === -1) continue;
-      if (prods.length > 0 && prods.indexOf(r.productId) === -1) continue;
-      if (paramSearch && String(r.parameterName || "").toLowerCase().indexOf(paramSearch) === -1) continue;
-      var d = parseDate(r.createDttd);
-      if (fromDate && d && d < fromDate) continue;
-      if (toDate && d && d > toDate) continue;
-      filtered.push(r);
-    }
-    return filtered;
-  }
-
-  function buildSummaryRowHtml(r) {
-    return '<tr>' +
-      '<td>' + (r.source || "") + '</td>' +
-      '<td>' + (r.moduleId || "") + '</td>' +
-      '<td>' + (r.productId || "") + '</td>' +
-      '<td><span class="param-link" onclick="openTrendModal(\'' + (r.parameterName || "").replace(/'/g, "\\'") + '\')">' + (r.parameterName || "") + '</span></td>' +
-      '<td>' + (r.currentValue || "") + '</td>' +
-      '<td>' + (r.currentLsl || "") + '</td>' +
-      '<td>' + (r.currentUsl || "") + '</td>' +
-      '<td>' + (r.createDttd || "") + '</td>' +
-      '</tr>';
-  }
-
-  function buildSummaryTable() {
-    summaryData1 = getFilteredArray(data1);
-    summaryData2 = getFilteredArray(data2);
-
-    summaryData1 = applyColumnFiltersToRows("summaryTable1", summaryData1);
-    summaryData2 = applyColumnFiltersToRows("summaryTable2", summaryData2);
-
-    summaryData1 = sortData(summaryData1, sortState.summaryTable1.col, sortState.summaryTable1.dir);
-    summaryData2 = sortData(summaryData2, sortState.summaryTable2.col, sortState.summaryTable2.dir);
-
-    var html1 = '';
-    if (summaryData1.length === 0) {
-      html1 = '<tr class="no-data-row"><td colspan="8">No data found in RCP table.</td></tr>';
-    } else {
-      for (var i = 0; i < summaryData1.length; i++) {
-        html1 += buildSummaryRowHtml(summaryData1[i]);
+    el("moduleFilter").addEventListener("change", clearErrors);
+    el("fromDate").addEventListener("change", clearErrors);
+    el("toDate").addEventListener("change", clearErrors);
+    el("searchBtn").addEventListener("click", function() {
+      if (validateFilters()) {
+        loadData(false);
+        if (state.summary) loadSummary();
       }
-    }
-    document.getElementById('summaryTableBody1').innerHTML = html1;
+    });
+    el("resetBtn").addEventListener("click", resetFilters);
+    el("summaryToggleBtn").addEventListener("click", toggleSummary);
+    el("downloadBtn").addEventListener("click", function() {
+      tableToExcel(state.summary ? "summaryTable" : "mainTable", state.summary ? "Summary Report" : "Parameter Change Report");
+    });
+    el("modalDownloadBtn").addEventListener("click", function() {
+      tableToExcel("trendTable", "Parameter Trend");
+    });
+    el("modalClose").addEventListener("click", closeTrend);
+    el("trendModal").addEventListener("click", function(event) {
+      if (event.target === this) closeTrend();
+    });
+    document.addEventListener("click", function(event) {
+      if (event.target.classList.contains("param-link")) openTrend(event.target.getAttribute("data-parameter"));
+    });
+    window.addEventListener("scroll", function() {
+      if (window.innerHeight + window.pageYOffset >= document.documentElement.scrollHeight - 300) loadData(true);
+    });
+    window.addEventListener("resize", function() {
+      if (trendChart) trendChart.resize();
+    });
 
-    var html2 = '';
-    if (summaryData2.length === 0) {
-      html2 = '<tr class="no-data-row"><td colspan="8">No data found in ECM table.</td></tr>';
-    } else {
-      for (var i = 0; i < summaryData2.length; i++) {
-        html2 += buildSummaryRowHtml(summaryData2[i]);
-      }
-    }
-    document.getElementById('summaryTableBody2').innerHTML = html2;
-  }
-
-  function downloadSummaryExcel() {
-    var html = tableToExcelHtml("summaryTable1", "Summary - RCP") + '<br>' + tableToExcelHtml("summaryTable2", "Summary - ECM");
-    saveExcelFile("Summary_Report.xls", html);
-  }
-
-  function renderTrendTable() {
-    var html = '';
-    for (var i = 0; i < trendData.length; i++) {
-      var d = trendData[i];
-      html += '<tr>' +
-        '<td>' + d.dateTime + '</td>' +
-        '<td>' + d.value + '</td>' +
-        '<td>' + d.lsl + '</td>' +
-        '<td>' + d.usl + '</td>' +
-        '<td>' + d.prevValue + '</td>' +
-        '<td>' + d.prevLsl + '</td>' +
-        '<td>' + d.prevUsl + '</td>' +
-        '</tr>';
-    }
-    document.getElementById('trendTableBody').innerHTML = html;
-    buildModalFixedHeader();
-    updateModalFixedHeader();
-  }
-
-  function initTrendChart() {
-    var chartDom = document.getElementById('trendChart');
-    if (trendChart) {
-      trendChart.dispose();
-    }
-    trendChart = echarts.init(chartDom);
-
-    var xData = [];
-    var valueData = [];
-    var lslData = [];
-    var uslData = [];
-    var prevValueData = [];
-    var prevLslData = [];
-    var prevUslData = [];
-
-    for (var i = 0; i < trendData.length; i++) {
-      xData.push(trendData[i].dateTime);
-      valueData.push(trendData[i].value);
-      lslData.push(trendData[i].lsl);
-      uslData.push(trendData[i].usl);
-      prevValueData.push(trendData[i].prevValue);
-      prevLslData.push(trendData[i].prevLsl);
-      prevUslData.push(trendData[i].prevUsl);
-    }
-
-    var option = {
-      tooltip: {
-        trigger: 'axis',
-        textStyle: { fontSize: 12 }
-      },
-      legend: {
-        data: ['Value', 'LSL', 'USL', 'Prev Value', 'Prev LSL', 'Prev USL'],
-        bottom: 5,
-        itemGap: 20,
-        itemWidth: 22,
-        itemHeight: 10,
-        textStyle: { fontSize: 11, color: '#333333' }
-      },
-      grid: {
-        left: '6%',
-        right: '5%',
-        top: '8%',
-        bottom: '22%'
-      },
-      xAxis: {
-        type: 'category',
-        data: xData,
-        boundaryGap: false,
-        axisLabel: {
-          fontSize: 10,
-          rotate: 35,
-          color: '#555555',
-          interval: 0
-        },
-        axisLine: { lineStyle: { color: '#cccccc' } },
-        axisTick: { alignWithLabel: true }
-      },
-      yAxis: {
-        type: 'value',
-        axisLabel: {
-          fontSize: 11,
-          color: '#555555'
-        },
-        axisLine: { lineStyle: { color: '#cccccc' } },
-        splitLine: { lineStyle: { color: '#eeeeee' } }
-      },
-      color: ['#003366', '#e74c3c', '#27ae60', '#f39c12', '#8e44ad', '#3498db'],
-      series: [
-        { name: 'Value', type: 'line', data: valueData, smooth: true, symbol: 'circle', symbolSize: 7, lineStyle: { width: 2.5 } },
-        { name: 'LSL', type: 'line', data: lslData, smooth: true, symbol: 'diamond', symbolSize: 6, lineStyle: { width: 2, type: 'dashed' } },
-        { name: 'USL', type: 'line', data: uslData, smooth: true, symbol: 'triangle', symbolSize: 6, lineStyle: { width: 2, type: 'dashed' } },
-        { name: 'Prev Value', type: 'line', data: prevValueData, smooth: true, symbol: 'circle', symbolSize: 6, lineStyle: { width: 2 } },
-        { name: 'Prev LSL', type: 'line', data: prevLslData, smooth: true, symbol: 'diamond', symbolSize: 5, lineStyle: { width: 1.5, type: 'dotted' } },
-        { name: 'Prev USL', type: 'line', data: prevUslData, smooth: true, symbol: 'triangle', symbolSize: 5, lineStyle: { width: 1.5, type: 'dotted' } }
-      ]
-    };
-
-    trendChart.setOption(option);
-  }
-
-  function initPage() {
-    var siteOpts = getUniqueValues(data1, data2, "site");
-    var lineOpts = getUniqueValues(data1, data2, "line");
-    var modOpts  = getUniqueValues(data1, data2, "moduleId");
-
-    selectedFilters = { site: "", line: "", moduleId: "" };
-
-    buildDropdown("siteDd",   "siteBtn",   siteOpts, "siteGroup");
-    buildDropdown("lineDd",   "lineBtn",   lineOpts, "lineGroup");
-    buildDropdown("moduleDd", "moduleBtn", modOpts,  "moduleGroup");
-
-    var today = new Date();
-    var sevenDaysAgo = new Date(today.getFullYear(), today.getMonth(), today.getDate() - 6);
-    pickerStartDate = sevenDaysAgo;
-    pickerEndDate = today;
-    document.getElementById("dateRange").value = formatDate(pickerStartDate) + ' - ' + formatDate(pickerEndDate);
-
-    applyFilters();
-  }
-
-  // Auto-refresh interval (5 minutes = 300000ms)
-  var autoRefreshInterval = null;
-
-  function startAutoRefresh() {
-    if (autoRefreshInterval) {
-      clearInterval(autoRefreshInterval);
-    }
-    autoRefreshInterval = setInterval(function() {
-      getData();
-      resetHeaderTimer();
-    }, 300000); // 5 minutes
-  }
-
-  var headerTimerSeconds = 300;
-  var headerTimerInterval = null;
-
-  function updateHeaderTimer() {
-    var minutes = Math.floor(headerTimerSeconds / 60);
-    var seconds = headerTimerSeconds % 60;
-    var secondsText = seconds < 10 ? "0" + seconds : String(seconds);
-    document.getElementById("headerTimer").innerText = "Next refresh in " + minutes + " min " + secondsText + " sec";
-
-    headerTimerSeconds--;
-    if (headerTimerSeconds < 0) {
-      headerTimerSeconds = 300;
-    }
-  }
-
-  function resetHeaderTimer() {
-    headerTimerSeconds = 300;
-    updateHeaderTimer();
-  }
-
-  function startHeaderTimer() {
-    if (headerTimerInterval) {
-      clearInterval(headerTimerInterval);
-    }
-    updateHeaderTimer();
-    headerTimerInterval = setInterval(updateHeaderTimer, 1000);
-  }
-
-  function bindFixedHeaderEvents() {
-    var wrappers = document.getElementsByClassName("table-wrapper");
-    for (var i = 0; i < wrappers.length; i++) {
-      if (!wrappers[i].fixedHeaderBound) {
-        wrappers[i].onscroll = updateFixedTableHeader;
-        wrappers[i].fixedHeaderBound = true;
-      }
-    }
-    window.onscroll = updateFixedTableHeader;
-    window.onresize = updateFixedTableHeader;
-  }
-
-  window.onload = function() {
-    updateFixedLayoutSpacing();
-    bindFixedHeaderEvents();
-    startHeaderTimer();
-    getData();
-    startAutoRefresh();
-    updateFixedTableHeader();
-  };
-</script>
-<div id="loaderOverlay" class="loader-overlay">
-  <div class="loader-spinner"></div>
-  <div class="loader-text">Loading...</div>
-</div>
-
-<div id="trendModal" class="modal-overlay" onclick="closeModal(event)">
-  <div class="modal-box">
-    <div class="modal-header">
-      <span id="modalTitle">Parameter Trend</span>
-      <span class="modal-close" onclick="closeModalDirect()">&times;</span>
-      <button type="button" class="modal-download-btn" onclick="downloadModalExcel()"><i class="fa fa-download"></i>Download Excel</button>
-    </div>
-    <div id="trendChart" class="chart-container"></div>
-    <div id="trendTableWrapper" class="modal-table-wrapper">
-      <table id="trendTable">
-        <thead>
-          <tr>
-            <th>Date Time</th>
-            <th>Value</th>
-            <th>LSL</th>
-            <th>USL</th>
-            <th>Prev Value</th>
-            <th>Prev LSL</th>
-            <th>Prev USL</th>
-          </tr>
-        </thead>
-        <tbody id="trendTableBody"></tbody>
-      </table>
-    </div>
-  </div>
-</div>
-
+    setDefaultDates();
+    updateTimer();
+    setInterval(updateTimer, 1000);
+    setInterval(function() {
+      refreshSeconds = 300;
+      loadData(false);
+    }, 300000);
+    loadData(false);
+  </script>
 </body>
 </html>
