@@ -1,742 +1,1219 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="en">
-<head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>Parameter Change Report</title>
-  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css">
-  <script src="https://code.jquery.com/jquery-1.12.4.min.js"></script>
-  <script src="https://cdn.jsdelivr.net/npm/echarts@4.9.0/dist/echarts.min.js"></script>
-  <style>
-    :root {
-      --blue: #036;
-      --border: #ccc;
-      --light-blue: #e6f2ff;
-      --header-height: 47px;
-      --filter-height: 67px;
-    }
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Parameter Change Report</title>
+    <link
+      rel="stylesheet"
+      href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css"
+    />
+    <script src="https://code.jquery.com/jquery-1.12.4.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/echarts@4.9.0/dist/echarts.min.js"></script>
+    <style>
+      :root {
+        --blue: #036;
+        --border: #ccc;
+        --light-blue: #e6f2ff;
+        --header-height: 47px;
+        --filter-height: 96px;
+      }
 
-    * { box-sizing: border-box; }
-    body { margin: 0; padding-top: calc(var(--header-height) + var(--filter-height)); font: 12px Arial, sans-serif; }
-    button, input, select { font: inherit; }
+      * {
+        box-sizing: border-box;
+      }
+      body {
+        margin: 0;
+        padding-top: calc(var(--header-height) + var(--filter-height));
+        font:
+          12px Arial,
+          sans-serif;
+      }
+      button,
+      input,
+      select {
+        font: inherit;
+      }
 
-    .header {
-      position: fixed;
-      inset: 0 0 auto;
-      z-index: 20;
-      height: var(--header-height);
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      padding: 0 15px;
-      color: white;
-      background: var(--blue);
-      box-shadow: 0 2px 4px #0005;
-      font-size: 16px;
-      font-weight: bold;
-    }
+      .header {
+        position: fixed;
+        inset: 0 0 auto;
+        z-index: 20;
+        height: var(--header-height);
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        padding: 0 15px;
+        color: white;
+        background: var(--blue);
+        box-shadow: 0 2px 4px #0005;
+        font-size: 16px;
+        font-weight: bold;
+      }
 
-    .header-timer { font-size: 12px; font-weight: normal; }
+      .header-timer {
+        font-size: 12px;
+        font-weight: normal;
+      }
 
-    .filters {
-      position: fixed;
-      inset: var(--header-height) 0 auto;
-      z-index: 19;
-      min-height: var(--filter-height);
-      display: flex;
-      align-items: end;
-      gap: 15px;
-      padding: 8px 10px;
-      background: #f5f5f5;
-      border-bottom: 1px solid var(--border);
-      box-shadow: 0 2px 4px #0001;
-    }
+      .filters {
+        position: fixed;
+        inset: var(--header-height) 0 auto;
+        z-index: 19;
+        min-height: var(--filter-height);
+        display: flex;
+        align-items: end;
+        gap: 15px;
+        padding: 8px 10px;
+        background: #f5f5f5;
+        border-bottom: 1px solid var(--border);
+        box-shadow: 0 2px 4px #0001;
+      }
 
-    .filter-group { min-width: 120px; }
-    .filter-label { display: block; margin-bottom: 3px; font-weight: bold; }
-    .filter-required, .filter-error { color: #c00; }
-    .filter-error { display: none; margin-top: 2px; font-size: 11px; }
-    .filter-control { width: 150px; height: 26px; padding: 3px 5px; border: 1px solid var(--border); background: white; }
-    .filter-control.error { border-color: #c00; }
-    .date-control { width: 125px; }
-    .date-range { display: flex; gap: 5px; }
+      .filter-group {
+        min-width: 120px;
+      }
+      .filter-label {
+        display: block;
+        margin-bottom: 3px;
+        font-weight: bold;
+      }
+      .filter-required,
+      .filter-error {
+        color: #c00;
+      }
+      .filter-error {
+        display: none;
+        margin-top: 2px;
+        font-size: 11px;
+      }
+      .filter-control {
+        width: 150px;
+        height: 26px;
+        padding: 3px 5px;
+        border: 1px solid var(--border);
+        background: white;
+      }
+      .filter-control.error {
+        border-color: #c00;
+      }
+      /* Custom checkbox dropdown used for filters that need multiple selections. */
+      .multi-select {
+        position: relative;
+        width: 170px;
+      }
+      .multi-select-toggle {
+        width: 100%;
+        height: 26px;
+        padding: 3px 24px 3px 5px;
+        overflow: hidden;
+        color: #000;
+        text-align: left;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+        background: white;
+        border: 1px solid var(--border);
+        cursor: pointer;
+      }
+      .multi-select-toggle::after {
+        position: absolute;
+        right: 8px;
+        content: "\25be";
+      }
+      .multi-select.error .multi-select-toggle {
+        border-color: #c00;
+      }
+      .multi-select-menu {
+        display: none;
+        position: absolute;
+        top: 28px;
+        left: 0;
+        z-index: 50;
+        width: 220px;
+        max-height: 220px;
+        overflow: auto;
+        background: white;
+        border: 1px solid var(--border);
+        box-shadow: 0 4px 12px #0002;
+      }
+      .multi-select.open .multi-select-menu {
+        display: block;
+      }
+      .multi-select-option {
+        display: flex;
+        align-items: center;
+        gap: 6px;
+        padding: 5px 7px;
+        cursor: pointer;
+      }
+      .multi-select-option:hover {
+        background: var(--light-blue);
+      }
+      .multi-select-option input {
+        margin: 0;
+      }
+      .date-control {
+        width: 125px;
+      }
+      .date-range {
+        display: flex;
+        gap: 5px;
+      }
 
-    .btn {
-      height: 26px;
-      padding: 4px 12px;
-      color: var(--blue);
-      background: white;
-      border: 1px solid var(--blue);
-      cursor: pointer;
-    }
+      .btn {
+        height: 26px;
+        padding: 4px 12px;
+        color: var(--blue);
+        background: white;
+        border: 1px solid var(--blue);
+        cursor: pointer;
+      }
 
-    .btn:hover { background: var(--light-blue); }
-    .btn-primary { color: white; background: var(--blue); }
-    .btn-primary:hover { background: #048; }
-    .actions { display: flex; gap: 5px; }
+      .btn:hover {
+        background: var(--light-blue);
+      }
+      .btn-primary {
+        color: white;
+        background: var(--blue);
+      }
+      .btn-primary:hover {
+        background: #048;
+      }
+      .actions {
+        display: flex;
+        gap: 5px;
+      }
 
-    .summary {
-      padding: 10px;
-      color: var(--blue);
-      font-weight: bold;
-    }
+      .summary {
+        padding: 10px;
+        color: var(--blue);
+        font-weight: bold;
+      }
 
-    .summary .btn { margin-left: 8px; }
-    #summaryToggleBtn { float: right; }
+      .summary .btn {
+        margin-left: 8px;
+      }
+      #summaryToggleBtn {
+        float: right;
+      }
 
-    .table-wrapper {
-      max-height: calc(100vh - 165px);
-      margin: 0 10px 20px;
-      overflow: auto;
-      border: 1px solid var(--border);
-    }
+      .table-wrapper {
+        max-height: calc(100vh - 165px);
+        margin: 0 10px 20px;
+        overflow: auto;
+        border: 1px solid var(--border);
+      }
 
-    table { width: 100%; min-width: 1100px; border-collapse: collapse; background: white; }
-    th, td { padding: 5px 7px; border: 1px solid var(--border); text-align: left; white-space: nowrap; }
-    th { position: sticky; top: 0; z-index: 2; background: #e0e0e0; }
-    tbody tr:nth-child(even) { background: #f9f9f9; }
-    .highlight { background: #ff9; }
-    .param-link { color: var(--blue); text-decoration: underline; cursor: pointer; }
-    .no-data-row td { padding: 30px; color: #777; text-align: center; font-style: italic; }
+      table {
+        width: 100%;
+        min-width: 1100px;
+        border-collapse: collapse;
+        background: white;
+      }
+      th,
+      td {
+        padding: 5px 7px;
+        border: 1px solid var(--border);
+        text-align: left;
+        white-space: nowrap;
+      }
+      th {
+        position: sticky;
+        top: 0;
+        z-index: 2;
+        background: #e0e0e0;
+      }
+      tbody tr:nth-child(even) {
+        background: #f9f9f9;
+      }
+      .highlight {
+        background: #ff9;
+      }
+      .param-link {
+        color: var(--blue);
+        text-decoration: underline;
+        cursor: pointer;
+      }
+      .no-data-row td {
+        padding: 30px;
+        color: #777;
+        text-align: center;
+        font-style: italic;
+      }
 
-    .loader-overlay, .modal-overlay {
-      display: none;
-      position: fixed;
-      inset: 0;
-      z-index: 40;
-      background: #fffB;
-    }
+      .loader-overlay,
+      .modal-overlay {
+        display: none;
+        position: fixed;
+        inset: 0;
+        z-index: 40;
+        background: #fffb;
+      }
 
-    .loader-spinner {
-      position: absolute;
-      top: 50%;
-      left: 50%;
-      width: 50px;
-      height: 50px;
-      margin: -25px;
-      border: 5px solid #ddd;
-      border-top-color: var(--blue);
-      border-radius: 50%;
-      animation: spin 1s linear infinite;
-    }
+      .loader-spinner {
+        position: absolute;
+        top: 50%;
+        left: 50%;
+        width: 50px;
+        height: 50px;
+        margin: -25px;
+        border: 5px solid #ddd;
+        border-top-color: var(--blue);
+        border-radius: 50%;
+        animation: spin 1s linear infinite;
+      }
 
-    .loader-text {
-      position: absolute;
-      top: calc(50% + 45px);
-      left: 50%;
-      transform: translateX(-50%);
-      color: var(--blue);
-      font-weight: bold;
-    }
+      .loader-text {
+        position: absolute;
+        top: calc(50% + 45px);
+        left: 50%;
+        transform: translateX(-50%);
+        color: var(--blue);
+        font-weight: bold;
+      }
 
-    @keyframes spin { to { transform: rotate(360deg); } }
+      @keyframes spin {
+        to {
+          transform: rotate(360deg);
+        }
+      }
 
-    .modal-overlay { z-index: 30; background: #0008; }
-    .modal-box {
-      position: absolute;
-      top: 50%;
-      left: 50%;
-      width: min(1000px, 90vw);
-      max-height: 90vh;
-      padding: 25px;
-      overflow: auto;
-      transform: translate(-50%, -50%);
-      background: white;
-      border-radius: 6px;
-      box-shadow: 0 8px 40px #0006;
-    }
+      .modal-overlay {
+        z-index: 30;
+        background: #0008;
+      }
+      .modal-box {
+        position: absolute;
+        top: 50%;
+        left: 50%;
+        width: min(1000px, 90vw);
+        max-height: 90vh;
+        padding: 25px;
+        overflow: auto;
+        transform: translate(-50%, -50%);
+        background: white;
+        border-radius: 6px;
+        box-shadow: 0 8px 40px #0006;
+      }
 
-    .modal-header {
-      margin-bottom: 20px;
-      padding-bottom: 12px;
-      color: var(--blue);
-      border-bottom: 2px solid var(--blue);
-      font-size: 16px;
-      font-weight: bold;
-    }
+      .modal-header {
+        margin-bottom: 20px;
+        padding-bottom: 12px;
+        color: var(--blue);
+        border-bottom: 2px solid var(--blue);
+        font-size: 16px;
+        font-weight: bold;
+      }
 
-    .modal-close { float: right; padding: 0 6px; color: #666; font-size: 22px; cursor: pointer; }
-    .modal-header .btn { float: right; margin-right: 10px; }
-    .chart-container { height: 420px; margin-bottom: 20px; border: 1px solid #ddd; background: #fafafa; }
-    .modal-table-wrapper { max-height: 250px; overflow: auto; border: 1px solid #ddd; }
-    .modal-table-wrapper th { color: white; background: var(--blue); }
+      .modal-close {
+        float: right;
+        padding: 0 6px;
+        color: #666;
+        font-size: 22px;
+        cursor: pointer;
+      }
+      .modal-header .btn {
+        float: right;
+        margin-right: 10px;
+      }
+      .chart-container {
+        height: 420px;
+        margin-bottom: 20px;
+        border: 1px solid #ddd;
+        background: #fafafa;
+      }
+      .modal-table-wrapper {
+        max-height: 250px;
+        overflow: auto;
+        border: 1px solid #ddd;
+      }
+      .modal-table-wrapper th {
+        color: white;
+        background: var(--blue);
+      }
 
-    @media (max-width: 900px) {
-      :root { --filter-height: 115px; }
-      .filters { flex-wrap: wrap; align-content: center; }
-    }
-  </style>
-</head>
-<body>
-  <header class="header">
-    <span>Parameter Change Report</span>
-    <span id="headerTimer" class="header-timer"></span>
-  </header>
+      @media (max-width: 900px) {
+        :root {
+          --filter-height: 170px;
+        }
+        .filters {
+          flex-wrap: wrap;
+          align-content: center;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <header class="header">
+      <span>Parameter Change Report</span>
+      <span id="headerTimer" class="header-timer"></span>
+    </header>
 
-  <section class="filters">
-    <label class="filter-group">
-      <span class="filter-label">SITE</span>
-      <select id="siteFilter" class="filter-control"></select>
-    </label>
+    <section class="filters">
+      <label class="filter-group">
+        <span class="filter-label">SITE</span>
+        <div id="siteFilter" class="multi-select"></div>
+      </label>
 
-    <label class="filter-group">
-      <span class="filter-label">LINE</span>
-      <select id="lineFilter" class="filter-control"></select>
-      <span id="lineError" class="filter-error">Line is required</span>
-    </label>
+      <label class="filter-group">
+        <span class="filter-label">LINE</span>
+        <div id="lineFilter" class="multi-select"></div>
+        <span id="lineError" class="filter-error">Line is required</span>
+      </label>
 
-    <label class="filter-group">
-      <span class="filter-label">Module ID <span class="filter-required">*</span></span>
-      <select id="moduleFilter" class="filter-control"></select>
-      <span id="moduleError" class="filter-error">Module ID is required</span>
-    </label>
+      <label class="filter-group">
+        <span class="filter-label"
+          >Module ID <span class="filter-required">*</span></span
+        >
+        <div id="moduleFilter" class="multi-select"></div>
+        <span id="moduleError" class="filter-error">Module ID is required</span>
+      </label>
 
-    <div class="filter-group">
-      <span class="filter-label">Date Range</span>
-      <div class="date-range">
-        <input id="fromDate" class="filter-control date-control" type="date">
-        <input id="toDate" class="filter-control date-control" type="date">
+      <div class="filter-group">
+        <span class="filter-label">Date Range</span>
+        <div class="date-range">
+          <input
+            id="fromDate"
+            class="filter-control date-control"
+            type="date"
+          />
+          <input id="toDate" class="filter-control date-control" type="date" />
+        </div>
+        <span id="dateError" class="filter-error"
+          >Start date cannot be greater than end date</span
+        >
       </div>
-      <span id="dateError" class="filter-error">Start date cannot be greater than end date</span>
-    </div>
 
-    <label class="filter-group">
-      <span class="filter-label">Parameter Search</span>
-      <input id="paramSearch" class="filter-control" placeholder="Search parameter...">
-    </label>
+      <label class="filter-group">
+        <span class="filter-label">Parameter Search</span>
+        <input
+          id="paramSearch"
+          class="filter-control"
+          placeholder="Search parameter..."
+        />
+      </label>
 
-    <div class="filter-group actions">
-      <button id="searchBtn" class="btn btn-primary">Search</button>
-      <button id="resetBtn" class="btn">Reset</button>
-    </div>
-  </section>
-
-  <div class="summary">
-    No. of changes: <span id="changeCount">0</span>
-    <button id="downloadBtn" class="btn"><i class="fa fa-download"></i> Download Excel</button>
-    <button id="summaryToggleBtn" class="btn btn-primary">Summary</button>
-  </div>
-
-  <main>
-    <div id="mainView" class="table-wrapper">
-      <table id="mainTable">
-        <thead>
-          <tr>
-            <th>Source</th><th>Module</th><th>RCP ID</th><th>Parameters</th>
-            <th>Value</th><th>LSL</th><th>USL</th><th>Create DTTD</th>
-            <th>Previous Value</th><th>Previous LSL</th><th>Previous USL</th>
-          </tr>
-        </thead>
-        <tbody id="mainBody"></tbody>
-      </table>
-    </div>
-
-    <div id="summaryView" class="table-wrapper" hidden>
-      <table id="summaryTable">
-        <thead>
-          <tr>
-            <th>Source</th><th>Module</th><th>Parameter</th>
-            <th>First Change</th><th>Last Change</th>
-            <th>Value Changes</th><th>LSL Changes</th><th>USL Changes</th>
-            <th>Total Change Points</th><th>Change Type</th>
-          </tr>
-        </thead>
-        <tbody id="summaryBody"></tbody>
-      </table>
-    </div>
-  </main>
-
-  <div id="loader" class="loader-overlay">
-    <div class="loader-spinner"></div>
-    <div class="loader-text">Loading...</div>
-  </div>
-
-  <div id="trendModal" class="modal-overlay">
-    <div class="modal-box">
-      <div class="modal-header">
-        <span id="modalTitle">Parameter Trend</span>
-        <span id="modalClose" class="modal-close">&times;</span>
-        <button id="modalDownloadBtn" class="btn"><i class="fa fa-download"></i> Download Excel</button>
+      <div class="filter-group actions">
+        <button id="searchBtn" class="btn btn-primary">Search</button>
+        <button id="resetBtn" class="btn">Reset</button>
       </div>
-      <div id="trendChart" class="chart-container"></div>
-      <div class="modal-table-wrapper">
-        <table id="trendTable">
+    </section>
+
+    <div class="summary">
+      No. of changes: <span id="changeCount">0</span>
+      <button id="downloadBtn" class="btn">
+        <i class="fa fa-download"></i> Download Excel
+      </button>
+      <button id="summaryToggleBtn" class="btn btn-primary">Summary</button>
+    </div>
+
+    <main>
+      <div id="mainView" class="table-wrapper">
+        <table id="mainTable">
           <thead>
             <tr>
-              <th>Date Time</th><th>Value</th><th>LSL</th><th>USL</th>
-              <th>Prev Value</th><th>Prev LSL</th><th>Prev USL</th>
+              <th>Source</th>
+              <th>Module</th>
+              <th>RCP ID</th>
+              <th>Parameters</th>
+              <th>Value</th>
+              <th>LSL</th>
+              <th>USL</th>
+              <th>Create DTTD</th>
+              <th>Previous Value</th>
+              <th>Previous LSL</th>
+              <th>Previous USL</th>
             </tr>
           </thead>
-          <tbody id="trendBody"></tbody>
+          <tbody id="mainBody"></tbody>
         </table>
       </div>
+
+      <div id="summaryView" class="table-wrapper" hidden>
+        <table id="summaryTable">
+          <thead>
+            <tr>
+              <th>Source</th>
+              <th>Module</th>
+              <th>Parameter</th>
+              <th>First Change</th>
+              <th>Last Change</th>
+              <th>Value Changes</th>
+              <th>LSL Changes</th>
+              <th>USL Changes</th>
+              <th>Total Change Points</th>
+              <th>Change Type</th>
+            </tr>
+          </thead>
+          <tbody id="summaryBody"></tbody>
+        </table>
+      </div>
+    </main>
+
+    <div id="loader" class="loader-overlay">
+      <div class="loader-spinner"></div>
+      <div class="loader-text">Loading...</div>
     </div>
-  </div>
 
-  <script>
-    var state = {
-      rows: [],
-      filteredRows: [],
-      summaryRows: [],
-      page: 0,
-      pageSize: 50,
-      hasMore: true,
-      loading: false,
-      summary: false
-    };
+    <div id="trendModal" class="modal-overlay">
+      <div class="modal-box">
+        <div class="modal-header">
+          <span id="modalTitle">Parameter Trend</span>
+          <span id="modalClose" class="modal-close">&times;</span>
+          <button id="modalDownloadBtn" class="btn">
+            <i class="fa fa-download"></i> Download Excel
+          </button>
+        </div>
+        <div id="trendChart" class="chart-container"></div>
+        <div class="modal-table-wrapper">
+          <table id="trendTable">
+            <thead>
+              <tr>
+                <th>Date Time</th>
+                <th>Value</th>
+                <th>LSL</th>
+                <th>USL</th>
+                <th>Prev Value</th>
+                <th>Prev LSL</th>
+                <th>Prev USL</th>
+              </tr>
+            </thead>
+            <tbody id="trendBody"></tbody>
+          </table>
+        </div>
+      </div>
+    </div>
 
-    var trendChart;
-    var refreshSeconds = 300;
-
-    var trendData = [
-      ["01/06/2026 08:00", 0.2, 0, 895, 0.5, 0, 900],
-      ["01/06/2026 09:00", 0.4, 0, 895, 0.6, 0, 900],
-      ["01/06/2026 10:00", 0.6, 0, 895, 0.7, 0, 900],
-      ["01/06/2026 11:00", 0.8, 0, 895, 0.8, 0, 900],
-      ["01/06/2026 12:00", 1.0, 0, 895, 0.9, 0, 900],
-      ["01/06/2026 13:00", 1.2, 0, 895, 1.0, 0, 900],
-      ["01/06/2026 14:00", 1.0, 0, 895, 1.1, 0, 900],
-      ["01/06/2026 15:00", 0.9, 0, 895, 1.0, 0, 900],
-      ["01/06/2026 16:00", 1.1, 0, 895, 1.1, 0, 900],
-      ["01/06/2026 17:00", 1.0, 0, 895, 1.2, 0, 900]
-    ];
-
-    function el(id) {
-      return document.getElementById(id);
-    }
-
-    function escapeHtml(value) {
-      return String(value == null ? "" : value)
-        .replace(/&/g, "&amp;")
-        .replace(/</g, "&lt;")
-        .replace(/>/g, "&gt;")
-        .replace(/"/g, "&quot;")
-        .replace(/'/g, "&#039;");
-    }
-
-    function formatInputDate(date) {
-      var month = String(date.getMonth() + 1);
-      var day = String(date.getDate());
-      return date.getFullYear() + "-" + (month.length < 2 ? "0" + month : month) + "-" + (day.length < 2 ? "0" + day : day);
-    }
-
-    function parseReportDate(value) {
-      var parts = String(value || "").split("/");
-      return parts.length === 3 ? new Date(parts[2], parts[1] - 1, parts[0]) : null;
-    }
-
-    function setDefaultDates() {
-      var today = new Date();
-      var weekAgo = new Date(today.getFullYear(), today.getMonth(), today.getDate() - 6);
-      el("fromDate").value = formatInputDate(weekAgo);
-      el("toDate").value = formatInputDate(today);
-    }
-
-    function unique(field, filters) {
-      var values = state.rows.filter(function(row) {
-        return (!filters.site || row.site === filters.site) &&
-               (!filters.line || row.line === filters.line);
-      }).map(function(row) {
-        return row[field];
-      }).filter(Boolean);
-
-      return values.filter(function(value, index) {
-        return values.indexOf(value) === index;
-      }).sort();
-    }
-
-    function fillSelect(id, values, selected, allowAll) {
-      var select = el(id);
-      var firstLabel = allowAll === false ? "Select..." : "All";
-      select.innerHTML = '<option value="">' + firstLabel + '</option>' +
-        values.map(function(value) {
-          return '<option value="' + escapeHtml(value) + '">' + escapeHtml(value) + '</option>';
-        }).join("");
-      select.value = values.indexOf(selected) >= 0 ? selected : "";
-    }
-
-    function updateFilterOptions() {
-      var site = el("siteFilter").value;
-      var line = el("lineFilter").value;
-      var moduleId = el("moduleFilter").value;
-
-      fillSelect("siteFilter", unique("site", {}), site, true);
-      fillSelect("lineFilter", unique("line", { site: site }), line, !site);
-      fillSelect("moduleFilter", unique("moduleId", { site: site, line: line }), moduleId, !(site || line));
-    }
-
-    function clearErrors() {
-      ["line", "module"].forEach(function(name) {
-        el(name + "Error").style.display = "none";
-        el(name + "Filter").classList.remove("error");
-      });
-      el("dateError").style.display = "none";
-      el("fromDate").classList.remove("error");
-      el("toDate").classList.remove("error");
-    }
-
-    function validateFilters() {
-      clearErrors();
-      var site = el("siteFilter").value;
-      var line = el("lineFilter").value;
-      var moduleId = el("moduleFilter").value;
-      var valid = true;
-
-      if (site && !line) {
-        el("lineError").style.display = "block";
-        el("lineFilter").classList.add("error");
-        valid = false;
-      }
-      if ((site || line) && !moduleId) {
-        el("moduleError").style.display = "block";
-        el("moduleFilter").classList.add("error");
-        valid = false;
-      }
-      if (el("fromDate").value && el("toDate").value &&
-          el("fromDate").value > el("toDate").value) {
-        el("dateError").style.display = "block";
-        el("fromDate").classList.add("error");
-        el("toDate").classList.add("error");
-        valid = false;
-      }
-      return valid;
-    }
-
-    function currentFilters() {
-      return {
-        site: el("siteFilter").value,
-        line: el("lineFilter").value,
-        moduleId: el("moduleFilter").value,
-        parameterName: el("paramSearch").value.trim(),
-        startDate: el("fromDate").value,
-        endDate: el("toDate").value
+    <script>
+      var state = {
+        rows: [],
+        filteredRows: [],
+        summaryRows: [],
+        page: 0,
+        pageSize: 50,
+        hasMore: true,
+        loading: false,
+        summary: false,
       };
-    }
 
-    function buildQuery(page) {
-      var filters = currentFilters();
-      var params = ["page=" + page, "pageSize=" + state.pageSize];
-      Object.keys(filters).forEach(function(key) {
-        if (filters[key]) params.push(key + "=" + encodeURIComponent(filters[key]));
-      });
-      return params.join("&");
-    }
+      var trendChart;
+      var refreshSeconds = 300;
 
-    function filterRows() {
-      var filters = currentFilters();
-      var from = filters.startDate ? new Date(filters.startDate + "T00:00:00") : null;
-      var to = filters.endDate ? new Date(filters.endDate + "T23:59:59") : null;
-      var search = filters.parameterName.toLowerCase();
+      var trendData = [
+        ["01/06/2026 08:00", 0.2, 0, 895, 0.5, 0, 900],
+        ["01/06/2026 09:00", 0.4, 0, 895, 0.6, 0, 900],
+        ["01/06/2026 10:00", 0.6, 0, 895, 0.7, 0, 900],
+        ["01/06/2026 11:00", 0.8, 0, 895, 0.8, 0, 900],
+        ["01/06/2026 12:00", 1.0, 0, 895, 0.9, 0, 900],
+        ["01/06/2026 13:00", 1.2, 0, 895, 1.0, 0, 900],
+        ["01/06/2026 14:00", 1.0, 0, 895, 1.1, 0, 900],
+        ["01/06/2026 15:00", 0.9, 0, 895, 1.0, 0, 900],
+        ["01/06/2026 16:00", 1.1, 0, 895, 1.1, 0, 900],
+        ["01/06/2026 17:00", 1.0, 0, 895, 1.2, 0, 900],
+      ];
 
-      state.filteredRows = state.rows.filter(function(row) {
-        var date = parseReportDate(row.createDttd);
-        return (!filters.site || row.site === filters.site) &&
-          (!filters.line || row.line === filters.line) &&
-          (!filters.moduleId || row.moduleId === filters.moduleId) &&
-          (!search || String(row.parameterName || "").toLowerCase().indexOf(search) >= 0) &&
-          (!from || !date || date >= from) &&
-          (!to || !date || date <= to);
-      });
-    }
-
-    function rowHtml(row, summary) {
-      var changes = row.changeType || "";
-      function changed(type) {
-        return changes.indexOf(type) >= 0 ? ' class="highlight"' : "";
+      function el(id) {
+        return document.getElementById(id);
       }
 
-      var common =
-        "<td>" + escapeHtml(row.source) + "</td>" +
-        "<td>" + escapeHtml(row.moduleId) + "</td>" +
-        "<td>" + escapeHtml(row.productId) + "</td>" +
-        '<td><span class="param-link" data-parameter="' + escapeHtml(row.parameterName) + '">' + escapeHtml(row.parameterName) + "</span></td>" +
-        (summary ? "" :
-          "<td" + changed("VALUE_CHANGED") + ">" + escapeHtml(row.currentValue) + "</td>" +
-          "<td" + changed("LSL_CHANGED") + ">" + escapeHtml(row.currentLsl) + "</td>" +
-          "<td" + changed("USL_CHANGED") + ">" + escapeHtml(row.currentUsl) + "</td>") +
-        (summary ?
-          "<td>" + escapeHtml(row.currentValue) + "</td><td>" + escapeHtml(row.currentLsl) + "</td><td>" + escapeHtml(row.currentUsl) + "</td>" : "") +
-        "<td>" + escapeHtml(row.createDttd) + "</td>";
-
-      if (!summary) {
-        common +=
-          "<td" + changed("VALUE_CHANGED") + ">" + escapeHtml(row.previousValue) + "</td>" +
-          "<td" + changed("LSL_CHANGED") + ">" + escapeHtml(row.previousLsl) + "</td>" +
-          "<td" + changed("USL_CHANGED") + ">" + escapeHtml(row.previousUsl) + "</td>";
+      function escapeHtml(value) {
+        return String(value == null ? "" : value)
+          .replace(/&/g, "&amp;")
+          .replace(/</g, "&lt;")
+          .replace(/>/g, "&gt;")
+          .replace(/"/g, "&quot;")
+          .replace(/'/g, "&#039;");
       }
-      return "<tr>" + common + "</tr>";
-    }
 
-    function render() {
-      filterRows();
-      var rows = state.filteredRows;
-      var changeCount = rows.reduce(function(total, row) {
-        return total + (row.changeType ? row.changeType.split("|").filter(Boolean).length : 0);
-      }, 0);
+      function formatInputDate(date) {
+        var month = String(date.getMonth() + 1);
+        var day = String(date.getDate());
+        return (
+          date.getFullYear() +
+          "-" +
+          (month.length < 2 ? "0" + month : month) +
+          "-" +
+          (day.length < 2 ? "0" + day : day)
+        );
+      }
 
-      el("changeCount").textContent = changeCount;
-      el("mainBody").innerHTML = rows.length
-        ? rows.map(function(row) { return rowHtml(row, false); }).join("")
-        : '<tr class="no-data-row"><td colspan="11">No data found.</td></tr>';
-    }
+      function parseReportDate(value) {
+        var parts = String(value || "").split("/");
+        return parts.length === 3
+          ? new Date(parts[2], parts[1] - 1, parts[0])
+          : null;
+      }
 
-    function summaryRowHtml(row) {
-      return "<tr>" +
-        "<td>" + escapeHtml(row.source) + "</td>" +
-        "<td>" + escapeHtml(row.moduleId) + "</td>" +
-        '<td><span class="param-link" data-parameter="' + escapeHtml(row.parameterName) + '">' +
-          escapeHtml(row.parameterName) + "</span></td>" +
-        "<td>" + escapeHtml(row.firstChangeTime) + "</td>" +
-        "<td>" + escapeHtml(row.lastChangeTime) + "</td>" +
-        "<td>" + escapeHtml(row.valueChangeCount) + "</td>" +
-        "<td>" + escapeHtml(row.lslChangeCount) + "</td>" +
-        "<td>" + escapeHtml(row.uslChangeCount) + "</td>" +
-        "<td>" + escapeHtml(row.totalChangePoints) + "</td>" +
-        "<td>" + escapeHtml(row.changeType) + "</td>" +
-        "</tr>";
-    }
+      function setDefaultDates() {
+        var today = new Date();
+        var weekAgo = new Date(
+          today.getFullYear(),
+          today.getMonth(),
+          today.getDate() - 6,
+        );
+        el("fromDate").value = formatInputDate(weekAgo);
+        el("toDate").value = formatInputDate(today);
+      }
 
-    function renderSummary() {
-      el("summaryBody").innerHTML = state.summaryRows.length
-        ? state.summaryRows.map(summaryRowHtml).join("")
-        : '<tr class="no-data-row"><td colspan="10">No summary data found.</td></tr>';
-    }
+      // Returns the checked values from a custom multi-select dropdown.
+      function selectedValues(id) {
+        return el(id)._selectedValues || [];
+      }
 
-    function buildLocalSummary() {
-      var grouped = {};
-      filterRows();
-      state.filteredRows.forEach(function(row) {
-        var key = row.source + "|" + row.moduleId + "|" + row.parameterName;
-        if (!grouped[key]) {
-          grouped[key] = {
-            source: row.source,
-            moduleId: row.moduleId,
-            parameterName: row.parameterName,
-            firstChangeTime: row.createDttd,
-            lastChangeTime: row.createDttd,
-            valueChangeCount: 0,
-            lslChangeCount: 0,
-            uslChangeCount: 0,
-            totalChangePoints: 0,
-            changeType: ""
-          };
+      // Empty selection means "All", otherwise the row must match one selected value.
+      function hasSelected(values, expected) {
+        return !values || !values.length || values.indexOf(expected) >= 0;
+      }
+
+      // Re-applies selections after cascading filter options are rebuilt.
+      function setSelectedValues(id, selected) {
+        var control = el(id);
+        var selectedMap = {};
+        (selected || []).forEach(function (value) {
+          selectedMap[value] = true;
+        });
+        control._selectedValues = (control._values || []).filter(function (value) {
+          return selectedMap[value] === true;
+        });
+        renderMultiSelectLabel(id);
+      }
+
+      // Shows selected labels in the closed dropdown; no selection is displayed as All.
+      function renderMultiSelectLabel(id) {
+        var control = el(id);
+        var selected = selectedValues(id);
+        var label = control.querySelector(".multi-select-toggle");
+        if (!label) return;
+        label.textContent = selected.length ? selected.join(", ") : "All";
+      }
+
+      function unique(field, filters) {
+        var values = state.rows
+          .filter(function (row) {
+            return (
+              hasSelected(filters.site, row.site) &&
+              hasSelected(filters.line, row.line)
+            );
+          })
+          .map(function (row) {
+            return row[field];
+          })
+          .filter(Boolean);
+
+        return values
+          .filter(function (value, index) {
+            return values.indexOf(value) === index;
+          })
+          .sort();
+      }
+
+      // Builds the checkbox dropdown menu and keeps valid previous selections.
+      function fillSelect(id, values, selected, allowAll) {
+        var control = el(id);
+        control._values = values;
+        control._selectedValues = (selected || []).filter(function (value) {
+          return values.indexOf(value) >= 0;
+        });
+        control.innerHTML =
+          '<button type="button" class="multi-select-toggle"></button>' +
+          '<div class="multi-select-menu">' +
+          values
+            .map(function (value) {
+              var checked = control._selectedValues.indexOf(value) >= 0 ? " checked" : "";
+              return (
+                '<label class="multi-select-option">' +
+                '<input type="checkbox" value="' +
+                escapeHtml(value) +
+                '"' +
+                checked +
+                "> " +
+                '<span>' +
+                escapeHtml(value) +
+                "</span></label>"
+              );
+            })
+            .join("") +
+          "</div>";
+        renderMultiSelectLabel(id);
+      }
+
+      function updateFilterOptions() {
+        var site = selectedValues("siteFilter");
+        var line = selectedValues("lineFilter");
+        var moduleId = selectedValues("moduleFilter");
+
+        fillSelect("siteFilter", unique("site", {}), site, true);
+        fillSelect("lineFilter", unique("line", { site: site }), line, !site.length);
+        fillSelect(
+          "moduleFilter",
+          unique("moduleId", { site: site, line: line }),
+          moduleId,
+          !(site.length || line.length),
+        );
+      }
+
+      function clearErrors() {
+        ["line", "module"].forEach(function (name) {
+          el(name + "Error").style.display = "none";
+          el(name + "Filter").classList.remove("error");
+        });
+        el("dateError").style.display = "none";
+        el("fromDate").classList.remove("error");
+        el("toDate").classList.remove("error");
+      }
+
+      function validateFilters() {
+        clearErrors();
+        var site = selectedValues("siteFilter");
+        var line = selectedValues("lineFilter");
+        var moduleId = selectedValues("moduleFilter");
+        var valid = true;
+
+        if (site.length && !line.length) {
+          el("lineError").style.display = "block";
+          el("lineFilter").classList.add("error");
+          valid = false;
         }
-        var item = grouped[key];
-        var types = String(row.changeType || "").split("|");
-        if (types.indexOf("VALUE_CHANGED") >= 0) item.valueChangeCount++;
-        if (types.indexOf("LSL_CHANGED") >= 0) item.lslChangeCount++;
-        if (types.indexOf("USL_CHANGED") >= 0) item.uslChangeCount++;
-        if (row.changeType) item.totalChangePoints++;
-      });
-      return Object.keys(grouped).map(function(key) {
-        var item = grouped[key];
-        var types = [];
-        if (item.valueChangeCount) types.push("VALUE_CHANGED");
-        if (item.lslChangeCount) types.push("LSL_CHANGED");
-        if (item.uslChangeCount) types.push("USL_CHANGED");
-        item.changeType = types.join("|");
-        return item;
-      });
-    }
+        if ((site.length || line.length) && !moduleId.length) {
+          el("moduleError").style.display = "block";
+          el("moduleFilter").classList.add("error");
+          valid = false;
+        }
+        if (
+          el("fromDate").value &&
+          el("toDate").value &&
+          el("fromDate").value > el("toDate").value
+        ) {
+          el("dateError").style.display = "block";
+          el("fromDate").classList.add("error");
+          el("toDate").classList.add("error");
+          valid = false;
+        }
+        return valid;
+      }
 
-    function loadSummary() {
-      el("loader").style.display = "block";
-      $.ajax({
-        url: "/api/parameter-change-summary?" + buildQuery(1),
-        dataType: "json",
-        cache: false
-      }).done(function(response) {
-        state.summaryRows = response.data || [];
-      }).fail(function() {
-        state.summaryRows = buildLocalSummary();
-      }).always(function() {
-        el("loader").style.display = "none";
-        renderSummary();
-      });
-    }
+      function currentFilters() {
+        return {
+          site: selectedValues("siteFilter"),
+          line: selectedValues("lineFilter"),
+          moduleId: selectedValues("moduleFilter"),
+          parameterName: el("paramSearch").value.trim(),
+          startDate: el("fromDate").value,
+          endDate: el("toDate").value,
+        };
+      }
 
-    function sampleRows() {
-      var parameters = ["ROLLER", "PRESSURE", "TEMP_CTRL", "SPEED", "VOLTAGE", "FLOW_RATE"];
-      var changes = ["VALUE_CHANGED", "LSL_CHANGED", "USL_CHANGED", "VALUE_CHANGED|LSL_CHANGED", ""];
-      var rows = [];
+      function buildQuery(page) {
+        var filters = currentFilters();
+        var params = ["page=" + page, "pageSize=" + state.pageSize];
+        Object.keys(filters).forEach(function (key) {
+          if ($.isArray(filters[key])) {
+            // Send multi-select values as repeated query params: site=A&site=B.
+            filters[key].forEach(function (value) {
+              if (value) params.push(key + "=" + encodeURIComponent(value));
+            });
+          } else if (filters[key]) {
+            params.push(key + "=" + encodeURIComponent(filters[key]));
+          }
+        });
+        return params.join("&");
+      }
 
-      for (var i = 0; i < 120; i++) {
-        var base = 20 + i % 80;
-        var change = changes[i % changes.length];
-        var date = new Date(2026, 5, 1 + i % 22);
-        rows.push({
-          site: "Site " + String.fromCharCode(65 + i % 3),
-          line: "Line " + (1 + i % 3),
-          source: "SRC-" + (1 + i % 5),
-          productId: "AMB" + (674 + i),
-          moduleId: "N1DLE" + (32 + i),
-          parameterName: "M_CHB" + (i % 100) + "_" + parameters[i % parameters.length],
-          createDttd: ("0" + date.getDate()).slice(-2) + "/06/2026",
-          previousValue: base,
-          currentValue: change.indexOf("VALUE_CHANGED") >= 0 ? base + 1 : base,
-          previousLsl: base - 10,
-          currentLsl: change.indexOf("LSL_CHANGED") >= 0 ? base - 9 : base - 10,
-          previousUsl: base + 20,
-          currentUsl: change.indexOf("USL_CHANGED") >= 0 ? base + 21 : base + 20,
-          changeType: change
+      function filterRows() {
+        var filters = currentFilters();
+        var from = filters.startDate
+          ? new Date(filters.startDate + "T00:00:00")
+          : null;
+        var to = filters.endDate
+          ? new Date(filters.endDate + "T23:59:59")
+          : null;
+        var search = filters.parameterName.toLowerCase();
+
+        state.filteredRows = state.rows.filter(function (row) {
+          var date = parseReportDate(row.createDttd);
+          return (
+            hasSelected(filters.site, row.site) &&
+            hasSelected(filters.line, row.line) &&
+            hasSelected(filters.moduleId, row.moduleId) &&
+            (!search ||
+              String(row.parameterName || "")
+                .toLowerCase()
+                .indexOf(search) >= 0) &&
+            (!from || !date || date >= from) &&
+            (!to || !date || date <= to)
+          );
         });
       }
-      return rows;
-    }
 
-    function loadData(append) {
-      if (state.loading || (append && !state.hasMore)) return;
-      state.loading = true;
-      if (!append) {
-        state.page = 0;
-        state.rows = [];
-        el("loader").style.display = "block";
+      function rowHtml(row, summary) {
+        var changes = row.changeType || "";
+        function changed(type) {
+          return changes.indexOf(type) >= 0 ? ' class="highlight"' : "";
+        }
+
+        var common =
+          "<td>" +
+          escapeHtml(row.source) +
+          "</td>" +
+          "<td>" +
+          escapeHtml(row.moduleId) +
+          "</td>" +
+          "<td>" +
+          escapeHtml(row.productId) +
+          "</td>" +
+          '<td><span class="param-link" data-parameter="' +
+          escapeHtml(row.parameterName) +
+          '">' +
+          escapeHtml(row.parameterName) +
+          "</span></td>" +
+          (summary
+            ? ""
+            : "<td" +
+              changed("VALUE_CHANGED") +
+              ">" +
+              escapeHtml(row.currentValue) +
+              "</td>" +
+              "<td" +
+              changed("LSL_CHANGED") +
+              ">" +
+              escapeHtml(row.currentLsl) +
+              "</td>" +
+              "<td" +
+              changed("USL_CHANGED") +
+              ">" +
+              escapeHtml(row.currentUsl) +
+              "</td>") +
+          (summary
+            ? "<td>" +
+              escapeHtml(row.currentValue) +
+              "</td><td>" +
+              escapeHtml(row.currentLsl) +
+              "</td><td>" +
+              escapeHtml(row.currentUsl) +
+              "</td>"
+            : "") +
+          "<td>" +
+          escapeHtml(row.createDttd) +
+          "</td>";
+
+        if (!summary) {
+          common +=
+            "<td" +
+            changed("VALUE_CHANGED") +
+            ">" +
+            escapeHtml(row.previousValue) +
+            "</td>" +
+            "<td" +
+            changed("LSL_CHANGED") +
+            ">" +
+            escapeHtml(row.previousLsl) +
+            "</td>" +
+            "<td" +
+            changed("USL_CHANGED") +
+            ">" +
+            escapeHtml(row.previousUsl) +
+            "</td>";
+        }
+        return "<tr>" + common + "</tr>";
       }
 
-      var nextPage = state.page + 1;
-      $.ajax({
-        url: "/api/parameter-changes?" + buildQuery(nextPage),
-        dataType: "json",
-        cache: false
-      }).done(function(response) {
-        var newRows = response.data || [];
-        state.rows = append ? state.rows.concat(newRows) : newRows;
-        state.page = response.page || nextPage;
-        state.hasMore = response.hasMore === true;
-      }).fail(function() {
-        if (!append) state.rows = sampleRows();
-        state.hasMore = false;
-      }).always(function() {
-        state.loading = false;
-        el("loader").style.display = "none";
+      function render() {
+        filterRows();
+        var rows = state.filteredRows;
+        var changeCount = rows.reduce(function (total, row) {
+          return (
+            total +
+            (row.changeType
+              ? row.changeType.split("|").filter(Boolean).length
+              : 0)
+          );
+        }, 0);
+
+        el("changeCount").textContent = changeCount;
+        el("mainBody").innerHTML = rows.length
+          ? rows
+              .map(function (row) {
+                return rowHtml(row, false);
+              })
+              .join("")
+          : '<tr class="no-data-row"><td colspan="11">No data found.</td></tr>';
+      }
+
+      function summaryRowHtml(row) {
+        return (
+          "<tr>" +
+          "<td>" +
+          escapeHtml(row.source) +
+          "</td>" +
+          "<td>" +
+          escapeHtml(row.moduleId) +
+          "</td>" +
+          '<td><span class="param-link" data-parameter="' +
+          escapeHtml(row.parameterName) +
+          '">' +
+          escapeHtml(row.parameterName) +
+          "</span></td>" +
+          "<td>" +
+          escapeHtml(row.firstChangeTime) +
+          "</td>" +
+          "<td>" +
+          escapeHtml(row.lastChangeTime) +
+          "</td>" +
+          "<td>" +
+          escapeHtml(row.valueChangeCount) +
+          "</td>" +
+          "<td>" +
+          escapeHtml(row.lslChangeCount) +
+          "</td>" +
+          "<td>" +
+          escapeHtml(row.uslChangeCount) +
+          "</td>" +
+          "<td>" +
+          escapeHtml(row.totalChangePoints) +
+          "</td>" +
+          "<td>" +
+          escapeHtml(row.changeType) +
+          "</td>" +
+          "</tr>"
+        );
+      }
+
+      function renderSummary() {
+        el("summaryBody").innerHTML = state.summaryRows.length
+          ? state.summaryRows.map(summaryRowHtml).join("")
+          : '<tr class="no-data-row"><td colspan="10">No summary data found.</td></tr>';
+      }
+
+      function buildLocalSummary() {
+        var grouped = {};
+        filterRows();
+        state.filteredRows.forEach(function (row) {
+          var key = row.source + "|" + row.moduleId + "|" + row.parameterName;
+          if (!grouped[key]) {
+            grouped[key] = {
+              source: row.source,
+              moduleId: row.moduleId,
+              parameterName: row.parameterName,
+              firstChangeTime: row.createDttd,
+              lastChangeTime: row.createDttd,
+              valueChangeCount: 0,
+              lslChangeCount: 0,
+              uslChangeCount: 0,
+              totalChangePoints: 0,
+              changeType: "",
+            };
+          }
+          var item = grouped[key];
+          var types = String(row.changeType || "").split("|");
+          if (types.indexOf("VALUE_CHANGED") >= 0) item.valueChangeCount++;
+          if (types.indexOf("LSL_CHANGED") >= 0) item.lslChangeCount++;
+          if (types.indexOf("USL_CHANGED") >= 0) item.uslChangeCount++;
+          if (row.changeType) item.totalChangePoints++;
+        });
+        return Object.keys(grouped).map(function (key) {
+          var item = grouped[key];
+          var types = [];
+          if (item.valueChangeCount) types.push("VALUE_CHANGED");
+          if (item.lslChangeCount) types.push("LSL_CHANGED");
+          if (item.uslChangeCount) types.push("USL_CHANGED");
+          item.changeType = types.join("|");
+          return item;
+        });
+      }
+
+      function loadSummary() {
+        el("loader").style.display = "block";
+        $.ajax({
+          url: "/api/parameter-change-summary?" + buildQuery(1),
+          dataType: "json",
+          cache: false,
+        })
+          .done(function (response) {
+            state.summaryRows = response.data || [];
+          })
+          .fail(function () {
+            state.summaryRows = buildLocalSummary();
+          })
+          .always(function () {
+            el("loader").style.display = "none";
+            renderSummary();
+          });
+      }
+
+      function sampleRows() {
+        var parameters = [
+          "ROLLER",
+          "PRESSURE",
+          "TEMP_CTRL",
+          "SPEED",
+          "VOLTAGE",
+          "FLOW_RATE",
+        ];
+        var changes = [
+          "VALUE_CHANGED",
+          "LSL_CHANGED",
+          "USL_CHANGED",
+          "VALUE_CHANGED|LSL_CHANGED",
+          "",
+        ];
+        var rows = [];
+
+        for (var i = 0; i < 120; i++) {
+          var base = 20 + (i % 80);
+          var change = changes[i % changes.length];
+          var date = new Date(2026, 5, 1 + (i % 22));
+          rows.push({
+            site: "Site " + String.fromCharCode(65 + (i % 3)),
+            line: "Line " + (1 + (i % 3)),
+            source: "SRC-" + (1 + (i % 5)),
+            productId: "AMB" + (674 + i),
+            moduleId: "N1DLE" + (32 + i),
+            parameterName:
+              "M_CHB" + (i % 100) + "_" + parameters[i % parameters.length],
+            createDttd: ("0" + date.getDate()).slice(-2) + "/06/2026",
+            previousValue: base,
+            currentValue:
+              change.indexOf("VALUE_CHANGED") >= 0 ? base + 1 : base,
+            previousLsl: base - 10,
+            currentLsl:
+              change.indexOf("LSL_CHANGED") >= 0 ? base - 9 : base - 10,
+            previousUsl: base + 20,
+            currentUsl:
+              change.indexOf("USL_CHANGED") >= 0 ? base + 21 : base + 20,
+            changeType: change,
+          });
+        }
+        return rows;
+      }
+
+      function loadData(append) {
+        if (state.loading || (append && !state.hasMore)) return;
+        state.loading = true;
+        if (!append) {
+          state.page = 0;
+          state.rows = [];
+          el("loader").style.display = "block";
+        }
+
+        var nextPage = state.page + 1;
+        $.ajax({
+          url: "/api/parameter-changes?" + buildQuery(nextPage),
+          dataType: "json",
+          cache: false,
+        })
+          .done(function (response) {
+            var newRows = response.data || [];
+            state.rows = append ? state.rows.concat(newRows) : newRows;
+            state.page = response.page || nextPage;
+            state.hasMore = response.hasMore === true;
+          })
+          .fail(function () {
+            if (!append) state.rows = sampleRows();
+            state.hasMore = false;
+          })
+          .always(function () {
+            state.loading = false;
+            el("loader").style.display = "none";
+            updateFilterOptions();
+            render();
+          });
+      }
+
+      function resetFilters() {
+        ["siteFilter", "lineFilter", "moduleFilter", "paramSearch"].forEach(
+          function (id) {
+            if (el(id).classList.contains("multi-select")) {
+              setSelectedValues(id, []);
+            } else {
+              el(id).value = "";
+            }
+          },
+        );
+        clearErrors();
+        setDefaultDates();
         updateFilterOptions();
         render();
-      });
-    }
-
-    function resetFilters() {
-      ["siteFilter", "lineFilter", "moduleFilter", "paramSearch"].forEach(function(id) {
-        el(id).value = "";
-      });
-      clearErrors();
-      setDefaultDates();
-      updateFilterOptions();
-      render();
-    }
-
-    function toggleSummary() {
-      state.summary = !state.summary;
-      el("mainView").hidden = state.summary;
-      el("summaryView").hidden = !state.summary;
-      el("summaryToggleBtn").textContent = state.summary ? "Main Data" : "Summary";
-      if (state.summary) loadSummary();
-    }
-
-    function tableToExcel(tableId, title) {
-      var table = el(tableId);
-      var copy = table.cloneNode(true);
-      var links = copy.querySelectorAll(".param-link");
-      for (var i = 0; i < links.length; i++) links[i].outerHTML = escapeHtml(links[i].textContent);
-      var html = "<h3>" + escapeHtml(title) + "</h3>" + copy.outerHTML;
-      var blob = new Blob(['<html><meta charset="UTF-8"><body>' + html + "</body></html>"], { type: "application/vnd.ms-excel" });
-      var link = document.createElement("a");
-      link.href = URL.createObjectURL(blob);
-      link.download = title.replace(/\s+/g, "-").toLowerCase() + ".xls";
-      link.click();
-      URL.revokeObjectURL(link.href);
-    }
-
-    function openTrend(parameterName) {
-      el("modalTitle").textContent = "Trend: " + parameterName;
-      el("trendBody").innerHTML = trendData.map(function(row) {
-        return "<tr>" + row.map(function(value) { return "<td>" + value + "</td>"; }).join("") + "</tr>";
-      }).join("");
-      el("trendModal").style.display = "block";
-      document.body.style.overflow = "hidden";
-
-      if (trendChart) trendChart.dispose();
-      trendChart = echarts.init(el("trendChart"));
-      var names = ["Value", "LSL", "USL", "Prev Value", "Prev LSL", "Prev USL"];
-      trendChart.setOption({
-        tooltip: { trigger: "axis" },
-        legend: { data: names, bottom: 5 },
-        grid: { left: "6%", right: "5%", top: "8%", bottom: "20%" },
-        xAxis: { type: "category", boundaryGap: false, data: trendData.map(function(row) { return row[0]; }), axisLabel: { rotate: 35 } },
-        yAxis: { type: "value" },
-        series: names.map(function(name, index) {
-          return { name: name, type: "line", smooth: true, data: trendData.map(function(row) { return row[index + 1]; }) };
-        })
-      });
-    }
-
-    function closeTrend() {
-      el("trendModal").style.display = "none";
-      document.body.style.overflow = "";
-      if (trendChart) {
-        trendChart.dispose();
-        trendChart = null;
       }
-    }
 
-    function updateTimer() {
-      var minutes = Math.floor(refreshSeconds / 60);
-      var seconds = ("0" + refreshSeconds % 60).slice(-2);
-      el("headerTimer").textContent = "Next refresh in " + minutes + " min " + seconds + " sec";
-      refreshSeconds = refreshSeconds > 0 ? refreshSeconds - 1 : 300;
-    }
-
-    el("siteFilter").addEventListener("change", function() {
-      el("lineFilter").value = "";
-      el("moduleFilter").value = "";
-      clearErrors();
-      updateFilterOptions();
-    });
-
-    el("lineFilter").addEventListener("change", function() {
-      el("moduleFilter").value = "";
-      clearErrors();
-      updateFilterOptions();
-    });
-
-    el("moduleFilter").addEventListener("change", clearErrors);
-    el("fromDate").addEventListener("change", clearErrors);
-    el("toDate").addEventListener("change", clearErrors);
-    el("searchBtn").addEventListener("click", function() {
-      if (validateFilters()) {
-        loadData(false);
+      function toggleSummary() {
+        state.summary = !state.summary;
+        el("mainView").hidden = state.summary;
+        el("summaryView").hidden = !state.summary;
+        el("summaryToggleBtn").textContent = state.summary
+          ? "Main Data"
+          : "Summary";
         if (state.summary) loadSummary();
       }
-    });
-    el("resetBtn").addEventListener("click", resetFilters);
-    el("summaryToggleBtn").addEventListener("click", toggleSummary);
-    el("downloadBtn").addEventListener("click", function() {
-      tableToExcel(state.summary ? "summaryTable" : "mainTable", state.summary ? "Summary Report" : "Parameter Change Report");
-    });
-    el("modalDownloadBtn").addEventListener("click", function() {
-      tableToExcel("trendTable", "Parameter Trend");
-    });
-    el("modalClose").addEventListener("click", closeTrend);
-    el("trendModal").addEventListener("click", function(event) {
-      if (event.target === this) closeTrend();
-    });
-    document.addEventListener("click", function(event) {
-      if (event.target.classList.contains("param-link")) openTrend(event.target.getAttribute("data-parameter"));
-    });
-    window.addEventListener("scroll", function() {
-      if (window.innerHeight + window.pageYOffset >= document.documentElement.scrollHeight - 300) loadData(true);
-    });
-    window.addEventListener("resize", function() {
-      if (trendChart) trendChart.resize();
-    });
 
-    setDefaultDates();
-    updateTimer();
-    setInterval(updateTimer, 1000);
-    setInterval(function() {
-      refreshSeconds = 300;
+      function tableToExcel(tableId, title) {
+        var table = el(tableId);
+        var copy = table.cloneNode(true);
+        var links = copy.querySelectorAll(".param-link");
+        for (var i = 0; i < links.length; i++)
+          links[i].outerHTML = escapeHtml(links[i].textContent);
+        var html = "<h3>" + escapeHtml(title) + "</h3>" + copy.outerHTML;
+        var blob = new Blob(
+          ['<html><meta charset="UTF-8"><body>' + html + "</body></html>"],
+          { type: "application/vnd.ms-excel" },
+        );
+        var link = document.createElement("a");
+        link.href = URL.createObjectURL(blob);
+        link.download = title.replace(/\s+/g, "-").toLowerCase() + ".xls";
+        link.click();
+        URL.revokeObjectURL(link.href);
+      }
+
+      function openTrend(parameterName) {
+        el("modalTitle").textContent = "Trend: " + parameterName;
+        el("trendBody").innerHTML = trendData
+          .map(function (row) {
+            return (
+              "<tr>" +
+              row
+                .map(function (value) {
+                  return "<td>" + value + "</td>";
+                })
+                .join("") +
+              "</tr>"
+            );
+          })
+          .join("");
+        el("trendModal").style.display = "block";
+        document.body.style.overflow = "hidden";
+
+        if (trendChart) trendChart.dispose();
+        trendChart = echarts.init(el("trendChart"));
+        var names = [
+          "Value",
+          "LSL",
+          "USL",
+          "Prev Value",
+          "Prev LSL",
+          "Prev USL",
+        ];
+        trendChart.setOption({
+          tooltip: { trigger: "axis" },
+          legend: { data: names, bottom: 5 },
+          grid: { left: "6%", right: "5%", top: "8%", bottom: "20%" },
+          xAxis: {
+            type: "category",
+            boundaryGap: false,
+            data: trendData.map(function (row) {
+              return row[0];
+            }),
+            axisLabel: { rotate: 35 },
+          },
+          yAxis: { type: "value" },
+          series: names.map(function (name, index) {
+            return {
+              name: name,
+              type: "line",
+              smooth: true,
+              data: trendData.map(function (row) {
+                return row[index + 1];
+              }),
+            };
+          }),
+        });
+      }
+
+      function closeTrend() {
+        el("trendModal").style.display = "none";
+        document.body.style.overflow = "";
+        if (trendChart) {
+          trendChart.dispose();
+          trendChart = null;
+        }
+      }
+
+      function updateTimer() {
+        var minutes = Math.floor(refreshSeconds / 60);
+        var seconds = ("0" + (refreshSeconds % 60)).slice(-2);
+        el("headerTimer").textContent =
+          "Next refresh in " + minutes + " min " + seconds + " sec";
+        refreshSeconds = refreshSeconds > 0 ? refreshSeconds - 1 : 300;
+      }
+
+      // Opens the clicked dropdown and closes any other open filter dropdown.
+      document.addEventListener("click", function (event) {
+        var toggle = event.target.closest(".multi-select-toggle");
+        var current = event.target.closest(".multi-select");
+        document.querySelectorAll(".multi-select.open").forEach(function (control) {
+          if (control !== current) control.classList.remove("open");
+        });
+        if (toggle) {
+          toggle.parentNode.classList.toggle("open");
+        }
+      });
+
+      // Stores checkbox selections and refreshes dependent filters in cascade order.
+      document.addEventListener("change", function (event) {
+        if (!event.target.matches(".multi-select-option input")) return;
+        var control = event.target.closest(".multi-select");
+        var id = control.id;
+        control._selectedValues = Array.prototype.slice
+          .call(control.querySelectorAll(".multi-select-option input:checked"))
+          .map(function (input) {
+            return input.value;
+          });
+        renderMultiSelectLabel(id);
+        clearErrors();
+        if (id === "siteFilter") {
+          setSelectedValues("lineFilter", []);
+          setSelectedValues("moduleFilter", []);
+          updateFilterOptions();
+        } else if (id === "lineFilter") {
+          setSelectedValues("moduleFilter", []);
+          updateFilterOptions();
+        }
+      });
+
+      el("fromDate").addEventListener("change", clearErrors);
+      el("toDate").addEventListener("change", clearErrors);
+      el("searchBtn").addEventListener("click", function () {
+        if (validateFilters()) {
+          loadData(false);
+          if (state.summary) loadSummary();
+        }
+      });
+      el("resetBtn").addEventListener("click", resetFilters);
+      el("summaryToggleBtn").addEventListener("click", toggleSummary);
+      el("downloadBtn").addEventListener("click", function () {
+        tableToExcel(
+          state.summary ? "summaryTable" : "mainTable",
+          state.summary ? "Summary Report" : "Parameter Change Report",
+        );
+      });
+      el("modalDownloadBtn").addEventListener("click", function () {
+        tableToExcel("trendTable", "Parameter Trend");
+      });
+      el("modalClose").addEventListener("click", closeTrend);
+      el("trendModal").addEventListener("click", function (event) {
+        if (event.target === this) closeTrend();
+      });
+      document.addEventListener("click", function (event) {
+        if (event.target.classList.contains("param-link"))
+          openTrend(event.target.getAttribute("data-parameter"));
+      });
+      window.addEventListener("scroll", function () {
+        if (
+          window.innerHeight + window.pageYOffset >=
+          document.documentElement.scrollHeight - 300
+        )
+          loadData(true);
+      });
+      window.addEventListener("resize", function () {
+        if (trendChart) trendChart.resize();
+      });
+
+      setDefaultDates();
+      updateTimer();
+      setInterval(updateTimer, 1000);
+      setInterval(function () {
+        refreshSeconds = 300;
+        loadData(false);
+      }, 300000);
       loadData(false);
-    }, 300000);
-    loadData(false);
-  </script>
-</body>
+    </script>
+  </body>
 </html>
