@@ -232,6 +232,7 @@ public class ParameterChangesServlet extends HttpServlet {
     List<String> clean = splitRequestValues(values);
     if (clean.isEmpty()) return;
     String joined = joinValues(clean);
+    // Oracle expands the comma-separated bind value into rows for the IN filter.
     sql.append(" AND ").append(column)
         .append(" IN (SELECT TRIM(REGEXP_SUBSTR(?,'[^,]+',1,LEVEL)) FROM dual")
         .append(" CONNECT BY REGEXP_SUBSTR(?,'[^,]+',1,LEVEL) IS NOT NULL)");
@@ -252,11 +253,14 @@ public class ParameterChangesServlet extends HttpServlet {
     for (int i = 0; i < requestValues.length; i++) {
       String requestValue = requestValues[i];
       if (requestValue == null) continue;
+      // Accept both repeated params and comma-separated params from older clients.
       String[] parts = requestValue.split(",");
       for (int j = 0; j < parts.length; j++) {
         String part = parts[j];
         String item = part.trim();
-        if (item.length() > 0 && !"All".equalsIgnoreCase(item)) values.add(item);
+        if (item.length() > 0 && !"All".equalsIgnoreCase(item) && !values.contains(item)) {
+          values.add(item);
+        }
       }
     }
     return values;
