@@ -2,669 +2,488 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Floor Map</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>SQL Single-Line Converter</title>
+  <script src="https://code.jquery.com/jquery-3.7.1.min.js"></script>
   <style>
-    :root {
-      --paper: #eef3fb;
-      --paper-2: #e4ecf8;
-      --ink: #1f2a44;
-      --line: #7f95ba;
-      --line-soft: #adc0de;
-      --header-dark: #0a1f4d;
-      --header-light: #1f4fa3;
-      --surface: #ffffff;
-      --surface-soft: #f4f8ff;
-      --shadow: rgba(16, 34, 74, 0.16);
-    }
-
     * {
       box-sizing: border-box;
     }
 
-    html,
     body {
       margin: 0;
-      padding: 0;
+      min-height: 100vh;
+      padding: 30px 15px;
+      font-family: Arial, sans-serif;
+      color: #1f2937;
+      background: #f3f4f6;
     }
 
-    body {
-      margin: 0;
-      background: #e5e7eb;
-      font-family: "Trebuchet MS", "Lucida Sans", "Segoe UI", sans-serif;
-      color: var(--ink);
-      overflow: hidden;
-      padding: 0;
+    .container {
+      width: min(1600px, 98%);
+      margin: auto;
+      padding: 32px;
+      background: #fff;
+      border-radius: 8px;
+      box-shadow: 0 4px 18px rgba(0, 0, 0, 0.1);
     }
 
-    .sheet {
-      width: 100vw;
-      height: 100vh;
-      margin: 0;
-      background: var(--paper);
-      border: none;
-      position: relative;
-      box-shadow: none;
-      border-radius: 0;
+    h1 {
+      margin: 0 0 8px;
+      color: #036;
+      font-size: 24px;
+    }
+
+    .description {
+      margin: 0 0 25px;
+      color: #6b7280;
+    }
+
+    .editor-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 20px;
+    }
+
+    .editor-panel {
+      min-width: 0;
+    }
+
+    label {
+      display: block;
+      margin-bottom: 7px;
+      font-weight: bold;
+    }
+
+    textarea {
+      width: 100%;
+      min-height: 620px;
+      padding: 12px;
+      border: 1px solid #cbd5e1;
+      border-radius: 5px;
+      outline: none;
+      resize: vertical;
+      font: 14px/1.5 Consolas, Monaco, monospace;
+    }
+
+    textarea:focus {
+      border-color: #036;
+      box-shadow: 0 0 0 2px rgba(0, 51, 102, 0.12);
+    }
+
+    #outputSql {
+      background: #f8fafc;
+    }
+
+    .actions {
       display: flex;
-      flex-direction: column;
-    }
-
-    .topbar {
-      height: 62px;
-      border-bottom: 1px solid #17376f;
-      background: linear-gradient(var(--header-light), var(--header-dark));
-      color: #f5f8ff;
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      padding: 0 20px;
-      font-size: 15px;
-      letter-spacing: 0.3px;
-      box-shadow: inset 0 -1px 0 rgba(255, 255, 255, 0.14);
-    }
-
-    .title {
-      min-width: 360px;
-      font-size: 22px;
-      letter-spacing: 0.8px;
-      line-height: 1;
-      text-transform: uppercase;
-      font-weight: 700;
-    }
-
-    .badges {
-      display: flex;
+      flex-wrap: wrap;
       gap: 10px;
-      align-items: center;
+      margin: 15px 0 22px;
     }
 
-    .badge {
-      min-width: 92px;
-      border: 1px solid rgba(16, 34, 74, 0.22);
-      background: #f8fbff;
-      color: #1f2a44;
-      text-align: center;
-      font-size: 12px;
-      padding: 4px 10px;
-      height: 28px;
-      line-height: 18px;
-      border-radius: 999px;
-      font-weight: 700;
-      box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.6);
+    button {
+      padding: 9px 18px;
+      color: #036;
+      background: #fff;
+      border: 1px solid #036;
+      border-radius: 4px;
+      cursor: pointer;
+      font-weight: bold;
     }
 
-    .badge-0-20 {
-      background: #5fbf6b;
-      border-color: #4b9d56;
-      color: #0f2b12;
+    button:hover {
+      background: #e6f2ff;
     }
 
-    .badge-20-30 {
-      background: #ffe066;
-      border-color: #c9ae3f;
-      color: #3a310f;
+    .primary {
+      color: #fff;
+      background: #036;
     }
 
-    .badge-30-45 {
-      background: #ffb347;
-      border-color: #c48631;
-      color: #3a2307;
+    .primary:hover {
+      background: #047;
     }
 
-    .badge-45-60 {
-      background: #ef6b5a;
-      border-color: #b95345;
-      color: #2f0e09;
-    }
-
-    .badge-s-grade {
-      background: #ffea00;
-      border-color: #c9ba00;
-      color: #2f2a00;
-    }
-
-    .right {
-      display: flex;
-      align-items: center;
-      gap: 12px;
-      min-width: 380px;
-      justify-content: flex-end;
-      font-size: 15px;
-      font-weight: 700;
-      letter-spacing: 0.5px;
-    }
-
-    .date-box {
-      border: 1px solid #666;
-      background: #f6f6f6;
-      color: #3e3e3e;
-      width: 220px;
-      height: 30px;
-      padding: 4px 10px;
-      font-size: 15px;
-      display: flex;
-      align-items: center;
-    }
-
-    .date-input {
-      border: 1px solid #2e56a2;
-      background: #f8fbff;
-      color: #1f2a44;
-      width: 220px;
-      height: 34px;
-      padding: 4px 10px;
-      font-size: 14px;
-      font-family: inherit;
-      border-radius: 6px;
-    }
-
-    .countdown-box {
-      min-width: 68px;
-      height: 34px;
-      border: 1px solid #2e56a2;
-      background: #f8fbff;
-      color: #15356f;
-      font-size: 14px;
-      display: inline-flex;
-      align-items: center;
-      justify-content: center;
-      padding: 0 10px;
-      border-radius: 6px;
-      font-weight: 700;
-    }
-
-    .map {
-      position: relative;
-      flex: 1;
-      min-height: 0;
-      border-top: 1px solid #a8bad8;
-      background: var(--paper-2);
-    }
-
-    .box {
-      position: absolute;
-      border: 1px solid var(--line);
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      text-align: center;
+    .status {
+      min-height: 20px;
+      margin-top: 8px;
+      color: #16803a;
       font-size: 13px;
-      line-height: 1.1;
-      background: rgba(255, 255, 255, 0.25);
     }
 
-    .lane {
-      position: absolute;
-      border: 1px solid var(--line);
+    .counts {
       display: flex;
-      align-items: center;
-      justify-content: center;
-      color: #25365c;
-      font-size: 18px;
-      font-weight: 700;
-      line-height: 1;
-      background: rgba(255, 255, 255, 0.3);
-    }
-
-    .rack {
-      position: absolute;
-      border: 1px solid var(--line);
-      font-size: 22px;
-      font-weight: 700;
-      line-height: 1;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      background: rgba(255, 255, 255, 0.35);
-    }
-
-    .cell {
-      position: absolute;
-      border: 1px solid var(--line);
-      font-size: 14px;
-      line-height: 1.1;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      background: rgba(255, 255, 255, 0.22);
-      text-align: center;
-      cursor: pointer;
-      transition: background 0.16s ease, box-shadow 0.16s ease;
-    }
-
-    .cell:hover {
-      background: rgba(255, 255, 255, 0.78);
-      box-shadow: inset 0 0 0 1px rgba(40, 70, 130, 0.18);
-    }
-
-    .small {
-      font-size: 11px;
-    }
-
-    .footer-table {
-      position: absolute;
-      bottom: 46px;
-      left: 20px;
-      width: 530px;
-      height: 98px;
-      display: flex;
-      gap: 8px;
-    }
-
-    .mini {
-      flex: 1;
-      border: 1px solid var(--line);
-      font-size: 12px;
-      background: rgba(255, 255, 255, 0.78);
-    }
-
-    .mini table {
-      border-collapse: collapse;
-      width: 100%;
-      height: 100%;
-    }
-
-    .mini td,
-    .mini th {
-      border: 1px solid var(--line-soft);
-      padding: 1px 4px;
-      text-align: left;
-    }
-
-    .mini th {
-      text-align: center;
-      background: #edf3ff;
-      font-weight: 700;
-    }
-
-    .modal-overlay {
-      position: fixed;
-      left: 0;
-      top: 0;
-      width: 100%;
-      height: 100%;
-      background: rgba(8, 16, 36, 0.44);
-      display: none;
-      z-index: 9999;
-    }
-
-    .modal-dialog {
-      position: absolute;
-      left: 50%;
-      top: 50%;
-      width: 680px;
-      height: 440px;
-      margin-left: -340px;
-      margin-top: -220px;
-      background: var(--surface);
-      border: 1px solid #8ea8d3;
-      box-shadow: 0 20px 48px var(--shadow);
-      border-radius: 12px;
-      overflow: hidden;
-    }
-
-    .modal-header {
-      height: 52px;
-      padding: 0 16px;
-      background: linear-gradient(#1c3b71, #122a52);
-      color: #fff;
-      border-bottom: 1px solid #102a5f;
-      display: flex;
-      align-items: center;
       justify-content: space-between;
-      font-size: 20px;
+      margin-top: 5px;
+      color: #6b7280;
+      font-size: 12px;
     }
 
-    .modal-title {
-      font-weight: 700;
-      letter-spacing: 0.2px;
-    }
-
-    .modal-close {
-      width: 30px;
-      height: 30px;
-      border: 1px solid rgba(255, 255, 255, 0.25);
-      background: rgba(255, 255, 255, 0.12);
-      color: #fff;
-      cursor: pointer;
-      font-size: 18px;
-      line-height: 1;
-      border-radius: 6px;
-    }
-
-    .modal-body {
-      height: 388px;
-      overflow-y: auto;
-      background: var(--surface-soft);
-      padding: 14px;
-    }
-
-    .modal-meta,
-    .modal-data {
-      width: 100%;
-      border-collapse: collapse;
-      font-size: 14px;
-      background: #ffffff;
-      margin-bottom: 10px;
-      border-radius: 10px;
-      overflow: hidden;
-      box-shadow: 0 1px 0 rgba(0, 0, 0, 0.03);
-    }
-
-    .modal-meta th,
-    .modal-meta td,
-    .modal-data th,
-    .modal-data td {
-      border: 1px solid #c8d5ea;
-      padding: 8px 10px;
-      text-align: left;
-      vertical-align: top;
-    }
-
-    .modal-meta th,
-    .modal-data th {
-      background: #eaf1ff;
-      font-weight: 700;
-    }
-
-    .modal-data tbody tr:nth-child(even) td {
-      background: #f5f8ff;
-    }
-
-    @media (max-width: 1740px) {
+    @media (max-width: 600px) {
       body {
-        padding: 0;
+        padding: 15px 10px;
       }
 
-      .sheet {
-        margin: 0;
+      .container {
+        padding: 18px;
+      }
+
+      button {
+        flex: 1;
+      }
+    }
+
+    @media (max-width: 850px) {
+      .editor-grid {
+        grid-template-columns: 1fr;
+      }
+
+      textarea {
+        min-height: 400px;
       }
     }
   </style>
 </head>
 <body>
-  <div class="sheet">
-    <div class="topbar">
-      <div class="title">Floor Map</div>
-      <div class="badges">
-        <div class="badge badge-0-20">0-20 Day</div>
-        <div class="badge badge-20-30">20-30 Day</div>
-        <div class="badge badge-30-45">30-45 Day</div>
-        <div class="badge badge-45-60">45-60 Day</div>
-        <div class="badge badge-s-grade">S Grade</div>
-      </div>
-      <div class="right">
-        <div>DATE</div>
-        <input id="warehouse-date" class="date-input" type="date" aria-label="Warehouse date">
-        <div id="countdown-seconds" class="countdown-box">120s</div>
-      </div>
+  <main class="container">
+    <h1>SQL Single-Line Converter</h1>
+    <p class="description">Paste multiline SQL and convert it into one clean line.</p>
+
+    <div class="editor-grid">
+      <section class="editor-panel">
+        <label for="inputSql">Input SQL</label>
+        <textarea id="inputSql" placeholder="Paste your SQL query here..."></textarea>
+        <div class="counts">
+          <span id="inputLines">0 lines</span>
+          <span id="inputCharacters">0 characters</span>
+        </div>
+      </section>
+
+      <section class="editor-panel">
+        <label for="outputSql">Converted SQL</label>
+        <textarea id="outputSql" readonly placeholder="Converted SQL will appear here..."></textarea>
+        <div class="counts">
+          <span id="outputLines">0 lines</span>
+          <span id="outputCharacters">0 characters</span>
+        </div>
+      </section>
     </div>
 
-    <div class="map">
-      <div class="box" style="left:82px;top:22px;width:170px;height:176px;">Vacuum Pack</div>
-      <div class="box" style="left:252px;top:22px;width:250px;height:46px;">Carton Stock</div>
-      <div class="box" style="left:460px;top:22px;width:540px;height:46px;">Packing Material Storage</div>
-      <div class="box" style="left:252px;top:86px;width:242px;height:108px;">SBP pack</div>
-      <div class="box" style="left:494px;top:140px;width:112px;height:20px;"></div>
-      <div class="box" style="left:690px;top:86px;width:320px;height:108px;"><span style="border:1px solid #888;padding:2px 28px;">PACK-ZONE</span></div>
-      <div class="box" style="right:144px;top:64px;width:338px;height:92px;"><span style="border:1px solid #888;padding:2px 30px;">LBP Pack</span></div>
-      <div class="box" style="right:144px;top:156px;width:56px;height:58px;"></div>
-
-      <div class="box" style="right:18px;top:22px;width:112px;height:170px;">ELEVATOR</div>
-      <div class="box" style="right:18px;top:192px;width:112px;height:142px;">GVR07</div>
-      <div class="box" style="right:18px;top:334px;width:112px;height:58px;">SERVER ROOM</div>
-      <div class="box" style="right:18px;top:392px;width:112px;height:58px;">WH UTILITY ROOM</div>
-      <div class="box" style="right:18px;top:450px;width:112px;height:66px;">GOC OFFICE</div>
-
-      <div class="cell" style="right:194px;top:244px;width:58px;height:58px;">G01X-04</div>
-
-      <div class="lane" style="left:690px;top:228px;width:360px;height:50px;font-size:34px;">G-RW</div>
-      <div class="lane" style="left:1050px;top:228px;width:360px;height:50px;font-size:34px;">GVR06</div>
-
-      <div class="box" style="left:20px;top:260px;width:270px;height:364px;"></div>
-      <div class="rack" style="left:112px;top:260px;width:178px;height:294px;">G07X-01</div>
-      <div class="box" style="left:88px;top:488px;width:130px;height:30px;border:none;font-size:16px;line-height:1;justify-content:flex-start;">Ship Tray</div>
-
-      <div class="cell" style="left:290px;top:260px;width:56px;height:98px;">G06B-03</div>
-      <div class="cell" style="left:346px;top:260px;width:56px;height:98px;">G06A-03</div>
-      <div class="cell" style="left:290px;top:358px;width:56px;height:98px;">G06B-02</div>
-      <div class="cell" style="left:346px;top:358px;width:56px;height:98px;">G06A-02</div>
-      <div class="cell" style="left:290px;top:456px;width:56px;height:98px;">G06B-01</div>
-      <div class="cell" style="left:346px;top:456px;width:56px;height:98px;">G06A-01</div>
-      <div class="lane" style="left:402px;top:260px;width:112px;height:294px;">GVR05</div>
-
-      <div class="cell" style="left:514px;top:260px;width:56px;height:98px;">G05B-03</div>
-      <div class="cell" style="left:570px;top:260px;width:56px;height:98px;">G05A-03</div>
-      <div class="cell" style="left:514px;top:358px;width:56px;height:98px;">G05B-02</div>
-      <div class="cell" style="left:570px;top:358px;width:56px;height:98px;">G05A-02</div>
-      <div class="cell" style="left:514px;top:456px;width:56px;height:98px;">G05B-01</div>
-      <div class="cell" style="left:570px;top:456px;width:56px;height:98px;">G05A-01</div>
-      <div class="lane" style="left:626px;top:260px;width:122px;height:294px;">GVR04</div>
-
-      <div class="cell" style="left:748px;top:260px;width:56px;height:98px;">G04B-03</div>
-      <div class="cell" style="left:804px;top:260px;width:56px;height:98px;">G04A-03</div>
-      <div class="cell" style="left:748px;top:358px;width:56px;height:98px;">G04B-02</div>
-      <div class="cell" style="left:804px;top:358px;width:56px;height:98px;">G04A-02</div>
-      <div class="cell" style="left:748px;top:456px;width:56px;height:98px;">G04B-01</div>
-      <div class="cell" style="left:804px;top:456px;width:56px;height:98px;">G04A-01</div>
-      <div class="lane" style="left:860px;top:260px;width:112px;height:294px;">GVR03</div>
-
-      <div class="cell" style="left:972px;top:260px;width:56px;height:98px;">G03B-03</div>
-      <div class="cell" style="left:1028px;top:260px;width:56px;height:98px;">G03A-03</div>
-      <div class="cell" style="left:972px;top:358px;width:56px;height:98px;">G03B-02</div>
-      <div class="cell" style="left:1028px;top:358px;width:56px;height:98px;">G03A-02</div>
-      <div class="cell" style="left:972px;top:456px;width:56px;height:98px;">G03B-01</div>
-      <div class="cell" style="left:1028px;top:456px;width:56px;height:98px;">G03A-01</div>
-      <div class="lane" style="left:1084px;top:260px;width:120px;height:294px;">GVR02</div>
-
-      <div class="cell" style="left:1204px;top:260px;width:56px;height:98px;">G02B-03</div>
-      <div class="cell" style="left:1260px;top:260px;width:56px;height:98px;">G02A-03</div>
-      <div class="cell" style="left:1204px;top:358px;width:56px;height:98px;">G02B-02</div>
-      <div class="cell" style="left:1260px;top:358px;width:56px;height:98px;">G02A-02</div>
-      <div class="cell" style="left:1204px;top:456px;width:56px;height:98px;">G02B-01</div>
-      <div class="cell" style="left:1260px;top:456px;width:56px;height:98px;">G02A-01</div>
-      <div class="lane" style="left:1316px;top:260px;width:78px;height:294px;">GVR01</div>
-
-      <div class="cell" style="left:1394px;top:260px;width:56px;height:98px;">G01X-03</div>
-      <div class="cell" style="left:1394px;top:358px;width:56px;height:98px;">G01X-02</div>
-      <div class="cell" style="left:1394px;top:456px;width:56px;height:98px;">G01X-01</div>
-
-      <div class="box" style="left:172px;top:560px;width:90px;height:64px;">SPEED<br>SHUTTER<br>8</div>
-      <div class="box" style="left:264px;top:560px;width:248px;height:64px;">RAW MAT RACK</div>
-      <div class="box" style="left:402px;top:560px;width:258px;height:22px;">SPEED SHUTTER 7</div>
-      <div class="box" style="left:914px;top:560px;width:448px;height:22px;">SPEED SHUTTER 6</div>
-      <div class="box" style="right:182px;top:560px;width:150px;height:22px;">SPEED SHUTTER 5</div>
-
-      <div class="box" style="left:20px;top:636px;width:1518px;height:48px;justify-content:flex-start;padding-left:12px;">BATTERY CHARGING</div>
-      <div class="box" style="left:540px;top:676px;width:998px;height:52px;font-size:34px;">G-SR</div>
-
-      <div class="footer-table">
-        <div class="mini">
-          <table>
-            <tr><th colspan="2">Warehouse Area</th></tr>
-            <tr><td>Area</td><td>1100m Sq</td></tr>
-            <tr><td>Capacity</td><td>925</td></tr>
-            <tr><td>Dock</td><td>3</td></tr>
-            <tr><td>Room</td><td>2</td></tr>
-          </table>
-        </div>
-        <div class="mini">
-          <table>
-            <tr><th colspan="2">Stock</th></tr>
-            <tr><td>Total Stock</td><td>925</td></tr>
-            <tr><td>Normal Stock</td><td>515</td></tr>
-            <tr><td>Emergencd</td><td>410</td></tr>
-            <tr><td>Actual Stock</td><td>-</td></tr>
-            <tr><td>Balance Stock</td><td>-</td></tr>
-          </table>
-        </div>
-        <div class="mini">
-          <table>
-            <tr><th colspan="2">Man Power</th></tr>
-            <tr><td>Total Man</td><td>28</td></tr>
-            <tr><td>Non Staff</td><td>5</td></tr>
-            <tr><td>Supervisor</td><td>7</td></tr>
-            <tr><td>Casual</td><td>12</td></tr>
-            <tr><td>FD Driver</td><td>4</td></tr>
-          </table>
-        </div>
-      </div>
+    <div class="actions">
+      <button type="button" id="convertBtn" class="primary">Convert to Single Line</button>
+      <button type="button" id="multilineBtn" class="primary">Convert to Multiline</button>
+      <button type="button" id="javaFormatterBtn">Format for Java</button>
+      <button type="button" id="quoteParamsBtn">Convert ? to '?'</button>
+      <button type="button" id="copyBtn">Copy Result</button>
+      <button type="button" id="clearBtn">Clear</button>
     </div>
-  </div>
-  <div id="cell-modal" class="modal-overlay">
-    <div class="modal-dialog">
-      <div class="modal-header">
-        <div id="cell-modal-title" class="modal-title">Cell Details</div>
-        <button id="cell-modal-close" class="modal-close" type="button">x</button>
-      </div>
-      <div class="modal-body">
-        <table class="modal-meta">
-          <thead>
-            <tr>
-              <th>Cell</th>
-              <th>Date</th>
-              <th>Timer</th>
-              <th>Status</th>
-            </tr>
-          </thead>
-          <tbody id="cell-modal-meta-body"></tbody>
-        </table>
-        <table class="modal-data">
-          <thead>
-            <tr>
-              <th>Metric</th>
-              <th>Value</th>
-              <th>Reference</th>
-              <th>Remarks</th>
-            </tr>
-          </thead>
-          <tbody id="cell-modal-body"></tbody>
-        </table>
-      </div>
-    </div>
-  </div>
+
+    <div id="status" class="status"></div>
+  </main>
+
   <script>
-    (function () {
-      var countdownEl = document.getElementById('countdown-seconds');
-      var dateInput = document.getElementById('warehouse-date');
-      var modalEl = document.getElementById('cell-modal');
-      var modalTitleEl = document.getElementById('cell-modal-title');
-      var modalMetaBodyEl = document.getElementById('cell-modal-meta-body');
-      var modalBodyEl = document.getElementById('cell-modal-body');
-      var modalCloseEl = document.getElementById('cell-modal-close');
-      var cells = document.getElementsByClassName('cell');
-      var remaining = 120;
-      var timerId;
+    $(function () {
+      function convertToSingleLine(sql) {
+        var result = "";
+        var quote = "";
+        var pendingSpace = false;
 
-      function pad2(value) {
-        return value < 10 ? '0' + value : '' + value;
+        for (var i = 0; i < sql.length; i++) {
+          var character = sql[i];
+          var nextCharacter = sql[i + 1];
+
+          if (quote) {
+            result += character;
+
+            if (character === quote) {
+              if (nextCharacter === quote) {
+                result += nextCharacter;
+                i++;
+              } else {
+                quote = "";
+              }
+            }
+            continue;
+          }
+
+          if (character === "'" || character === '"') {
+            if (pendingSpace && result && result[result.length - 1] !== " ") {
+              result += " ";
+            }
+            pendingSpace = false;
+            quote = character;
+            result += character;
+            continue;
+          }
+
+          if (/\s/.test(character)) {
+            pendingSpace = true;
+            continue;
+          }
+
+          if (pendingSpace && result && result[result.length - 1] !== " ") {
+            result += " ";
+          }
+          pendingSpace = false;
+          result += character;
+        }
+
+        return result.trim();
       }
 
-      function setTodayDate() {
-        var now = new Date();
-        var formatted = now.getFullYear() + '-' + pad2(now.getMonth() + 1) + '-' + pad2(now.getDate());
-        dateInput.value = formatted;
+      function convertToMultiline(sql) {
+        var singleLine = convertToSingleLine(sql);
+        var quote = "";
+        var keywords = [
+          "UNION ALL", "UNION", "ORDER BY", "GROUP BY", "PARTITION BY",
+          "LEFT JOIN", "RIGHT JOIN", "INNER JOIN", "FULL JOIN", "CROSS JOIN",
+          "CONNECT BY", "START WITH", "INSERT INTO", "DELETE FROM",
+          "SELECT", "FROM", "WHERE", "HAVING", "JOIN", "ON",
+          "VALUES", "SET", "OFFSET", "FETCH NEXT"
+        ];
+
+        var protectedText = "";
+        var values = [];
+        var text = "";
+
+        for (var j = 0; j < singleLine.length; j++) {
+          var current = singleLine[j];
+          var next = singleLine[j + 1];
+
+          if (!quote && (current === "'" || current === '"')) {
+            quote = current;
+            text = current;
+          } else if (quote) {
+            text += current;
+            if (current === quote) {
+              if (next === quote) {
+                text += next;
+                j++;
+              } else {
+                values.push(text);
+                protectedText += "__SQL_STRING_" + (values.length - 1) + "__";
+                quote = "";
+                text = "";
+              }
+            }
+          } else {
+            protectedText += current;
+          }
+        }
+
+        if (text) protectedText += text;
+
+        keywords.forEach(function (keyword) {
+          var pattern = new RegExp("\\s+(" + keyword.replace(/ /g, "\\s+") + ")\\s+", "gi");
+          protectedText = protectedText.replace(pattern, "\n$1 ");
+        });
+
+        protectedText = protectedText
+          .replace(/\s+(AND|OR)\s+/gi, "\n  $1 ")
+          .replace(/\n\s*\n/g, "\n");
+
+        /*
+         * Split SELECT lists without splitting function arguments.
+         * Example: DECODE(a, b, 0, 1) remains on one line.
+         */
+        var formatted = "";
+        var depth = 0;
+        var selectDepth = -1;
+
+        for (var k = 0; k < protectedText.length; k++) {
+          var remaining = protectedText.substring(k);
+
+          if (/^SELECT\b/i.test(remaining)) {
+            selectDepth = depth;
+          }
+
+          var character = protectedText[k];
+          if (character === "(") {
+            depth++;
+            formatted += character;
+          } else if (character === ")") {
+            depth = Math.max(0, depth - 1);
+            formatted += character;
+            if (selectDepth > depth) selectDepth = depth;
+          } else if (character === "," && depth === selectDepth) {
+            formatted += ",\n  ";
+            while (/\s/.test(protectedText[k + 1] || "")) k++;
+          } else {
+            formatted += character;
+          }
+        }
+
+        protectedText = formatted
+          .split("\n")
+          .map(function (line) {
+            return line.trimEnd();
+          })
+          .join("\n")
+          .replace(/\n{2,}/g, "\n")
+          .trim();
+
+        values.forEach(function (value, index) {
+          protectedText = protectedText.replace("__SQL_STRING_" + index + "__", value);
+        });
+
+        return protectedText;
       }
 
-      function updateCountdown() {
-        countdownEl.innerHTML = remaining + 's';
-        if (remaining <= 0) {
-          clearInterval(timerId);
+      function quotePlaceholders(sql) {
+        var result = "";
+        var quote = "";
+
+        for (var i = 0; i < sql.length; i++) {
+          var character = sql[i];
+          var nextCharacter = sql[i + 1];
+
+          if (quote) {
+            result += character;
+            if (character === quote) {
+              if (nextCharacter === quote) {
+                result += nextCharacter;
+                i++;
+              } else {
+                quote = "";
+              }
+            }
+          } else if (character === "'" || character === '"') {
+            quote = character;
+            result += character;
+          } else {
+            result += character === "?" ? "'?'" : character;
+          }
+        }
+
+        return result;
+      }
+
+      function escapeJavaString(value) {
+        return value
+          .replace(/\\/g, "\\\\")
+          .replace(/"/g, "\\\"");
+      }
+
+      function formatForJava(sql) {
+        var lines = sql.replace(/\r\n/g, "\n").replace(/\r/g, "\n").split("\n");
+        var output = "String sql = \"\"";
+
+        for (var i = 0; i < lines.length; i++) {
+          output += "\n    + \"" + escapeJavaString(lines[i]) + "\\n\"";
+        }
+
+        return output + ";";
+      }
+
+      function updateCounts() {
+        var value = $("#inputSql").val();
+        var lineCount = value ? value.split(/\r\n|\r|\n/).length : 0;
+        $("#inputLines").text(lineCount + (lineCount === 1 ? " line" : " lines"));
+        $("#inputCharacters").text(value.length + " characters");
+
+        var output = $("#outputSql").val();
+        var outputLineCount = output ? output.split(/\r\n|\r|\n/).length : 0;
+        $("#outputLines").text(outputLineCount + (outputLineCount === 1 ? " line" : " lines"));
+        $("#outputCharacters").text(output.length + " characters");
+      }
+
+      function showStatus(message, isError) {
+        $("#status")
+          .text(message)
+          .css("color", isError ? "#c00" : "#16803a");
+      }
+
+      $("#inputSql").on("input", function () {
+        updateCounts();
+        showStatus("");
+      });
+
+      $("#convertBtn").on("click", function () {
+        var sql = $("#inputSql").val();
+
+        if (!sql.trim()) {
+          $("#outputSql").val("");
+          showStatus("Enter a SQL query first.", true);
           return;
         }
-        remaining = remaining - 1;
-      }
 
-      function getTodayString() {
-        var now = new Date();
-        return now.getFullYear() + '-' + pad2(now.getMonth() + 1) + '-' + pad2(now.getDate());
-      }
+        $("#outputSql").val(convertToSingleLine(sql));
+        updateCounts();
+        showStatus("SQL converted successfully.");
+      });
 
-      function buildMetaRow(cellName, selectedDate, timerText, status) {
-        return '<tr>' +
-          '<td>' + cellName + '</td>' +
-          '<td>' + selectedDate + '</td>' +
-          '<td>' + timerText + '</td>' +
-          '<td>' + status + '</td>' +
-          '</tr>';
-      }
+      $("#multilineBtn").on("click", function () {
+        var sql = $("#inputSql").val();
 
-      function buildDataRow(metric, value, reference, remarks) {
-        return '<tr>' +
-          '<td>' + metric + '</td>' +
-          '<td>' + value + '</td>' +
-          '<td>' + reference + '</td>' +
-          '<td>' + remarks + '</td>' +
-          '</tr>';
-      }
-
-      function openCellModal(cellName) {
-        var selectedDate = dateInput.value || getTodayString();
-        var status = 'Available';
-        var metaHtml = '';
-        var rowsHtml = '';
-        metaHtml += buildMetaRow(cellName, selectedDate, countdownEl.innerHTML, status);
-        rowsHtml += buildDataRow('Capacity', '100', cellName, 'Max units');
-        rowsHtml += buildDataRow('Occupied', '42', selectedDate, 'Current load');
-        rowsHtml += buildDataRow('Free Space', '58', countdownEl.innerHTML, 'Available units');
-        rowsHtml += buildDataRow('Zone', 'WH', 'Warehouse', status);
-        rowsHtml += buildDataRow('Last Update', '09:00', selectedDate, 'Sync complete');
-        rowsHtml += buildDataRow('Item 1', 'A12', 'Batch 006', 'OK');
-        rowsHtml += buildDataRow('Item 2', 'B03', 'Batch 014', 'OK');
-        rowsHtml += buildDataRow('Item 3', 'C07', 'Batch 019', 'Review');
-        rowsHtml += buildDataRow('Item 4', 'D02', 'Batch 021', 'OK');
-        rowsHtml += buildDataRow('Item 5', 'E11', 'Batch 024', 'OK');
-        rowsHtml += buildDataRow('Item 6', 'F05', 'Batch 026', 'Hold');
-        rowsHtml += buildDataRow('Item 7', 'G08', 'Batch 029', 'OK');
-        rowsHtml += buildDataRow('Item 8', 'H04', 'Batch 031', 'OK');
-        modalTitleEl.innerHTML = 'Cell Details';
-        modalMetaBodyEl.innerHTML = metaHtml;
-        modalBodyEl.innerHTML = rowsHtml;
-        modalEl.style.display = 'block';
-      }
-
-      function closeCellModal() {
-        modalEl.style.display = 'none';
-      }
-
-      function bindCellClickEvents() {
-        var i;
-        for (i = 0; i < cells.length; i++) {
-          (function (cell) {
-            cell.onclick = function () {
-              var cellName = cell.innerText || cell.textContent || 'Cell';
-              cellName = cellName.replace(/\s+/g, ' ').replace(/^\s+|\s+$/g, '');
-              openCellModal(cellName);
-            };
-          })(cells[i]);
+        if (!sql.trim()) {
+          $("#outputSql").val("");
+          showStatus("Enter a SQL query first.", true);
+          return;
         }
-      }
 
-      modalCloseEl.onclick = function () {
-        closeCellModal();
-      };
+        $("#outputSql").val(convertToMultiline(sql));
+        updateCounts();
+        showStatus("SQL converted to multiline format.");
+      });
 
-      modalEl.onclick = function (event) {
-        var e = event || window.event;
-        var target = e.target || e.srcElement;
-        if (target === modalEl) {
-          closeCellModal();
+      $("#quoteParamsBtn").on("click", function () {
+        var sql = $("#inputSql").val();
+
+        if (!sql.trim()) {
+          $("#outputSql").val("");
+          updateCounts();
+          showStatus("Enter a SQL query first.", true);
+          return;
         }
-      };
 
-      document.onkeydown = function (event) {
-        var e = event || window.event;
-        if (e.keyCode === 27) {
-          closeCellModal();
+        $("#outputSql").val(quotePlaceholders(sql));
+        updateCounts();
+        showStatus("SQL placeholders converted from ? to '?'.");
+      });
+
+      $("#javaFormatterBtn").on("click", function () {
+        var sql = $("#inputSql").val();
+
+        if (!sql.trim()) {
+          $("#outputSql").val("");
+          updateCounts();
+          showStatus("Enter a SQL query first.", true);
+          return;
         }
-      };
 
-      setTodayDate();
-      updateCountdown();
-      bindCellClickEvents();
-      timerId = setInterval(updateCountdown, 1000);
-    })();
+        $("#outputSql").val(formatForJava(sql));
+        updateCounts();
+        showStatus("SQL formatted as a Java string.");
+      });
+
+      $("#copyBtn").on("click", function () {
+        var output = $("#outputSql").val();
+
+        if (!output) {
+          showStatus("There is no converted SQL to copy.", true);
+          return;
+        }
+
+        navigator.clipboard.writeText(output).then(function () {
+          showStatus("Copied to clipboard.");
+        }).catch(function () {
+          $("#outputSql").prop("readonly", false).select();
+          document.execCommand("copy");
+          $("#outputSql").prop("readonly", true);
+          showStatus("Copied to clipboard.");
+        });
+      });
+
+      $("#clearBtn").on("click", function () {
+        $("#inputSql, #outputSql").val("");
+        updateCounts();
+        showStatus("");
+        $("#inputSql").focus();
+      });
+
+      updateCounts();
+    });
   </script>
 </body>
 </html>
