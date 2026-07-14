@@ -7,9 +7,9 @@ import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Timestamp;
 import java.text.SimpleDateFormat;
-import java.util.ArrayList;
 import java.util.Calendar;
-import java.util.List;
+import java.util.LinkedHashSet;
+import java.util.Set;
 import java.util.Timer;
 import java.util.TimerTask;
 import javax.servlet.ServletContext;
@@ -50,43 +50,51 @@ public class ParameterChangesScheduler implements ServletContextListener {
     }
 
     public void run() {
-      Connection source = null;
-      Connection target = null;
       try {
         String driver = getConfig(context, "parameter.jdbc.driver", "PARAMETER_JDBC_DRIVER", DEFAULT_DRIVER);
         Class.forName(driver);
 
-        source = openConnection(context, "parameter.source.jdbc.url", "PARAMETER_SOURCE_JDBC_URL",
+        try (Connection source = openConnection(context,
+            "parameter.source.jdbc.url", "PARAMETER_SOURCE_JDBC_URL",
             "parameter.source.jdbc.user", "PARAMETER_SOURCE_JDBC_USER",
             "parameter.source.jdbc.password", "PARAMETER_SOURCE_JDBC_PASSWORD");
-        target = openConnection(context, "parameter.target.jdbc.url", "PARAMETER_TARGET_JDBC_URL",
+            Connection target = openConnection(context,
+            "parameter.target.jdbc.url", "PARAMETER_TARGET_JDBC_URL",
             "parameter.target.jdbc.user", "PARAMETER_TARGET_JDBC_USER",
-            "parameter.target.jdbc.password", "PARAMETER_TARGET_JDBC_PASSWORD");
-        target.setAutoCommit(false);
+            "parameter.target.jdbc.password", "PARAMETER_TARGET_JDBC_PASSWORD")) {
+          target.setAutoCommit(false);
 
-        String mainTable = getConfig(context, "parameter.target.mainTable", "PARAMETER_TARGET_MAIN_TABLE",
-            DEFAULT_MAIN_TABLE);
-        String summaryTable = getConfig(context, "parameter.target.summaryTable",
-            "PARAMETER_TARGET_SUMMARY_TABLE", DEFAULT_SUMMARY_TABLE);
-        String trendTable = getConfig(context, "parameter.target.trendTable", "PARAMETER_TARGET_TREND_TABLE",
-            DEFAULT_TREND_TABLE);
+          try {
+            String mainTableRCP = getConfig(context, "parameter.target.mainTableRCP",
+                "PARAMETER_TARGET_MAIN_TABLE_RCP", DEFAULT_MAIN_TABLE + "_rcp");
+            String summaryTableRCP = getConfig(context, "parameter.target.summaryTableRCP",
+                "PARAMETER_TARGET_SUMMARY_TABLE_RCP", DEFAULT_SUMMARY_TABLE + "_rcp");
+            String trendTableRCP = getConfig(context, "parameter.target.trendTableRCP",
+                "PARAMETER_TARGET_TREND_TABLE_RCP", DEFAULT_TREND_TABLE + "_rcp");
 
-        DateRange range = lastHourRange();
-        Timestamp runTime = new Timestamp(System.currentTimeMillis());
-        CopyResult rcp = copyAllResults(source, target, mainTable, summaryTable, trendTable,
-            "PARAMETER_HISTORY", "RCP", runTime, range);
-        CopyResult ecm = copyAllResults(source, target, mainTable, summaryTable, trendTable,
-            "PARAMETER_HISTORY_2", "ECM", runTime, range);
-        target.commit();
-        context.log("Parameter changes scheduler inserted main=" + (rcp.mainRows + ecm.mainRows)
-            + ", summary=" + (rcp.summaryRows + ecm.summaryRows)
-            + ", trend=" + (rcp.trendRows + ecm.trendRows));
+            String mainTableECM = getConfig(context, "parameter.target.mainTableECM",
+                "PARAMETER_TARGET_MAIN_TABLE_ECM", DEFAULT_MAIN_TABLE + "_ecm");
+            String summaryTableECM = getConfig(context, "parameter.target.summaryTableECM",
+                "PARAMETER_TARGET_SUMMARY_TABLE_ECM", DEFAULT_SUMMARY_TABLE + "_ecm");
+            String trendTableECM = getConfig(context, "parameter.target.trendTableECM",
+                "PARAMETER_TARGET_TREND_TABLE_ECM", DEFAULT_TREND_TABLE + "_ecm");
+
+            DateRange range = lastHourRange();
+            Timestamp runTime = new Timestamp(System.currentTimeMillis());
+            CopyResult total = new CopyResult();
+            total.add(copyAllResults(source, target, mainTableRCP, summaryTableRCP, trendTableRCP,
+                "PARAMETER_HISTORY", "RCP", runTime, range));
+            total.add(copyAllResults(source, target, mainTableECM, summaryTableECM, trendTableECM,
+                "PARAMETER_HISTORY_2", "ECM", runTime, range));
+            target.commit();
+            context.log("Parameter changes scheduler inserted " + total);
+          } catch (Exception e) {
+            rollback(target);
+            throw e;
+          }
+        }
       } catch (Exception e) {
-        rollback(target);
         context.log("Parameter changes scheduler failed", e);
-      } finally {
-        closeConnection(target);
-        closeConnection(source);
       }
     }
 
@@ -94,8 +102,7 @@ public class ParameterChangesScheduler implements ServletContextListener {
         String summaryTable, String trendTable, String sourceTable, String sourceName, Timestamp runTime,
         DateRange range) throws SQLException {
       CopyResult result = copyMainChanges(source, target, mainTable, sourceTable, sourceName, runTime, range);
-      for (int i = 0; i < result.keys.size(); i++) {
-        ModuleParameter key = (ModuleParameter) result.keys.get(i);
+      for (ModuleParameter key : result.keys) {
         result.summaryRows += copySummary(source, target, summaryTable, sourceTable, sourceName, runTime,
             range, key.moduleId, key.paramName);
         result.trendRows += copyTrend(source, target, trendTable, sourceTable, sourceName, runTime,
@@ -106,41 +113,34 @@ public class ParameterChangesScheduler implements ServletContextListener {
 
     private CopyResult copyMainChanges(Connection source, Connection target, String targetTable,
         String sourceTable, String sourceName, Timestamp runTime, DateRange range) throws SQLException {
-      PreparedStatement read = null;
-      PreparedStatement write = null;
-      ResultSet rs = null;
       CopyResult result = new CopyResult();
-      try {
-        read = source.prepareStatement(buildMainChangesSql(sourceTable));
+      try (PreparedStatement read = source.prepareStatement(buildMainChangesSql(sourceTable));
+          PreparedStatement write = target.prepareStatement(buildMainInsertSql(targetTable))) {
         bindDateRange(read, range);
-        write = target.prepareStatement(buildMainInsertSql(targetTable));
-        rs = read.executeQuery();
-        while (rs.next()) {
-          String moduleId = rs.getString("MODULE_ID");
-          String paramName = rs.getString("PARAM_NAME");
-          int i = 1;
-          write.setTimestamp(i++, runTime);
-          write.setString(i++, sourceName);
-          write.setString(i++, moduleId);
-          write.setString(i++, paramName);
-          write.setTimestamp(i++, rs.getTimestamp("PREVIOUS_CHANGE_TIME"));
-          write.setTimestamp(i++, rs.getTimestamp("CURRENT_CHANGE_TIME"));
-          write.setString(i++, rs.getString("PREV_VALUE"));
-          write.setString(i++, rs.getString("VALUE"));
-          write.setString(i++, rs.getString("PREV_LSL"));
-          write.setString(i++, rs.getString("LSL"));
-          write.setString(i++, rs.getString("PREV_USL"));
-          write.setString(i++, rs.getString("USL"));
-          write.setString(i++, rs.getString("CHANGE_TYPE"));
-          write.addBatch();
-          result.mainRows++;
-          result.addKey(moduleId, paramName);
+        try (ResultSet rs = read.executeQuery()) {
+          while (rs.next()) {
+            String moduleId = rs.getString("MODULE_ID");
+            String paramName = rs.getString("PARAM_NAME");
+            int i = 1;
+            write.setTimestamp(i++, runTime);
+            write.setString(i++, sourceName);
+            write.setString(i++, moduleId);
+            write.setString(i++, paramName);
+            write.setTimestamp(i++, rs.getTimestamp("PREVIOUS_CHANGE_TIME"));
+            write.setTimestamp(i++, rs.getTimestamp("CURRENT_CHANGE_TIME"));
+            write.setString(i++, rs.getString("PREV_VALUE"));
+            write.setString(i++, rs.getString("VALUE"));
+            write.setString(i++, rs.getString("PREV_LSL"));
+            write.setString(i++, rs.getString("LSL"));
+            write.setString(i++, rs.getString("PREV_USL"));
+            write.setString(i++, rs.getString("USL"));
+            write.setString(i++, rs.getString("CHANGE_TYPE"));
+            write.addBatch();
+            result.mainRows++;
+            result.addKey(moduleId, paramName);
+          }
         }
         write.executeBatch();
-      } finally {
-        closeResultSet(rs);
-        closeStatement(write);
-        closeStatement(read);
       }
       return result;
     }
@@ -148,36 +148,29 @@ public class ParameterChangesScheduler implements ServletContextListener {
     private int copySummary(Connection source, Connection target, String targetTable, String sourceTable,
         String sourceName, Timestamp runTime, DateRange range, String moduleId, String paramName)
         throws SQLException {
-      PreparedStatement read = null;
-      PreparedStatement write = null;
-      ResultSet rs = null;
       int count = 0;
-      try {
-        read = source.prepareStatement(buildSummarySql(sourceTable));
+      try (PreparedStatement read = source.prepareStatement(buildSummarySql(sourceTable));
+          PreparedStatement write = target.prepareStatement(buildSummaryInsertSql(targetTable))) {
         bindDateRangeModuleParam(read, range, moduleId, paramName);
-        write = target.prepareStatement(buildSummaryInsertSql(targetTable));
-        rs = read.executeQuery();
-        while (rs.next()) {
-          int i = 1;
-          write.setTimestamp(i++, runTime);
-          write.setString(i++, sourceName);
-          write.setString(i++, rs.getString("MODULE_ID"));
-          write.setString(i++, rs.getString("PARAM_NAME"));
-          write.setTimestamp(i++, rs.getTimestamp("FIRST_CHANGE_TIME"));
-          write.setTimestamp(i++, rs.getTimestamp("LAST_CHANGE_TIME"));
-          write.setLong(i++, rs.getLong("VALUE_CHANGE_COUNT"));
-          write.setLong(i++, rs.getLong("LSL_CHANGE_COUNT"));
-          write.setLong(i++, rs.getLong("USL_CHANGE_COUNT"));
-          write.setLong(i++, rs.getLong("TOTAL_CHANGE_POINTS"));
-          write.setString(i++, rs.getString("CHANGE_TYPE"));
-          write.addBatch();
-          count++;
+        try (ResultSet rs = read.executeQuery()) {
+          while (rs.next()) {
+            int i = 1;
+            write.setTimestamp(i++, runTime);
+            write.setString(i++, sourceName);
+            write.setString(i++, rs.getString("MODULE_ID"));
+            write.setString(i++, rs.getString("PARAM_NAME"));
+            write.setTimestamp(i++, rs.getTimestamp("FIRST_CHANGE_TIME"));
+            write.setTimestamp(i++, rs.getTimestamp("LAST_CHANGE_TIME"));
+            write.setLong(i++, rs.getLong("VALUE_CHANGE_COUNT"));
+            write.setLong(i++, rs.getLong("LSL_CHANGE_COUNT"));
+            write.setLong(i++, rs.getLong("USL_CHANGE_COUNT"));
+            write.setLong(i++, rs.getLong("TOTAL_CHANGE_POINTS"));
+            write.setString(i++, rs.getString("CHANGE_TYPE"));
+            write.addBatch();
+            count++;
+          }
         }
         write.executeBatch();
-      } finally {
-        closeResultSet(rs);
-        closeStatement(write);
-        closeStatement(read);
       }
       return count;
     }
@@ -185,38 +178,31 @@ public class ParameterChangesScheduler implements ServletContextListener {
     private int copyTrend(Connection source, Connection target, String targetTable, String sourceTable,
         String sourceName, Timestamp runTime, DateRange range, String moduleId, String paramName)
         throws SQLException {
-      PreparedStatement read = null;
-      PreparedStatement write = null;
-      ResultSet rs = null;
       int count = 0;
-      try {
-        read = source.prepareStatement(buildTrendSql(sourceTable));
+      try (PreparedStatement read = source.prepareStatement(buildTrendSql(sourceTable));
+          PreparedStatement write = target.prepareStatement(buildTrendInsertSql(targetTable))) {
         bindDateRangeModuleParam(read, range, moduleId, paramName);
-        write = target.prepareStatement(buildTrendInsertSql(targetTable));
-        rs = read.executeQuery();
-        while (rs.next()) {
-          int i = 1;
-          write.setTimestamp(i++, runTime);
-          write.setString(i++, sourceName);
-          write.setString(i++, rs.getString("MODULE_ID"));
-          write.setString(i++, rs.getString("PARAM_NAME"));
-          write.setTimestamp(i++, rs.getTimestamp("PREVIOUS_CHANGE_TIME"));
-          write.setTimestamp(i++, rs.getTimestamp("CURRENT_CHANGE_TIME"));
-          write.setString(i++, rs.getString("PREV_VALUE"));
-          write.setString(i++, rs.getString("VALUE"));
-          write.setString(i++, rs.getString("PREV_LSL"));
-          write.setString(i++, rs.getString("LSL"));
-          write.setString(i++, rs.getString("PREV_USL"));
-          write.setString(i++, rs.getString("USL"));
-          write.setString(i++, rs.getString("CHANGE_TYPE"));
-          write.addBatch();
-          count++;
+        try (ResultSet rs = read.executeQuery()) {
+          while (rs.next()) {
+            int i = 1;
+            write.setTimestamp(i++, runTime);
+            write.setString(i++, sourceName);
+            write.setString(i++, rs.getString("MODULE_ID"));
+            write.setString(i++, rs.getString("PARAM_NAME"));
+            write.setTimestamp(i++, rs.getTimestamp("PREVIOUS_CHANGE_TIME"));
+            write.setTimestamp(i++, rs.getTimestamp("CURRENT_CHANGE_TIME"));
+            write.setString(i++, rs.getString("PREV_VALUE"));
+            write.setString(i++, rs.getString("VALUE"));
+            write.setString(i++, rs.getString("PREV_LSL"));
+            write.setString(i++, rs.getString("LSL"));
+            write.setString(i++, rs.getString("PREV_USL"));
+            write.setString(i++, rs.getString("USL"));
+            write.setString(i++, rs.getString("CHANGE_TYPE"));
+            write.addBatch();
+            count++;
+          }
         }
         write.executeBatch();
-      } finally {
-        closeResultSet(rs);
-        closeStatement(write);
-        closeStatement(read);
       }
       return count;
     }
@@ -623,14 +609,20 @@ public class ParameterChangesScheduler implements ServletContextListener {
     int mainRows;
     int summaryRows;
     int trendRows;
-    final List keys = new ArrayList();
+    final Set<ModuleParameter> keys = new LinkedHashSet<ModuleParameter>();
 
     void addKey(String moduleId, String paramName) {
-      ModuleParameter key = new ModuleParameter(moduleId, paramName);
-      for (int i = 0; i < keys.size(); i++) {
-        if (key.equals(keys.get(i))) return;
-      }
-      keys.add(key);
+      keys.add(new ModuleParameter(moduleId, paramName));
+    }
+
+    void add(CopyResult other) {
+      mainRows += other.mainRows;
+      summaryRows += other.summaryRows;
+      trendRows += other.trendRows;
+    }
+
+    public String toString() {
+      return "main=" + mainRows + ", summary=" + summaryRows + ", trend=" + trendRows;
     }
   }
 
@@ -669,30 +661,4 @@ public class ParameterChangesScheduler implements ServletContextListener {
     }
   }
 
-  private static void closeResultSet(ResultSet rs) {
-    if (rs != null) {
-      try {
-        rs.close();
-      } catch (SQLException ignored) {
-      }
-    }
-  }
-
-  private static void closeStatement(PreparedStatement ps) {
-    if (ps != null) {
-      try {
-        ps.close();
-      } catch (SQLException ignored) {
-      }
-    }
-  }
-
-  private static void closeConnection(Connection connection) {
-    if (connection != null) {
-      try {
-        connection.close();
-      } catch (SQLException ignored) {
-      }
-    }
-  }
 }
