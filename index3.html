@@ -549,7 +549,7 @@
         var weekAgo = new Date(
           today.getFullYear(),
           today.getMonth(),
-          today.getDate() - 6,
+          today.getDate() - 6
         );
         el("fromDate").value = formatInputDate(weekAgo);
         el("toDate").value = formatInputDate(today);
@@ -648,7 +648,7 @@
           "moduleFilter",
           unique("moduleId", { site: site, line: line }),
           moduleId,
-          !(site.length || line.length),
+          !(site.length || line.length)
         );
       }
 
@@ -814,10 +814,16 @@
             escapeHtml(row.previousUsl) +
             "</td>";
         }
-        return "<tr>" + common + "</tr>";
+        return (
+          '<tr data-row-key="' +
+          escapeHtml(encodeURIComponent(rowKey(row))) +
+          '">' +
+          common +
+          "</tr>"
+        );
       }
 
-      function render() {
+      function render(appendedRows) {
         filterRows();
         var rows = state.filteredRows;
         var changeCount = rows.reduce(function (total, row) {
@@ -830,6 +836,32 @@
         }, 0);
 
         el("changeCount").textContent = changeCount;
+        if (appendedRows) {
+          var visibleKeys = {};
+          var htmlKeys = {};
+          var html = "";
+          var noDataRow = el("mainBody").querySelector(".no-data-row");
+          var renderedRows = el("mainBody").querySelectorAll("tr[data-row-key]");
+          var i;
+
+          rows.forEach(function (row) {
+            visibleKeys[rowKey(row)] = true;
+          });
+          for (i = 0; i < renderedRows.length; i++) {
+            htmlKeys[decodeURIComponent(renderedRows[i].getAttribute("data-row-key"))] = true;
+          }
+          appendedRows.forEach(function (row) {
+            var key = rowKey(row);
+            if (visibleKeys[key] && !htmlKeys[key]) {
+              htmlKeys[key] = true;
+              html += rowHtml(row, false);
+            }
+          });
+          if (noDataRow) noDataRow.parentNode.removeChild(noDataRow);
+          if (html) el("mainBody").insertAdjacentHTML("beforeend", html);
+          return;
+        }
+
         el("mainBody").innerHTML = rows.length
           ? rows
               .map(function (row) {
@@ -986,9 +1018,44 @@
         return rows;
       }
 
+      // API pages can overlap (for example when data changes between requests).
+      // Keep a stable client-side key so an already rendered change is not added again.
+      function rowKey(row) {
+        return [
+          row.id,
+          row.source,
+          row.moduleId,
+          row.productId,
+          row.parameterName,
+          row.createDttd,
+          row.previousValue,
+          row.currentValue,
+          row.previousLsl,
+          row.currentLsl,
+          row.previousUsl,
+          row.currentUsl,
+          row.changeType,
+        ].join("\u001f");
+      }
+
+      function appendUniqueRows(existingRows, newRows) {
+        var seen = {};
+        var result = [];
+
+        existingRows.concat(newRows).forEach(function (row) {
+          var key = rowKey(row);
+          if (seen[key]) return;
+          seen[key] = true;
+          result.push(row);
+        });
+
+        return result;
+      }
+
       function loadData(append) {
         if (state.loading || (append && !state.hasMore)) return;
         state.loading = true;
+        var appendedRows = null;
         if (!append) {
           state.page = 0;
           state.rows = [];
@@ -1003,7 +1070,18 @@
         })
           .done(function (response) {
             var newRows = response.data || [];
-            state.rows = append ? state.rows.concat(newRows) : newRows;
+            if (append) {
+              var existing = {};
+              state.rows.forEach(function (row) {
+                existing[rowKey(row)] = true;
+              });
+              appendedRows = newRows.filter(function (row) {
+                return existing[rowKey(row)] !== true;
+              });
+            }
+            state.rows = append
+              ? appendUniqueRows(state.rows, newRows)
+              : appendUniqueRows([], newRows);
             state.page = response.page || nextPage;
             state.hasMore = response.hasMore === true;
           })
@@ -1015,7 +1093,7 @@
             state.loading = false;
             el("loader").style.display = "none";
             updateFilterOptions();
-            render();
+            render(append ? appendedRows || [] : null);
           });
       }
 
@@ -1027,7 +1105,7 @@
             } else {
               el(id).value = "";
             }
-          },
+          }
         );
         clearErrors();
         setDefaultDates();
@@ -1054,7 +1132,7 @@
         var html = "<h3>" + escapeHtml(title) + "</h3>" + copy.outerHTML;
         var blob = new Blob(
           ['<html><meta charset="UTF-8"><body>' + html + "</body></html>"],
-          { type: "application/vnd.ms-excel" },
+          { type: "application/vnd.ms-excel" }
         );
         var link = document.createElement("a");
         link.href = URL.createObjectURL(blob);
@@ -1134,13 +1212,32 @@
         refreshSeconds = refreshSeconds > 0 ? refreshSeconds - 1 : 300;
       }
 
+      // IE11 does not provide Element.closest or the unprefixed matches method.
+      function matchesSelector(node, selector) {
+        var matches =
+          node.matches ||
+          node.msMatchesSelector ||
+          node.webkitMatchesSelector;
+        return !!matches && matches.call(node, selector);
+      }
+
+      function closestElement(node, selector) {
+        while (node && node.nodeType === 1) {
+          if (matchesSelector(node, selector)) return node;
+          node = node.parentElement;
+        }
+        return null;
+      }
+
       // Opens the clicked dropdown and closes any other open filter dropdown.
       document.addEventListener("click", function (event) {
-        var toggle = event.target.closest(".multi-select-toggle");
-        var current = event.target.closest(".multi-select");
-        document.querySelectorAll(".multi-select.open").forEach(function (control) {
+        var toggle = closestElement(event.target, ".multi-select-toggle");
+        var current = closestElement(event.target, ".multi-select");
+        var openControls = document.querySelectorAll(".multi-select.open");
+        for (var i = 0; i < openControls.length; i++) {
+          var control = openControls[i];
           if (control !== current) control.classList.remove("open");
-        });
+        }
         if (toggle) {
           toggle.parentNode.classList.toggle("open");
         }
@@ -1148,8 +1245,8 @@
 
       // Stores checkbox selections and refreshes dependent filters in cascade order.
       document.addEventListener("change", function (event) {
-        if (!event.target.matches(".multi-select-option input")) return;
-        var control = event.target.closest(".multi-select");
+        if (!matchesSelector(event.target, ".multi-select-option input")) return;
+        var control = closestElement(event.target, ".multi-select");
         var id = control.id;
         control._selectedValues = Array.prototype.slice
           .call(control.querySelectorAll(".multi-select-option input:checked"))
@@ -1181,7 +1278,7 @@
       el("downloadBtn").addEventListener("click", function () {
         tableToExcel(
           state.summary ? "summaryTable" : "mainTable",
-          state.summary ? "Summary Report" : "Parameter Change Report",
+          state.summary ? "Summary Report" : "Parameter Change Report"
         );
       });
       el("modalDownloadBtn").addEventListener("click", function () {
@@ -1195,10 +1292,10 @@
         if (event.target.classList.contains("param-link"))
           openTrend(event.target.getAttribute("data-parameter"));
       });
-      window.addEventListener("scroll", function () {
+      el("mainView").addEventListener("scroll", function () {
         if (
-          window.innerHeight + window.pageYOffset >=
-          document.documentElement.scrollHeight - 300
+          this.scrollTop + this.clientHeight >=
+          this.scrollHeight - 300
         )
           loadData(true);
       });
