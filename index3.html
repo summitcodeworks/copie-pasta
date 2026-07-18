@@ -11,22 +11,19 @@
     <script src="https://code.jquery.com/jquery-1.12.4.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/echarts@4.9.0/dist/echarts.min.js"></script>
     <style>
-      :root {
-        --blue: #036;
-        --border: #ccc;
-        --light-blue: #e6f2ff;
-        --header-height: 47px;
-        --filter-height: 96px;
-      }
-
       * {
         box-sizing: border-box;
       }
+      [hidden] {
+        display: none !important;
+      }
       body {
         margin: 0;
-        padding-top: calc(var(--header-height) + var(--filter-height));
+        padding-top: 162px;
+        color: #24364b;
+        background: #f4f7fb;
         font:
-          12px Arial,
+          13px "Segoe UI", Arial,
           sans-serif;
       }
       button,
@@ -37,46 +34,60 @@
 
       .header {
         position: fixed;
-        inset: 0 0 auto;
+        top: 0;
+        right: 0;
+        left: 0;
         z-index: 20;
-        height: var(--header-height);
+        height: 58px;
         display: flex;
         align-items: center;
         justify-content: space-between;
-        padding: 0 15px;
+        padding: 0 24px;
         color: white;
-        background: var(--blue);
-        box-shadow: 0 2px 4px #0005;
-        font-size: 16px;
-        font-weight: bold;
+        background: #073b71;
+        background: linear-gradient(135deg, #073b71, #0b5aa5);
+        box-shadow: 0 4px 14px rgba(7, 59, 113, 0.25);
+        font-size: 18px;
+        font-weight: 600;
+        letter-spacing: 0.2px;
       }
 
       .header-timer {
+        padding: 7px 12px;
         font-size: 12px;
         font-weight: normal;
+        background: rgba(255, 255, 255, 0.14);
+        border: 1px solid rgba(255, 255, 255, 0.2);
+        border-radius: 16px;
       }
 
       .filters {
         position: fixed;
-        inset: var(--header-height) 0 auto;
+        top: 58px;
+        right: 0;
+        left: 0;
         z-index: 19;
-        min-height: var(--filter-height);
+        min-height: 104px;
         display: flex;
-        align-items: end;
-        gap: 15px;
-        padding: 8px 10px;
-        background: #f5f5f5;
-        border-bottom: 1px solid var(--border);
-        box-shadow: 0 2px 4px #0001;
+        align-items: flex-end;
+        padding: 14px 20px 16px;
+        background: #fff;
+        border-bottom: 1px solid #dbe4ee;
+        box-shadow: 0 5px 18px rgba(32, 64, 96, 0.08);
       }
 
       .filter-group {
-        min-width: 120px;
+        min-width: 105px;
+        margin-right: 10px;
       }
       .filter-label {
         display: block;
-        margin-bottom: 3px;
-        font-weight: bold;
+        margin-bottom: 7px;
+        color: #4b6075;
+        font-size: 11px;
+        font-weight: 600;
+        letter-spacing: 0.45px;
+        text-transform: uppercase;
       }
       .filter-required,
       .filter-error {
@@ -88,11 +99,18 @@
         font-size: 11px;
       }
       .filter-control {
-        width: 150px;
-        height: 26px;
-        padding: 3px 5px;
-        border: 1px solid var(--border);
+        width: 130px;
+        height: 38px;
+        padding: 7px 10px;
+        color: #20354a;
+        border: 1px solid #cbd7e3;
+        border-radius: 6px;
         background: white;
+        outline: none;
+      }
+      .filter-control:focus {
+        border-color: #1473c9;
+        box-shadow: 0 0 0 2px rgba(20, 115, 201, 0.13);
       }
       .filter-control.error {
         border-color: #c00;
@@ -100,20 +118,22 @@
       /* Custom checkbox dropdown used for filters that need multiple selections. */
       .multi-select {
         position: relative;
-        width: 170px;
+        width: 145px;
       }
       .multi-select-toggle {
         width: 100%;
-        height: 26px;
-        padding: 3px 24px 3px 5px;
+        height: 38px;
+        padding: 7px 28px 7px 10px;
         overflow: hidden;
         color: #000;
         text-align: left;
         text-overflow: ellipsis;
         white-space: nowrap;
         background: white;
-        border: 1px solid var(--border);
+        border: 1px solid #cbd7e3;
+        border-radius: 6px;
         cursor: pointer;
+        outline: none;
       }
       .multi-select-toggle::after {
         position: absolute;
@@ -126,15 +146,16 @@
       .multi-select-menu {
         display: none;
         position: absolute;
-        top: 28px;
+        top: 41px;
         left: 0;
         z-index: 50;
         width: 220px;
         max-height: 220px;
         overflow: auto;
         background: white;
-        border: 1px solid var(--border);
-        box-shadow: 0 4px 12px #0002;
+        border: 1px solid #d4dee8;
+        border-radius: 7px;
+        box-shadow: 0 10px 28px rgba(30, 55, 80, 0.18);
       }
       .multi-select.open .multi-select-menu {
         display: block;
@@ -142,52 +163,66 @@
       .multi-select-option {
         display: flex;
         align-items: center;
-        gap: 6px;
-        padding: 5px 7px;
+        padding: 8px 10px;
         cursor: pointer;
       }
       .multi-select-option:hover {
-        background: var(--light-blue);
+        background: #e6f2ff;
       }
       .multi-select-option input {
-        margin: 0;
+        margin: 0 6px 0 0;
       }
       .date-control {
-        width: 125px;
+        width: 112px;
       }
       .date-range {
         display: flex;
-        gap: 5px;
+      }
+      .date-range .date-control {
+        margin-right: 5px;
       }
 
       .btn {
-        height: 26px;
-        padding: 4px 12px;
-        color: var(--blue);
+        height: 38px;
+        padding: 7px 16px;
+        color: #036;
         background: white;
-        border: 1px solid var(--blue);
+        border: 1px solid #9eb6cc;
+        border-radius: 6px;
         cursor: pointer;
+        font-weight: 600;
+        outline: none;
       }
 
       .btn:hover {
-        background: var(--light-blue);
+        background: #e6f2ff;
       }
       .btn-primary {
         color: white;
-        background: var(--blue);
+        background: #0b5aa5;
+        border-color: #0b5aa5;
+        box-shadow: 0 3px 8px rgba(11, 90, 165, 0.22);
       }
       .btn-primary:hover {
         background: #048;
       }
       .actions {
         display: flex;
-        gap: 5px;
+      }
+      .actions .btn {
+        margin-right: 5px;
       }
 
       .summary {
-        padding: 10px;
-        color: var(--blue);
-        font-weight: bold;
+        min-height: 56px;
+        margin: 16px 20px 12px;
+        padding: 9px 14px;
+        color: #26445f;
+        font-weight: 600;
+        background: white;
+        border: 1px solid #e0e8f0;
+        border-radius: 9px;
+        box-shadow: 0 4px 14px rgba(32, 64, 96, 0.06);
       }
 
       .summary .btn {
@@ -198,10 +233,12 @@
       }
 
       .table-wrapper {
-        max-height: calc(100vh - 165px);
-        margin: 0 10px 20px;
+        max-height: calc(100vh - 242px);
+        margin: 0 20px 24px;
         overflow: auto;
-        border: 1px solid var(--border);
+        border: 1px solid #dce5ee;
+        border-radius: 9px;
+        box-shadow: 0 5px 18px rgba(32, 64, 96, 0.07);
       }
 
       table {
@@ -212,8 +249,9 @@
       }
       th,
       td {
-        padding: 5px 7px;
-        border: 1px solid var(--border);
+        padding: 10px 12px;
+        border-right: 1px solid #e3eaf1;
+        border-bottom: 1px solid #e3eaf1;
         text-align: left;
         white-space: nowrap;
       }
@@ -221,16 +259,25 @@
         position: sticky;
         top: 0;
         z-index: 2;
-        background: #e0e0e0;
+        height: 42px;
+        color: #38516a;
+        background: #edf3f8;
+        font-size: 11px;
+        font-weight: 700;
+        letter-spacing: 0.3px;
+        text-transform: uppercase;
       }
       tbody tr:nth-child(even) {
-        background: #f9f9f9;
+        background: #f8fafc;
+      }
+      tbody tr:hover {
+        background: #eef6fd;
       }
       .highlight {
         background: #ff9;
       }
       .param-link {
-        color: var(--blue);
+        color: #0968bc;
         text-decoration: underline;
         cursor: pointer;
       }
@@ -245,9 +292,12 @@
       .modal-overlay {
         display: none;
         position: fixed;
-        inset: 0;
+        top: 0;
+        right: 0;
+        bottom: 0;
+        left: 0;
         z-index: 40;
-        background: #fffb;
+        background: rgba(255, 255, 255, 0.73);
       }
 
       .loader-spinner {
@@ -258,7 +308,7 @@
         height: 50px;
         margin: -25px;
         border: 5px solid #ddd;
-        border-top-color: var(--blue);
+        border-top-color: #036;
         border-radius: 50%;
         animation: spin 1s linear infinite;
       }
@@ -268,7 +318,7 @@
         top: calc(50% + 45px);
         left: 50%;
         transform: translateX(-50%);
-        color: var(--blue);
+        color: #036;
         font-weight: bold;
       }
 
@@ -280,7 +330,7 @@
 
       .modal-overlay {
         z-index: 30;
-        background: #0008;
+        background: rgba(0, 0, 0, 0.53);
       }
       .modal-box {
         position: absolute;
@@ -293,14 +343,15 @@
         transform: translate(-50%, -50%);
         background: white;
         border-radius: 6px;
-        box-shadow: 0 8px 40px #0006;
+        border-radius: 10px;
+        box-shadow: 0 14px 46px rgba(0, 0, 0, 0.35);
       }
 
       .modal-header {
         margin-bottom: 20px;
         padding-bottom: 12px;
-        color: var(--blue);
-        border-bottom: 2px solid var(--blue);
+        color: #036;
+        border-bottom: 2px solid #036;
         font-size: 16px;
         font-weight: bold;
       }
@@ -329,16 +380,20 @@
       }
       .modal-table-wrapper th {
         color: white;
-        background: var(--blue);
+        background: #036;
       }
 
       @media (max-width: 900px) {
-        :root {
-          --filter-height: 170px;
+        body {
+          padding-top: 260px;
         }
         .filters {
+          min-height: 202px;
           flex-wrap: wrap;
           align-content: center;
+        }
+        .table-wrapper {
+          max-height: calc(100vh - 340px);
         }
       }
     </style>
@@ -393,6 +448,25 @@
         />
       </label>
 
+      <label class="filter-group">
+        <span class="filter-label">APC</span>
+        <select id="apcFilter" class="filter-control">
+          <option value="">All</option>
+          <option value="APC">APC</option>
+          <option value="Non-APC">Non-APC</option>
+        </select>
+      </label>
+
+      <label class="filter-group">
+        <span class="filter-label">View Type</span>
+        <select id="viewTypeFilter" class="filter-control">
+          <option value="ALL">ALL</option>
+          <option value="LSL">LSL</option>
+          <option value="USL">USL</option>
+          <option value="Value">Value</option>
+        </select>
+      </label>
+
       <div class="filter-group actions">
         <button id="searchBtn" class="btn btn-primary">Search</button>
         <button id="resetBtn" class="btn">Reset</button>
@@ -416,13 +490,13 @@
               <th>Module</th>
               <th>RCP ID</th>
               <th>Parameters</th>
-              <th>Value</th>
-              <th>LSL</th>
-              <th>USL</th>
+              <th data-view-column="Value">Value</th>
+              <th data-view-column="LSL">LSL</th>
+              <th data-view-column="USL">USL</th>
               <th>Create DTTD</th>
-              <th>Previous Value</th>
-              <th>Previous LSL</th>
-              <th>Previous USL</th>
+              <th data-view-column="Value">Previous Value</th>
+              <th data-view-column="LSL">Previous LSL</th>
+              <th data-view-column="USL">Previous USL</th>
             </tr>
           </thead>
           <tbody id="mainBody"></tbody>
@@ -698,6 +772,7 @@
           line: selectedValues("lineFilter"),
           moduleId: selectedValues("moduleFilter"),
           parameterName: el("paramSearch").value.trim(),
+          apc: el("apcFilter").value,
           startDate: el("fromDate").value,
           endDate: el("toDate").value,
         };
@@ -707,6 +782,8 @@
         var filters = currentFilters();
         var params = ["page=" + page, "pageSize=" + state.pageSize];
         Object.keys(filters).forEach(function (key) {
+          // APC is derived from the parameter name in the browser.
+          if (key === "apc") return;
           if ($.isArray(filters[key])) {
             // Send multi-select values as repeated query params: site=A&site=B.
             filters[key].forEach(function (value) {
@@ -717,6 +794,14 @@
           }
         });
         return params.join("&");
+      }
+
+      function matchesApcFilter(parameterName, apcFilter) {
+        if (!apcFilter) return true;
+        var hasApc = String(parameterName || "")
+          .toUpperCase()
+          .indexOf("APC") >= 0;
+        return apcFilter === "APC" ? hasApc : !hasApc;
       }
 
       function filterRows() {
@@ -735,6 +820,7 @@
             hasSelected(filters.site, row.site) &&
             hasSelected(filters.line, row.line) &&
             hasSelected(filters.moduleId, row.moduleId) &&
+            matchesApcFilter(row.parameterName, filters.apc) &&
             (!search ||
               String(row.parameterName || "")
                 .toLowerCase()
@@ -768,17 +854,17 @@
           "</span></td>" +
           (summary
             ? ""
-            : "<td" +
+            : '<td data-view-column="Value"' +
               changed("VALUE_CHANGED") +
               ">" +
               escapeHtml(row.currentValue) +
               "</td>" +
-              "<td" +
+              '<td data-view-column="LSL"' +
               changed("LSL_CHANGED") +
               ">" +
               escapeHtml(row.currentLsl) +
               "</td>" +
-              "<td" +
+              '<td data-view-column="USL"' +
               changed("USL_CHANGED") +
               ">" +
               escapeHtml(row.currentUsl) +
@@ -798,17 +884,17 @@
 
         if (!summary) {
           common +=
-            "<td" +
+            '<td data-view-column="Value"' +
             changed("VALUE_CHANGED") +
             ">" +
             escapeHtml(row.previousValue) +
             "</td>" +
-            "<td" +
+            '<td data-view-column="LSL"' +
             changed("LSL_CHANGED") +
             ">" +
             escapeHtml(row.previousLsl) +
             "</td>" +
-            "<td" +
+            '<td data-view-column="USL"' +
             changed("USL_CHANGED") +
             ">" +
             escapeHtml(row.previousUsl) +
@@ -859,6 +945,7 @@
           });
           if (noDataRow) noDataRow.parentNode.removeChild(noDataRow);
           if (html) el("mainBody").insertAdjacentHTML("beforeend", html);
+          applyViewType();
           return;
         }
 
@@ -869,6 +956,19 @@
               })
               .join("")
           : '<tr class="no-data-row"><td colspan="11">No data found.</td></tr>';
+        applyViewType();
+      }
+
+      // Hide only the unselected measurement pairs; all identifying columns remain visible.
+      function applyViewType() {
+        var selected = el("viewTypeFilter").value;
+        var columns = el("mainTable").querySelectorAll("[data-view-column]");
+        for (var i = 0; i < columns.length; i++) {
+          columns[i].style.display =
+            selected === "ALL" || columns[i].getAttribute("data-view-column") === selected
+              ? ""
+              : "none";
+        }
       }
 
       function summaryRowHtml(row) {
@@ -1001,7 +1101,10 @@
             productId: "AMB" + (674 + i),
             moduleId: "N1DLE" + (32 + i),
             parameterName:
-              "M_CHB" + (i % 100) + "_" + parameters[i % parameters.length],
+              "M_CHB" +
+              (i % 100) +
+              (i % 2 === 0 ? "_APC_" : "_") +
+              parameters[i % parameters.length],
             createDttd: ("0" + date.getDate()).slice(-2) + "/06/2026",
             previousValue: base,
             currentValue:
@@ -1098,7 +1201,7 @@
       }
 
       function resetFilters() {
-        ["siteFilter", "lineFilter", "moduleFilter", "paramSearch"].forEach(
+        ["siteFilter", "lineFilter", "moduleFilter", "paramSearch", "apcFilter"].forEach(
           function (id) {
             if (el(id).classList.contains("multi-select")) {
               setSelectedValues(id, []);
@@ -1111,6 +1214,8 @@
         setDefaultDates();
         updateFilterOptions();
         render();
+        el("viewTypeFilter").value = "ALL";
+        applyViewType();
       }
 
       function toggleSummary() {
@@ -1274,6 +1379,8 @@
         }
       });
       el("resetBtn").addEventListener("click", resetFilters);
+      el("apcFilter").addEventListener("change", render);
+      el("viewTypeFilter").addEventListener("change", applyViewType);
       el("summaryToggleBtn").addEventListener("click", toggleSummary);
       el("downloadBtn").addEventListener("click", function () {
         tableToExcel(
