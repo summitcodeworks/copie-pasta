@@ -2,6 +2,7 @@
 <html lang="en">
   <head>
     <meta charset="UTF-8" />
+    <meta http-equiv="X-UA-Compatible" content="IE=edge" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <title>Parameter Change Report</title>
     <link
@@ -114,63 +115,6 @@
       }
       .filter-control.error {
         border-color: #c00;
-      }
-      /* Custom checkbox dropdown used for filters that need multiple selections. */
-      .multi-select {
-        position: relative;
-        width: 145px;
-      }
-      .multi-select-toggle {
-        width: 100%;
-        height: 38px;
-        padding: 7px 28px 7px 10px;
-        overflow: hidden;
-        color: #000;
-        text-align: left;
-        text-overflow: ellipsis;
-        white-space: nowrap;
-        background: white;
-        border: 1px solid #cbd7e3;
-        border-radius: 6px;
-        cursor: pointer;
-        outline: none;
-      }
-      .multi-select-toggle::after {
-        position: absolute;
-        right: 8px;
-        content: "\25be";
-      }
-      .multi-select.error .multi-select-toggle {
-        border-color: #c00;
-      }
-      .multi-select-menu {
-        display: none;
-        position: absolute;
-        top: 41px;
-        left: 0;
-        z-index: 50;
-        width: 220px;
-        max-height: 220px;
-        overflow: auto;
-        background: white;
-        border: 1px solid #d4dee8;
-        border-radius: 7px;
-        box-shadow: 0 10px 28px rgba(30, 55, 80, 0.18);
-      }
-      .multi-select.open .multi-select-menu {
-        display: block;
-      }
-      .multi-select-option {
-        display: flex;
-        align-items: center;
-        padding: 8px 10px;
-        cursor: pointer;
-      }
-      .multi-select-option:hover {
-        background: #e6f2ff;
-      }
-      .multi-select-option input {
-        margin: 0 6px 0 0;
       }
       .date-control {
         width: 112px;
@@ -407,12 +351,16 @@
     <section class="filters">
       <label class="filter-group">
         <span class="filter-label">SITE</span>
-        <div id="siteFilter" class="multi-select"></div>
+        <select id="siteFilter" class="filter-control">
+          <option value="" selected>Select</option>
+        </select>
       </label>
 
       <label class="filter-group">
         <span class="filter-label">LINE</span>
-        <div id="lineFilter" class="multi-select"></div>
+        <select id="lineFilter" class="filter-control">
+          <option value="" selected>Select</option>
+        </select>
         <span id="lineError" class="filter-error">Line is required</span>
       </label>
 
@@ -420,7 +368,9 @@
         <span class="filter-label"
           >Module ID <span class="filter-required">*</span></span
         >
-        <div id="moduleFilter" class="multi-select"></div>
+        <select id="moduleFilter" class="filter-control">
+          <option value="" selected>Select</option>
+        </select>
         <span id="moduleError" class="filter-error">Module ID is required</span>
       </label>
 
@@ -460,10 +410,9 @@
       <label class="filter-group">
         <span class="filter-label">View Type</span>
         <select id="viewTypeFilter" class="filter-control">
-          <option value="ALL">ALL</option>
-          <option value="LSL">LSL</option>
-          <option value="USL">USL</option>
-          <option value="Value">Value</option>
+          <option value="ALL">All</option>
+          <option value="SPEC_CHANGE">Spec Change</option>
+          <option value="VALUE">Value</option>
         </select>
       </label>
 
@@ -476,7 +425,7 @@
     <div class="summary">
       No. of changes: <span id="changeCount">0</span>
       <button id="downloadBtn" class="btn">
-        <i class="fa fa-download"></i> Download Excel
+        <i class="fa fa-download"></i> Download CSV
       </button>
       <button id="summaryToggleBtn" class="btn btn-primary">Summary</button>
     </div>
@@ -490,13 +439,13 @@
               <th>Module</th>
               <th>RCP ID</th>
               <th>Parameters</th>
-              <th data-view-column="Value">Value</th>
-              <th data-view-column="LSL">LSL</th>
-              <th data-view-column="USL">USL</th>
+              <th data-view-column="VALUE">Value</th>
+              <th data-view-column="SPEC_CHANGE">LSL</th>
+              <th data-view-column="SPEC_CHANGE">USL</th>
               <th>Create DTTD</th>
-              <th data-view-column="Value">Previous Value</th>
-              <th data-view-column="LSL">Previous LSL</th>
-              <th data-view-column="USL">Previous USL</th>
+              <th data-view-column="VALUE">Previous Value</th>
+              <th data-view-column="SPEC_CHANGE">Previous LSL</th>
+              <th data-view-column="SPEC_CHANGE">Previous USL</th>
             </tr>
           </thead>
           <tbody id="mainBody"></tbody>
@@ -535,7 +484,7 @@
           <span id="modalTitle">Parameter Trend</span>
           <span id="modalClose" class="modal-close">&times;</span>
           <button id="modalDownloadBtn" class="btn">
-            <i class="fa fa-download"></i> Download Excel
+            <i class="fa fa-download"></i> Download CSV
           </button>
         </div>
         <div id="trendChart" class="chart-container"></div>
@@ -586,10 +535,6 @@
         ["01/06/2026 17:00", 1.0, 0, 895, 1.2, 0, 900],
       ];
 
-      function el(id) {
-        return document.getElementById(id);
-      }
-
       function escapeHtml(value) {
         return String(value == null ? "" : value)
           .replace(/&/g, "&amp;")
@@ -625,48 +570,16 @@
           today.getMonth(),
           today.getDate() - 6
         );
-        el("fromDate").value = formatInputDate(weekAgo);
-        el("toDate").value = formatInputDate(today);
-      }
-
-      // Returns the checked values from a custom multi-select dropdown.
-      function selectedValues(id) {
-        return el(id)._selectedValues || [];
-      }
-
-      // Empty selection means "All", otherwise the row must match one selected value.
-      function hasSelected(values, expected) {
-        return !values || !values.length || values.indexOf(expected) >= 0;
-      }
-
-      // Re-applies selections after cascading filter options are rebuilt.
-      function setSelectedValues(id, selected) {
-        var control = el(id);
-        var selectedMap = {};
-        (selected || []).forEach(function (value) {
-          selectedMap[value] = true;
-        });
-        control._selectedValues = (control._values || []).filter(function (value) {
-          return selectedMap[value] === true;
-        });
-        renderMultiSelectLabel(id);
-      }
-
-      // Shows selected labels in the closed dropdown; no selection is displayed as All.
-      function renderMultiSelectLabel(id) {
-        var control = el(id);
-        var selected = selectedValues(id);
-        var label = control.querySelector(".multi-select-toggle");
-        if (!label) return;
-        label.textContent = selected.length ? selected.join(", ") : "All";
+        document.getElementById("fromDate").value = formatInputDate(weekAgo);
+        document.getElementById("toDate").value = formatInputDate(today);
       }
 
       function unique(field, filters) {
         var values = state.rows
           .filter(function (row) {
             return (
-              hasSelected(filters.site, row.site) &&
-              hasSelected(filters.line, row.line)
+              (!filters.site || filters.site === row.site) &&
+              (!filters.line || filters.line === row.line)
             );
           })
           .map(function (row) {
@@ -681,86 +594,68 @@
           .sort();
       }
 
-      // Builds the checkbox dropdown menu and keeps valid previous selections.
-      function fillSelect(id, values, selected, allowAll) {
-        var control = el(id);
-        control._values = values;
-        control._selectedValues = (selected || []).filter(function (value) {
-          return values.indexOf(value) >= 0;
-        });
+      function fillSelect(id, values, selected) {
+        var control = document.getElementById(id);
         control.innerHTML =
-          '<button type="button" class="multi-select-toggle"></button>' +
-          '<div class="multi-select-menu">' +
+          '<option value="">Select</option>' +
           values
             .map(function (value) {
-              var checked = control._selectedValues.indexOf(value) >= 0 ? " checked" : "";
-              return (
-                '<label class="multi-select-option">' +
-                '<input type="checkbox" value="' +
-                escapeHtml(value) +
-                '"' +
-                checked +
-                "> " +
-                '<span>' +
-                escapeHtml(value) +
-                "</span></label>"
-              );
+              return '<option value="' + escapeHtml(value) + '">' +
+                escapeHtml(value) + "</option>";
             })
-            .join("") +
-          "</div>";
-        renderMultiSelectLabel(id);
+            .join("");
+        control.value = values.indexOf(selected) >= 0 ? selected : "";
       }
 
-      function updateFilterOptions() {
-        var site = selectedValues("siteFilter");
-        var line = selectedValues("lineFilter");
-        var moduleId = selectedValues("moduleFilter");
+      function updateFilterOptions(clearLine, clearModule) {
+        var site = document.getElementById("siteFilter").value;
+        var line = clearLine ? "" : document.getElementById("lineFilter").value;
+        var moduleId = clearModule ? "" : document.getElementById("moduleFilter").value;
 
-        fillSelect("siteFilter", unique("site", {}), site, true);
-        fillSelect("lineFilter", unique("line", { site: site }), line, !site.length);
+        fillSelect("siteFilter", unique("site", {}), site);
+        fillSelect("lineFilter", unique("line", { site: site }), line);
         fillSelect(
           "moduleFilter",
           unique("moduleId", { site: site, line: line }),
-          moduleId,
-          !(site.length || line.length)
+          moduleId
         );
       }
 
       function clearErrors() {
         ["line", "module"].forEach(function (name) {
-          el(name + "Error").style.display = "none";
-          el(name + "Filter").classList.remove("error");
+          document.getElementById(name + "Error").style.display = "none";
+          document.getElementById(name + "Filter").classList.remove("error");
         });
-        el("dateError").style.display = "none";
-        el("fromDate").classList.remove("error");
-        el("toDate").classList.remove("error");
+        document.getElementById("dateError").style.display = "none";
+        document.getElementById("fromDate").classList.remove("error");
+        document.getElementById("toDate").classList.remove("error");
       }
 
       function validateFilters() {
         clearErrors();
-        var site = selectedValues("siteFilter");
-        var line = selectedValues("lineFilter");
-        var moduleId = selectedValues("moduleFilter");
+        var site = document.getElementById("siteFilter").value;
+        var line = document.getElementById("lineFilter").value;
+        var moduleId = document.getElementById("moduleFilter").value;
         var valid = true;
 
-        if (site.length && !line.length) {
-          el("lineError").style.display = "block";
-          el("lineFilter").classList.add("error");
+        if (site && !line) {
+          document.getElementById("lineError").style.display = "block";
+          document.getElementById("lineFilter").classList.add("error");
           valid = false;
         }
-        if ((site.length || line.length) && !moduleId.length) {
-          el("moduleError").style.display = "block";
-          el("moduleFilter").classList.add("error");
+        if ((site || line) && !moduleId) {
+          document.getElementById("moduleError").style.display = "block";
+          document.getElementById("moduleFilter").classList.add("error");
           valid = false;
         }
         if (
-          el("fromDate").value &&
-          el("toDate").value &&
-          el("fromDate").value > el("toDate").value
+          document.getElementById("fromDate").value &&
+          document.getElementById("toDate").value &&
+          document.getElementById("fromDate").value > document.getElementById("toDate").value
         ) {
-          el("dateError").style.display = "block";
-          el("fromDate").classList.add("error");
-          el("toDate").classList.add("error");
+          document.getElementById("dateError").style.display = "block";
+          document.getElementById("fromDate").classList.add("error");
+          document.getElementById("toDate").classList.add("error");
           valid = false;
         }
         return valid;
@@ -768,13 +663,13 @@
 
       function currentFilters() {
         return {
-          site: selectedValues("siteFilter"),
-          line: selectedValues("lineFilter"),
-          moduleId: selectedValues("moduleFilter"),
-          parameterName: el("paramSearch").value.trim(),
-          apc: el("apcFilter").value,
-          startDate: el("fromDate").value,
-          endDate: el("toDate").value,
+          site: document.getElementById("siteFilter").value,
+          line: document.getElementById("lineFilter").value,
+          moduleId: document.getElementById("moduleFilter").value,
+          parameterName: document.getElementById("paramSearch").value.trim(),
+          apc: document.getElementById("apcFilter").value,
+          startDate: document.getElementById("fromDate").value,
+          endDate: document.getElementById("toDate").value,
         };
       }
 
@@ -784,12 +679,7 @@
         Object.keys(filters).forEach(function (key) {
           // APC is derived from the parameter name in the browser.
           if (key === "apc") return;
-          if ($.isArray(filters[key])) {
-            // Send multi-select values as repeated query params: site=A&site=B.
-            filters[key].forEach(function (value) {
-              if (value) params.push(key + "=" + encodeURIComponent(value));
-            });
-          } else if (filters[key]) {
+          if (filters[key]) {
             params.push(key + "=" + encodeURIComponent(filters[key]));
           }
         });
@@ -817,9 +707,9 @@
         state.filteredRows = state.rows.filter(function (row) {
           var date = parseReportDate(row.createDttd);
           return (
-            hasSelected(filters.site, row.site) &&
-            hasSelected(filters.line, row.line) &&
-            hasSelected(filters.moduleId, row.moduleId) &&
+            (!filters.site || filters.site === row.site) &&
+            (!filters.line || filters.line === row.line) &&
+            (!filters.moduleId || filters.moduleId === row.moduleId) &&
             matchesApcFilter(row.parameterName, filters.apc) &&
             (!search ||
               String(row.parameterName || "")
@@ -854,17 +744,17 @@
           "</span></td>" +
           (summary
             ? ""
-            : '<td data-view-column="Value"' +
+            : '<td data-view-column="VALUE"' +
               changed("VALUE_CHANGED") +
               ">" +
               escapeHtml(row.currentValue) +
               "</td>" +
-              '<td data-view-column="LSL"' +
+              '<td data-view-column="SPEC_CHANGE"' +
               changed("LSL_CHANGED") +
               ">" +
               escapeHtml(row.currentLsl) +
               "</td>" +
-              '<td data-view-column="USL"' +
+              '<td data-view-column="SPEC_CHANGE"' +
               changed("USL_CHANGED") +
               ">" +
               escapeHtml(row.currentUsl) +
@@ -884,32 +774,26 @@
 
         if (!summary) {
           common +=
-            '<td data-view-column="Value"' +
+            '<td data-view-column="VALUE"' +
             changed("VALUE_CHANGED") +
             ">" +
             escapeHtml(row.previousValue) +
             "</td>" +
-            '<td data-view-column="LSL"' +
+            '<td data-view-column="SPEC_CHANGE"' +
             changed("LSL_CHANGED") +
             ">" +
             escapeHtml(row.previousLsl) +
             "</td>" +
-            '<td data-view-column="USL"' +
+            '<td data-view-column="SPEC_CHANGE"' +
             changed("USL_CHANGED") +
             ">" +
             escapeHtml(row.previousUsl) +
             "</td>";
         }
-        return (
-          '<tr data-row-key="' +
-          escapeHtml(encodeURIComponent(rowKey(row))) +
-          '">' +
-          common +
-          "</tr>"
-        );
+        return "<tr>" + common + "</tr>";
       }
 
-      function render(appendedRows) {
+      function render() {
         filterRows();
         var rows = state.filteredRows;
         var changeCount = rows.reduce(function (total, row) {
@@ -921,35 +805,8 @@
           );
         }, 0);
 
-        el("changeCount").textContent = changeCount;
-        if (appendedRows) {
-          var visibleKeys = {};
-          var htmlKeys = {};
-          var html = "";
-          var noDataRow = el("mainBody").querySelector(".no-data-row");
-          var renderedRows = el("mainBody").querySelectorAll("tr[data-row-key]");
-          var i;
-
-          rows.forEach(function (row) {
-            visibleKeys[rowKey(row)] = true;
-          });
-          for (i = 0; i < renderedRows.length; i++) {
-            htmlKeys[decodeURIComponent(renderedRows[i].getAttribute("data-row-key"))] = true;
-          }
-          appendedRows.forEach(function (row) {
-            var key = rowKey(row);
-            if (visibleKeys[key] && !htmlKeys[key]) {
-              htmlKeys[key] = true;
-              html += rowHtml(row, false);
-            }
-          });
-          if (noDataRow) noDataRow.parentNode.removeChild(noDataRow);
-          if (html) el("mainBody").insertAdjacentHTML("beforeend", html);
-          applyViewType();
-          return;
-        }
-
-        el("mainBody").innerHTML = rows.length
+        document.getElementById("changeCount").textContent = changeCount;
+        document.getElementById("mainBody").innerHTML = rows.length
           ? rows
               .map(function (row) {
                 return rowHtml(row, false);
@@ -959,10 +816,10 @@
         applyViewType();
       }
 
-      // Hide only the unselected measurement pairs; all identifying columns remain visible.
+      // All shows every measurement. Other views show one related column group.
       function applyViewType() {
-        var selected = el("viewTypeFilter").value;
-        var columns = el("mainTable").querySelectorAll("[data-view-column]");
+        var selected = document.getElementById("viewTypeFilter").value;
+        var columns = document.getElementById("mainTable").querySelectorAll("[data-view-column]");
         for (var i = 0; i < columns.length; i++) {
           columns[i].style.display =
             selected === "ALL" || columns[i].getAttribute("data-view-column") === selected
@@ -1011,7 +868,7 @@
       }
 
       function renderSummary() {
-        el("summaryBody").innerHTML = state.summaryRows.length
+        document.getElementById("summaryBody").innerHTML = state.summaryRows.length
           ? state.summaryRows.map(summaryRowHtml).join("")
           : '<tr class="no-data-row"><td colspan="10">No summary data found.</td></tr>';
       }
@@ -1054,7 +911,7 @@
       }
 
       function loadSummary() {
-        el("loader").style.display = "block";
+        document.getElementById("loader").style.display = "block";
         $.ajax({
           url: "/api/parameter-change-summary?" + buildQuery(1),
           dataType: "json",
@@ -1067,7 +924,7 @@
             state.summaryRows = buildLocalSummary();
           })
           .always(function () {
-            el("loader").style.display = "none";
+            document.getElementById("loader").style.display = "none";
             renderSummary();
           });
       }
@@ -1121,48 +978,14 @@
         return rows;
       }
 
-      // API pages can overlap (for example when data changes between requests).
-      // Keep a stable client-side key so an already rendered change is not added again.
-      function rowKey(row) {
-        return [
-          row.id,
-          row.source,
-          row.moduleId,
-          row.productId,
-          row.parameterName,
-          row.createDttd,
-          row.previousValue,
-          row.currentValue,
-          row.previousLsl,
-          row.currentLsl,
-          row.previousUsl,
-          row.currentUsl,
-          row.changeType,
-        ].join("\u001f");
-      }
-
-      function appendUniqueRows(existingRows, newRows) {
-        var seen = {};
-        var result = [];
-
-        existingRows.concat(newRows).forEach(function (row) {
-          var key = rowKey(row);
-          if (seen[key]) return;
-          seen[key] = true;
-          result.push(row);
-        });
-
-        return result;
-      }
-
+      // Start at page 1 for a new search, then load one page per scroll request.
       function loadData(append) {
         if (state.loading || (append && !state.hasMore)) return;
         state.loading = true;
-        var appendedRows = null;
         if (!append) {
           state.page = 0;
           state.rows = [];
-          el("loader").style.display = "block";
+          document.getElementById("loader").style.display = "block";
         }
 
         var nextPage = state.page + 1;
@@ -1173,18 +996,7 @@
         })
           .done(function (response) {
             var newRows = response.data || [];
-            if (append) {
-              var existing = {};
-              state.rows.forEach(function (row) {
-                existing[rowKey(row)] = true;
-              });
-              appendedRows = newRows.filter(function (row) {
-                return existing[rowKey(row)] !== true;
-              });
-            }
-            state.rows = append
-              ? appendUniqueRows(state.rows, newRows)
-              : appendUniqueRows([], newRows);
+            state.rows = append ? state.rows.concat(newRows) : newRows;
             state.page = response.page || nextPage;
             state.hasMore = response.hasMore === true;
           })
@@ -1194,61 +1006,143 @@
           })
           .always(function () {
             state.loading = false;
-            el("loader").style.display = "none";
+            document.getElementById("loader").style.display = "none";
             updateFilterOptions();
-            render(append ? appendedRows || [] : null);
+            render();
           });
       }
 
       function resetFilters() {
         ["siteFilter", "lineFilter", "moduleFilter", "paramSearch", "apcFilter"].forEach(
           function (id) {
-            if (el(id).classList.contains("multi-select")) {
-              setSelectedValues(id, []);
-            } else {
-              el(id).value = "";
-            }
+            document.getElementById(id).value = "";
           }
         );
         clearErrors();
         setDefaultDates();
         updateFilterOptions();
         render();
-        el("viewTypeFilter").value = "ALL";
+        document.getElementById("viewTypeFilter").value = "ALL";
         applyViewType();
       }
 
       function toggleSummary() {
         state.summary = !state.summary;
-        el("mainView").hidden = state.summary;
-        el("summaryView").hidden = !state.summary;
-        el("summaryToggleBtn").textContent = state.summary
+        document.getElementById("mainView").hidden = state.summary;
+        document.getElementById("summaryView").hidden = !state.summary;
+        document.getElementById("summaryToggleBtn").textContent = state.summary
           ? "Main Data"
           : "Summary";
         if (state.summary) loadSummary();
       }
 
-      function tableToExcel(tableId, title) {
-        var table = el(tableId);
-        var copy = table.cloneNode(true);
-        var links = copy.querySelectorAll(".param-link");
-        for (var i = 0; i < links.length; i++)
-          links[i].outerHTML = escapeHtml(links[i].textContent);
-        var html = "<h3>" + escapeHtml(title) + "</h3>" + copy.outerHTML;
-        var blob = new Blob(
-          ['<html><meta charset="UTF-8"><body>' + html + "</body></html>"],
-          { type: "application/vnd.ms-excel" }
-        );
+      function jsonToExcelCsv(jsonData, fileName) {
+        if (!jsonData || jsonData.length === 0) {
+          window.alert("No data available");
+          return;
+        }
+
+        var headers = [];
+        var key;
+        for (key in jsonData[0]) {
+          if (jsonData[0].hasOwnProperty(key)) headers.push(key);
+        }
+
+        var csv = headers.join(",") + "\r\n";
+        var i;
+        var j;
+        for (i = 0; i < jsonData.length; i++) {
+          var row = [];
+          for (j = 0; j < headers.length; j++) {
+            var value = jsonData[i][headers[j]];
+            if (value === null || value === undefined) value = "";
+            value = String(value).replace(/"/g, '""');
+            row.push('"' + value + '"');
+          }
+          csv += row.join(",") + "\r\n";
+        }
+
+        var blob = new Blob(["\uFEFF" + csv], {
+          type: "text/csv;charset=utf-8;",
+        });
+        fileName = fileName || "data.csv";
+
+        // IE11 requires msSaveBlob because it does not support link.download.
+        if (window.navigator.msSaveBlob) {
+          window.navigator.msSaveBlob(blob, fileName);
+          return;
+        }
+
         var link = document.createElement("a");
-        link.href = URL.createObjectURL(blob);
-        link.download = title.replace(/\s+/g, "-").toLowerCase() + ".xls";
+        var url = window.URL.createObjectURL(blob);
+        link.href = url;
+        link.download = fileName;
+        document.body.appendChild(link);
         link.click();
-        URL.revokeObjectURL(link.href);
+        document.body.removeChild(link);
+        window.URL.revokeObjectURL(url);
+      }
+
+      // Fetch every JSON page before creating the report file.
+      function fetchExportPages(url, page, rows, done, failed) {
+        $.ajax({
+          url: url + buildQuery(page),
+          dataType: "json",
+          cache: false,
+        })
+          .done(function (response) {
+            var allRows = rows.concat(response.data || []);
+            if (response.hasMore === true) {
+              fetchExportPages(url, page + 1, allRows, done, failed);
+            } else {
+              done(allRows);
+            }
+          })
+          .fail(function () {
+            failed();
+          });
+      }
+
+      function saveReportRows(rows, summary) {
+        var apc = currentFilters().apc;
+        rows = rows.filter(function (row) {
+          return matchesApcFilter(row.parameterName, apc);
+        });
+        jsonToExcelCsv(
+          rows,
+          summary ? "summary-report.csv" : "parameter-change-report.csv"
+        );
+        document.getElementById("loader").style.display = "none";
+      }
+
+      function downloadReport() {
+        if (!validateFilters()) return;
+        var summary = state.summary;
+        var url = summary
+          ? "/api/parameter-change-summary?"
+          : "/api/parameter-changes?";
+        document.getElementById("loader").style.display = "block";
+
+        fetchExportPages(
+          url,
+          1,
+          [],
+          function (rows) {
+            saveReportRows(rows, summary);
+          },
+          function () {
+            // Local/demo mode: export the JSON already loaded on the page.
+            saveReportRows(
+              summary ? state.summaryRows : state.filteredRows,
+              summary
+            );
+          }
+        );
       }
 
       function openTrend(parameterName) {
-        el("modalTitle").textContent = "Trend: " + parameterName;
-        el("trendBody").innerHTML = trendData
+        document.getElementById("modalTitle").textContent = "Trend: " + parameterName;
+        document.getElementById("trendBody").innerHTML = trendData
           .map(function (row) {
             return (
               "<tr>" +
@@ -1261,11 +1155,11 @@
             );
           })
           .join("");
-        el("trendModal").style.display = "block";
+        document.getElementById("trendModal").style.display = "block";
         document.body.style.overflow = "hidden";
 
         if (trendChart) trendChart.dispose();
-        trendChart = echarts.init(el("trendChart"));
+        trendChart = echarts.init(document.getElementById("trendChart"));
         var names = [
           "Value",
           "LSL",
@@ -1301,7 +1195,7 @@
       }
 
       function closeTrend() {
-        el("trendModal").style.display = "none";
+        document.getElementById("trendModal").style.display = "none";
         document.body.style.overflow = "";
         if (trendChart) {
           trendChart.dispose();
@@ -1312,94 +1206,57 @@
       function updateTimer() {
         var minutes = Math.floor(refreshSeconds / 60);
         var seconds = ("0" + (refreshSeconds % 60)).slice(-2);
-        el("headerTimer").textContent =
+        document.getElementById("headerTimer").textContent =
           "Next refresh in " + minutes + " min " + seconds + " sec";
         refreshSeconds = refreshSeconds > 0 ? refreshSeconds - 1 : 300;
       }
 
-      // IE11 does not provide Element.closest or the unprefixed matches method.
-      function matchesSelector(node, selector) {
-        var matches =
-          node.matches ||
-          node.msMatchesSelector ||
-          node.webkitMatchesSelector;
-        return !!matches && matches.call(node, selector);
-      }
-
-      function closestElement(node, selector) {
-        while (node && node.nodeType === 1) {
-          if (matchesSelector(node, selector)) return node;
-          node = node.parentElement;
-        }
-        return null;
-      }
-
-      // Opens the clicked dropdown and closes any other open filter dropdown.
-      document.addEventListener("click", function (event) {
-        var toggle = closestElement(event.target, ".multi-select-toggle");
-        var current = closestElement(event.target, ".multi-select");
-        var openControls = document.querySelectorAll(".multi-select.open");
-        for (var i = 0; i < openControls.length; i++) {
-          var control = openControls[i];
-          if (control !== current) control.classList.remove("open");
-        }
-        if (toggle) {
-          toggle.parentNode.classList.toggle("open");
-        }
-      });
-
-      // Stores checkbox selections and refreshes dependent filters in cascade order.
-      document.addEventListener("change", function (event) {
-        if (!matchesSelector(event.target, ".multi-select-option input")) return;
-        var control = closestElement(event.target, ".multi-select");
-        var id = control.id;
-        control._selectedValues = Array.prototype.slice
-          .call(control.querySelectorAll(".multi-select-option input:checked"))
-          .map(function (input) {
-            return input.value;
-          });
-        renderMultiSelectLabel(id);
+      document.getElementById("siteFilter").addEventListener("change", function () {
         clearErrors();
-        if (id === "siteFilter") {
-          setSelectedValues("lineFilter", []);
-          setSelectedValues("moduleFilter", []);
-          updateFilterOptions();
-        } else if (id === "lineFilter") {
-          setSelectedValues("moduleFilter", []);
-          updateFilterOptions();
-        }
+        updateFilterOptions(true, true);
       });
+      document.getElementById("lineFilter").addEventListener("change", function () {
+        clearErrors();
+        updateFilterOptions(false, true);
+      });
+      document.getElementById("moduleFilter").addEventListener("change", clearErrors);
 
-      el("fromDate").addEventListener("change", clearErrors);
-      el("toDate").addEventListener("change", clearErrors);
-      el("searchBtn").addEventListener("click", function () {
+      document.getElementById("fromDate").addEventListener("change", clearErrors);
+      document.getElementById("toDate").addEventListener("change", clearErrors);
+      document.getElementById("searchBtn").addEventListener("click", function () {
         if (validateFilters()) {
           loadData(false);
           if (state.summary) loadSummary();
         }
       });
-      el("resetBtn").addEventListener("click", resetFilters);
-      el("apcFilter").addEventListener("change", render);
-      el("viewTypeFilter").addEventListener("change", applyViewType);
-      el("summaryToggleBtn").addEventListener("click", toggleSummary);
-      el("downloadBtn").addEventListener("click", function () {
-        tableToExcel(
-          state.summary ? "summaryTable" : "mainTable",
-          state.summary ? "Summary Report" : "Parameter Change Report"
-        );
+      document.getElementById("resetBtn").addEventListener("click", resetFilters);
+      document.getElementById("apcFilter").addEventListener("change", render);
+      document.getElementById("viewTypeFilter").addEventListener("change", applyViewType);
+      document.getElementById("summaryToggleBtn").addEventListener("click", toggleSummary);
+      document.getElementById("downloadBtn").addEventListener("click", downloadReport);
+      document.getElementById("modalDownloadBtn").addEventListener("click", function () {
+        var trendJson = trendData.map(function (row) {
+          return {
+            dateTime: row[0],
+            value: row[1],
+            lsl: row[2],
+            usl: row[3],
+            previousValue: row[4],
+            previousLsl: row[5],
+            previousUsl: row[6],
+          };
+        });
+        jsonToExcelCsv(trendJson, "parameter-trend.csv");
       });
-      el("modalDownloadBtn").addEventListener("click", function () {
-        tableToExcel("trendTable", "Parameter Trend");
-      });
-      el("modalClose").addEventListener("click", closeTrend);
-      el("trendModal").addEventListener("click", function (event) {
+      document.getElementById("modalClose").addEventListener("click", closeTrend);
+      document.getElementById("trendModal").addEventListener("click", function (event) {
         if (event.target === this) closeTrend();
       });
       document.addEventListener("click", function (event) {
         if (event.target.classList.contains("param-link"))
           openTrend(event.target.getAttribute("data-parameter"));
       });
-      el("mainView").addEventListener("scroll", function () {
+      document.getElementById("mainView").addEventListener("scroll", function () {
         if (
           this.scrollTop + this.clientHeight >=
           this.scrollHeight - 300
