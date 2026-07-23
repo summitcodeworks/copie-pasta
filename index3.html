@@ -116,6 +116,77 @@
       .filter-control.error {
         border-color: #c00;
       }
+      #moduleFilter {
+        display: none;
+      }
+      .multi-select {
+        position: relative;
+        width: 150px;
+      }
+      .multi-select-button {
+        width: 100%;
+        padding-right: 28px;
+        overflow: hidden;
+        text-align: left;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+        position: relative;
+      }
+      .multi-select-button:after {
+        content: "\25BC";
+        position: absolute;
+        top: 12px;
+        right: 9px;
+        color: #60758a;
+        font-size: 9px;
+      }
+      .multi-select-button.error {
+        border: 2px solid #d90000;
+        box-shadow: none;
+      }
+      #moduleError {
+        margin-top: 4px;
+        color: #d90000;
+        font-size: 13px;
+        line-height: 16px;
+        white-space: nowrap;
+      }
+      .multi-select-options {
+        display: none;
+        position: absolute;
+        top: 41px;
+        left: 0;
+        z-index: 30;
+        width: 230px;
+        max-height: 220px;
+        padding: 5px 0;
+        overflow-y: auto;
+        background: #fff;
+        border: 1px solid #b9c8d6;
+        border-radius: 6px;
+        box-shadow: 0 7px 20px rgba(32, 64, 96, 0.2);
+      }
+      .multi-select.open .multi-select-options {
+        display: block;
+      }
+      .module-option {
+        display: block;
+        padding: 7px 10px;
+        cursor: pointer;
+        white-space: nowrap;
+      }
+      .module-option:hover {
+        background: #eef6fd;
+      }
+      .module-option input {
+        margin: 0 8px 0 0;
+        vertical-align: middle;
+      }
+      .multi-select-empty {
+        display: block;
+        padding: 8px 10px;
+        color: #788a9b;
+      }
       .date-control {
         width: 112px;
       }
@@ -364,15 +435,23 @@
         <span id="lineError" class="filter-error">Line is required</span>
       </label>
 
-      <label class="filter-group">
+      <div class="filter-group">
         <span class="filter-label"
           >Module ID <span class="filter-required">*</span></span
         >
-        <select id="moduleFilter" class="filter-control">
-          <option value="" selected>Select</option>
-        </select>
-        <span id="moduleError" class="filter-error">Module ID is required</span>
-      </label>
+        <div id="moduleMultiSelect" class="multi-select">
+          <button
+            id="moduleDropdownButton"
+            class="filter-control multi-select-button"
+            type="button"
+            aria-haspopup="true"
+            aria-expanded="false"
+          >Select</button>
+          <div id="moduleOptions" class="multi-select-options"></div>
+          <select id="moduleFilter" multiple></select>
+        </div>
+        <span id="moduleError" class="filter-error">Please select Module ID</span>
+      </div>
 
       <div class="filter-group">
         <span class="filter-label">Date Range</span>
@@ -596,28 +675,83 @@
 
       function fillSelect(id, values, selected) {
         var control = document.getElementById(id);
+        var isMultiple = control.multiple;
+        var selectedValues = isMultiple
+          ? (selected || [])
+          : [selected];
         control.innerHTML =
-          '<option value="">Select</option>' +
+          (isMultiple ? "" : '<option value="">Select</option>') +
           values
             .map(function (value) {
               return '<option value="' + escapeHtml(value) + '">' +
                 escapeHtml(value) + "</option>";
             })
             .join("");
-        control.value = values.indexOf(selected) >= 0 ? selected : "";
+        Array.prototype.forEach.call(control.options, function (option) {
+          option.selected = selectedValues.indexOf(option.value) >= 0;
+        });
+        if (id === "moduleFilter") renderModuleCheckboxes();
+      }
+
+      function selectedModuleIds() {
+        return Array.prototype.filter
+          .call(document.getElementById("moduleFilter").options, function (option) {
+            return option.selected;
+          })
+          .map(function (option) {
+            return option.value;
+          });
+      }
+
+      function renderModuleCheckboxes() {
+        var control = document.getElementById("moduleFilter");
+        var optionsBox = document.getElementById("moduleOptions");
+        var selected = selectedModuleIds();
+
+        optionsBox.innerHTML = control.options.length
+          ? Array.prototype.map
+              .call(control.options, function (option, index) {
+                return (
+                  '<label class="module-option">' +
+                  '<input type="checkbox" data-module-index="' +
+                  index +
+                  '"' +
+                  (option.selected ? " checked" : "") +
+                  ">" +
+                  escapeHtml(option.text) +
+                  "</label>"
+                );
+              })
+              .join("")
+          : '<span class="multi-select-empty">No modules available</span>';
+
+        document.getElementById("moduleDropdownButton").textContent =
+          selected.length === 0
+            ? "Select"
+            : selected.length === 1
+              ? selected[0]
+              : selected.length + " modules selected";
+      }
+
+      function closeModuleDropdown() {
+        document.getElementById("moduleMultiSelect").classList.remove("open");
+        document.getElementById("moduleDropdownButton").setAttribute(
+          "aria-expanded",
+          "false"
+        );
       }
 
       function updateFilterOptions(clearLine, clearModule) {
         var site = document.getElementById("siteFilter").value;
         var line = clearLine ? "" : document.getElementById("lineFilter").value;
-        var moduleId = clearModule ? "" : document.getElementById("moduleFilter").value;
+        var moduleIds = clearModule ? [] : selectedModuleIds();
 
         fillSelect("siteFilter", unique("site", {}), site);
         fillSelect("lineFilter", unique("line", { site: site }), line);
         fillSelect(
           "moduleFilter",
           unique("moduleId", { site: site, line: line }),
-          moduleId
+          moduleIds
         );
       }
 
@@ -626,6 +760,7 @@
           document.getElementById(name + "Error").style.display = "none";
           document.getElementById(name + "Filter").classList.remove("error");
         });
+        document.getElementById("moduleDropdownButton").classList.remove("error");
         document.getElementById("dateError").style.display = "none";
         document.getElementById("fromDate").classList.remove("error");
         document.getElementById("toDate").classList.remove("error");
@@ -635,7 +770,7 @@
         clearErrors();
         var site = document.getElementById("siteFilter").value;
         var line = document.getElementById("lineFilter").value;
-        var moduleId = document.getElementById("moduleFilter").value;
+        var moduleIds = selectedModuleIds();
         var valid = true;
 
         if (site && !line) {
@@ -643,9 +778,12 @@
           document.getElementById("lineFilter").classList.add("error");
           valid = false;
         }
-        if ((site || line) && !moduleId) {
+        // A date-only search is valid. Once Site/Line narrows the search,
+        // at least one Module ID must also be selected.
+        if ((site || line) && moduleIds.length === 0) {
           document.getElementById("moduleError").style.display = "block";
           document.getElementById("moduleFilter").classList.add("error");
+          document.getElementById("moduleDropdownButton").classList.add("error");
           valid = false;
         }
         if (
@@ -665,7 +803,7 @@
         return {
           site: document.getElementById("siteFilter").value,
           line: document.getElementById("lineFilter").value,
-          moduleId: document.getElementById("moduleFilter").value,
+          moduleId: selectedModuleIds(),
           parameterName: document.getElementById("paramSearch").value.trim(),
           apc: document.getElementById("apcFilter").value,
           startDate: document.getElementById("fromDate").value,
@@ -679,7 +817,11 @@
         Object.keys(filters).forEach(function (key) {
           // APC is derived from the parameter name in the browser.
           if (key === "apc") return;
-          if (filters[key]) {
+          if (Array.isArray(filters[key])) {
+            filters[key].forEach(function (value) {
+              params.push(key + "=" + encodeURIComponent(value));
+            });
+          } else if (filters[key]) {
             params.push(key + "=" + encodeURIComponent(filters[key]));
           }
         });
@@ -709,7 +851,8 @@
           return (
             (!filters.site || filters.site === row.site) &&
             (!filters.line || filters.line === row.line) &&
-            (!filters.moduleId || filters.moduleId === row.moduleId) &&
+            (filters.moduleId.length === 0 ||
+              filters.moduleId.indexOf(row.moduleId) >= 0) &&
             matchesApcFilter(row.parameterName, filters.apc) &&
             (!search ||
               String(row.parameterName || "")
@@ -1220,6 +1363,25 @@
         updateFilterOptions(false, true);
       });
       document.getElementById("moduleFilter").addEventListener("change", clearErrors);
+      document.getElementById("moduleDropdownButton").addEventListener("click", function () {
+        var wrapper = document.getElementById("moduleMultiSelect");
+        var opening = !wrapper.classList.contains("open");
+        wrapper.classList.toggle("open");
+        this.setAttribute("aria-expanded", opening ? "true" : "false");
+      });
+      document.getElementById("moduleOptions").addEventListener("change", function (event) {
+        if (!event.target.hasAttribute("data-module-index")) return;
+        var index = Number(event.target.getAttribute("data-module-index"));
+        document.getElementById("moduleFilter").options[index].selected =
+          event.target.checked;
+        renderModuleCheckboxes();
+        clearErrors();
+      });
+      document.addEventListener("click", function (event) {
+        if (!document.getElementById("moduleMultiSelect").contains(event.target)) {
+          closeModuleDropdown();
+        }
+      });
 
       document.getElementById("fromDate").addEventListener("change", clearErrors);
       document.getElementById("toDate").addEventListener("change", clearErrors);
