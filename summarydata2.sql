@@ -5,7 +5,7 @@ WITH p AS (
     FROM dual
 ),
 
-/* All records inside selected date range */
+/* Records inside selected date range */
 range_rows AS (
     SELECT
         ROWIDTOCHAR(ph.ROWID) AS rid,
@@ -18,10 +18,10 @@ range_rows AS (
     FROM PARAMETER_HISTORY ph
     CROSS JOIN p
     WHERE ph.CREATE_DTTS >= p.start_dt
-      AND ph.CREATE_DTTS <  p.end_dt
+      AND ph.CREATE_DTTS < p.end_dt
 ),
 
-/* Latest record before start date for every MODULE_ID + PARAM_NAME */
+/* Last record before selected range for each MODULE_ID + PARAM_NAME */
 before_range AS (
     SELECT
         rid,
@@ -43,8 +43,9 @@ before_range AS (
 
             ROW_NUMBER() OVER (
                 PARTITION BY ph.MODULE_ID, ph.PARAM_NAME
-                ORDER BY ph.CREATE_DTTS DESC,
-                         ROWIDTOCHAR(ph.ROWID) DESC
+                ORDER BY
+                    ph.CREATE_DTTS DESC,
+                    ROWIDTOCHAR(ph.ROWID) DESC
             ) AS rn
 
         FROM PARAMETER_HISTORY ph
@@ -54,7 +55,7 @@ before_range AS (
     WHERE rn = 1
 ),
 
-/* Selected records + one previous record for comparison */
+/* Range data + previous baseline record */
 s AS (
     SELECT * FROM range_rows
 
@@ -66,7 +67,12 @@ s AS (
 /* Get previous VALUE, LSL and USL */
 d AS (
     SELECT
-        s.*,
+        s.MODULE_ID,
+        s.PARAM_NAME,
+        s.CREATE_DTTS,
+        s.VALUE,
+        s.LSL,
+        s.USL,
 
         LEAD(s.VALUE) OVER (
             PARTITION BY s.MODULE_ID, s.PARAM_NAME
@@ -91,10 +97,11 @@ d AS (
     FROM s
 ),
 
-/* Calculate changes only inside selected date range */
 c AS (
     SELECT
-        d.*,
+        d.MODULE_ID,
+        d.PARAM_NAME,
+        d.CREATE_DTTS,
 
         CASE
             WHEN d.PREV_VALUE IS NOT NULL
@@ -123,7 +130,7 @@ c AS (
     FROM d
     CROSS JOIN p
     WHERE d.CREATE_DTTS >= p.start_dt
-      AND d.CREATE_DTTS <  p.end_dt
+      AND d.CREATE_DTTS < p.end_dt
       AND d.PREV_CREATE_DTTS IS NOT NULL
 ),
 
@@ -139,83 +146,23 @@ SELECT
     MODULE_ID,
     PARAM_NAME,
 
-    MIN(CREATE_DTTS) AS FIRST_CHANGE_TIME,
-    MAX(CREATE_DTTS) AS LAST_CHANGE_TIME,
+    TO_CHAR(
+        MIN(CREATE_DTTS),
+        'DD/MM/YYYY HH24:MI:SS'
+    ) AS FIRST_CHANGE_TIME,
+
+    TO_CHAR(
+        MAX(CREATE_DTTS),
+        'DD/MM/YYYY HH24:MI:SS'
+    ) AS LAST_CHANGE_TIME,
 
     SUM(VALUE_CHANGED) AS VALUE_CHANGE_COUNT,
+
     SUM(LSL_CHANGED) AS LSL_CHANGE_COUNT,
+
     SUM(USL_CHANGED) AS USL_CHANGE_COUNT,
 
     COUNT(*) AS TOTAL_CHANGE_POINTS,
-
-    /* Last VALUE change */
-    MAX(
-        CASE
-            WHEN VALUE_CHANGED = 1 THEN CREATE_DTTS
-        END
-    ) AS LAST_VALUE_CHANGE_TIME,
-
-    CASE
-        WHEN SUM(VALUE_CHANGED) > 0 THEN
-            MAX(PREV_VALUE) KEEP (
-                DENSE_RANK LAST
-                ORDER BY VALUE_CHANGED, CREATE_DTTS, rid
-            )
-    END AS LAST_VALUE_OLD,
-
-    CASE
-        WHEN SUM(VALUE_CHANGED) > 0 THEN
-            MAX(VALUE) KEEP (
-                DENSE_RANK LAST
-                ORDER BY VALUE_CHANGED, CREATE_DTTS, rid
-            )
-    END AS LAST_VALUE_NEW,
-
-    /* Last LSL change */
-    MAX(
-        CASE
-            WHEN LSL_CHANGED = 1 THEN CREATE_DTTS
-        END
-    ) AS LAST_LSL_CHANGE_TIME,
-
-    CASE
-        WHEN SUM(LSL_CHANGED) > 0 THEN
-            MAX(PREV_LSL) KEEP (
-                DENSE_RANK LAST
-                ORDER BY LSL_CHANGED, CREATE_DTTS, rid
-            )
-    END AS LAST_LSL_OLD,
-
-    CASE
-        WHEN SUM(LSL_CHANGED) > 0 THEN
-            MAX(LSL) KEEP (
-                DENSE_RANK LAST
-                ORDER BY LSL_CHANGED, CREATE_DTTS, rid
-            )
-    END AS LAST_LSL_NEW,
-
-    /* Last USL change */
-    MAX(
-        CASE
-            WHEN USL_CHANGED = 1 THEN CREATE_DTTS
-        END
-    ) AS LAST_USL_CHANGE_TIME,
-
-    CASE
-        WHEN SUM(USL_CHANGED) > 0 THEN
-            MAX(PREV_USL) KEEP (
-                DENSE_RANK LAST
-                ORDER BY USL_CHANGED, CREATE_DTTS, rid
-            )
-    END AS LAST_USL_OLD,
-
-    CASE
-        WHEN SUM(USL_CHANGED) > 0 THEN
-            MAX(USL) KEEP (
-                DENSE_RANK LAST
-                ORDER BY USL_CHANGED, CREATE_DTTS, rid
-            )
-    END AS LAST_USL_NEW,
 
     RTRIM(
           CASE
@@ -240,4 +187,4 @@ GROUP BY
     PARAM_NAME
 
 ORDER BY
-    LAST_CHANGE_TIME DESC;
+    MAX(CREATE_DTTS) DESC;
